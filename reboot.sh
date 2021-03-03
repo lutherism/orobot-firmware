@@ -10,7 +10,7 @@ touch tmp/run.log
 echo $(date) Run >> $BASEDIR/tmp/reboot.log
 export DISPLAY=:0 #needed if you are running a simple gui app.
 
-process="v8.17.0/bin/node"
+process="node $BASEDIR/pi-node/keep-alive.js"
 makerun="node $BASEDIR/scripts/keep-alive.js >> tmp/run.log"
 
 echo Running $makerun

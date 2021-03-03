@@ -2,7 +2,8 @@
 interfaceWifi=wlan0
 interfaceWired=eth0
 ipAddress=192.168.4.1/24
-
+deviceUuid=$(<scripts/openroboticsdata/.deviceUuid)
+deviceSlug=$(echo deviceUuid | cut -c1-5)
 ### Check if run as root ############################
 if [[ $EUID -ne 0 ]]; then
 	echo "This script must be run as root"
@@ -23,6 +24,22 @@ apt-mark hold avahi-daemon libnss-mdns
 apt install -y libnss-resolve
 ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 systemctl enable systemd-networkd.service systemd-resolved.service
+
+cat > /etc/wpa_supplicant/wpa_supplicant-wlan0.conf <<-EOF
+	country=US
+	ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+	update_config=1
+	ap_scan=1
+
+	### your access point/hotspot ###
+	network={
+	    ssid="oRobot-Setup-$deviceSlug"    # your hotspot's name
+	    mode=2
+	    key_mgmt=WPA-PSK
+	    psk="orobotio"        # your hotspot's password
+	    frequency=2462
+	}
+EOF
 
 ## Install configuration files for systemd-networkd
 cat > /etc/systemd/network/04-${interfaceWired}.network <<-EOF
@@ -79,4 +96,5 @@ fi
 systemctl daemon-reload
 systemctl enable wpa_cli@${interfaceWifi}.service
 echo "Reboot now!"
+reboot
 exit 0
