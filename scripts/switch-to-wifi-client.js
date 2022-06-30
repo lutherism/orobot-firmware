@@ -21,7 +21,6 @@ network={
 
 const writeWPAConf = () => {
   fs.writeFileSync(wpaConfPath, createWPAConf());
-  spawn('wpa_cli enable_network 0');
 }
 
 module.exports = {
