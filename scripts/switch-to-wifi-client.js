@@ -7,6 +7,7 @@ const currentData = JSON.parse(
 
 const wpaConfPath = "/etc/wpa_supplicant/wpa_supplicant.conf";
 const dnsConfPath = "/etc/dnsmasq.conf";
+const hostsPath = "/etc/hosts";
 
 const createWPAConf = () => {
   return `country=US
@@ -23,9 +24,19 @@ const createDNSConf = () => {
   return '#empty';
 }
 
+const createHosts = () => {
+  return `127.0.0.1	localhost
+::1		localhost ip6-localhost ip6-loopback
+ff02::1		ip6-allnodes
+ff02::2		ip6-allrouters
+
+127.0.1.1		raspberrypi`;
+}
+
 const writeWPAConf = () => {
   fs.writeFileSync(wpaConfPath, createWPAConf());
   fs.writeFileSync(dnsConfPath, createDNSConf());
+  fs.writeFileSync(hostsPath, createHosts());
 }
 
 module.exports = {
