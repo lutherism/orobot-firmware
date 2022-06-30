@@ -4,8 +4,9 @@ const request = require('request');
 var through = require('through')
 var os = require('os');
 var pty = require('node-pty');
-//var COMMANDS = require('./commands.js');
+var COMMANDS = require('./commands.js');
 const { Duplex } = require('stream');
+var {syncLogsIfAfterGap} = require('./upload-logs');
 
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
@@ -18,7 +19,7 @@ var ptyProcess = pty.spawn(shell, [], {
   name: 'xterm-color',
   cols: 80,
   rows: 30,
-  cwd: process.env.HOME,
+  cwd: `${process.env.HOME}/orobot-firmware`,
   env: process.env
 });
 
@@ -52,18 +53,18 @@ function recursiveConnect() {
 
 recursiveConnect();
 
-let DeviceData = {};
-
-DeviceData = JSON.parse(fs.readFileSync(__dirname + '/openroboticsdata/data.json'));
+let DeviceData = JSON.parse(fs.readFileSync(__dirname + '/openroboticsdata/data.json'));
 
 let interval = null;
+
+let version = fs.readFileSync(__dirname + '/../.git/refs/heads/master').toString();
 
 function intervalHeartbeat(msDelay = 8000) {
   const heartPump = () => {
     const hb = {
       deviceUuid: DeviceData.deviceUuid,
       payloadJSON: JSON.stringify({
-        version:  fs.readFileSync(__dirname + '/../.git/refs/heads/master').toString(),
+        version: version,
         type: "wifi-motor"
       })
     };
@@ -71,9 +72,8 @@ function intervalHeartbeat(msDelay = 8000) {
       uri: `${API_URL}/api/device/state`,
       json: true,
       body: hb
-    }, (err, resp) => {
-      console.log(`Finished Heartbeat ${Date.now()}`);
     });
+    syncLogsIfAfterGap();
   };
   heartPump();
   clearInterval(interval);
@@ -93,16 +93,19 @@ function keepOpenGatewayConnection() {
       });
 
       client.onopen = function() {
-          console.log(`WebSocket Client Connected to ${WS_URL}`);
-          client.send(JSON.stringify({type: 'identify-connection', deviceUuid: DeviceData.deviceUuid}));
+          console.log(`WebSocket Client Connected to ${WS_URL} ${client.readyState}`);
+          client.send(JSON.stringify({
+            type: 'identify-connection',
+            deviceUuid: DeviceData.deviceUuid}));
           if (client.readyState === client.OPEN) {
             ptyProcess.on('data', (data) => {
+              console.log('pyt out data');
               client.send(JSON.stringify({
                 type: 'pty-out',
                 data,
                 deviceUuid: DeviceData.deviceUuid}));
             });
-            ptyProcess.write('sudo -u pi -i && cd projects/orobot-firmware');
+            ptyProcess.write('sudo -u pi -i && cd /home/pi/orobot-firmware');
             ptyProcess.write('echo \'' +
               `Welcome to Open Robotics Terminal! Device UUID: ${DeviceData.deviceUuid}`
               + '`\'\r');
@@ -113,21 +116,28 @@ function keepOpenGatewayConnection() {
 
       client.onclose = function() {
           console.log('ssh-protocol Client Closed');
+          ptyProcess.kill();
           reject();
       };
 
       client.onmessage = function(e) {
-          if (typeof e.data === 'string') {
-              const messageObj = JSON.parse(e.data);
-              if (messageObj.type === 'pty-in') {
-                console.log('got data')
-                ptyProcess.write(messageObj.data);
-              } else if (messageObj.type === 'command-in' &&
-                COMMANDS[messageObj.data]) {
+        if (typeof e.data === 'string') {
+          const messageObj = JSON.parse(e.data);
+          console.log('got ws message', messageObj);
+          if (messageObj.type === 'pty-in') {
+
+            ptyProcess.write(messageObj.data);
+          } else if (messageObj.type === 'command-in' &&
+            COMMANDS[messageObj.data]) {
+            COMMANDS.export()
+              .then(() => {
                 COMMANDS[messageObj.data]();
-                client.send(JSON.stringify({type: 'command-out', data: 'ok'}));
-              }
+              });
+          } else if (messageObj.data.indexOf('gotoangle') === 0){
+            COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
           }
+          //client.send(JSON.stringify({type: 'command-out', data: 'ok'}));
+        }
       };
     } catch (e) {
       console.log('error caught', e)
