@@ -13,11 +13,11 @@ const createWPAConf = () => {
   return `country=US
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
-proto=wpa
 
 network={
     ssid="OROBOT-Setup-${currentData.deviceUuid.slice(0, 5)}"
     mode=2
+    proto=wpa
     key_mgmt=WPA-PSK
     psk="wifisetup"
     frequency=2412
