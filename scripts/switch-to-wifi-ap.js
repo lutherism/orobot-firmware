@@ -7,10 +7,9 @@ const currentData = JSON.parse(
 
 const wpaConfPath = "/etc/wpa_supplicant/wpa_supplicant.conf";
 
-const createWPAConf = ({
-  ssid, psk
-}) => {
-  return `ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+const createWPAConf = () => {
+  return `country=US
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 
 network={

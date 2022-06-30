@@ -7,15 +7,14 @@ const currentData = JSON.parse(
 
 const wpaConfPath = "/etc/wpa_supplicant/wpa_supplicant.conf";
 
-const createWPAConf = ({
-  ssid, psk
-}) => {
-  return `ctrl_interface=/run/wpa_supplicant
+const createWPAConf = () => {
+  return `country=US
+ctrl_interface=/run/wpa_supplicant
 update_config=1
 
 network={
- ssid="${currentData.wifiSettings.ssid}"
- psk="${currentData.wifiSettings.psk}"
+ ssid="The Internet"
+ psk="alexjansen"
 }`;
 }
 
