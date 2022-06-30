@@ -6,6 +6,7 @@ const currentData = JSON.parse(
 );
 
 const wpaConfPath = "/etc/wpa_supplicant/wpa_supplicant.conf";
+const dnsConfPath = "/etc/dnsmasq.conf";
 
 const createWPAConf = () => {
   return `country=US
@@ -18,8 +19,13 @@ network={
 }`;
 }
 
+const createDNSConf = () => {
+  return '#empty';
+}
+
 const writeWPAConf = () => {
   fs.writeFileSync(wpaConfPath, createWPAConf());
+  fs.writeFileSync(dnsConfPath, createDNSConf());
 }
 
 module.exports = {
