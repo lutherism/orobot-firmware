@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const { spawn, spawnSync } = require('child_process');
+const { spawn, exec } = require('child_process');
 
 app.use(express.static('public'))
 
@@ -10,8 +10,9 @@ app.post('/api/goto-client', () => {
 });
 
 app.post('/api/wifi', (req, res) => {
-  const results = spawnSync('sudo iwlist wlan0 scan | grep ESSID');
-  res.send(JSON.stringify(results.output));
+  const results = exec('sudo iwlist wlan0 scan | grep ESSID', (e, o, err) => {
+    res.send(o);
+  });
 });
 
 app.listen(3006)
