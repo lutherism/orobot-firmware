@@ -9,7 +9,7 @@ app.post('/api/goto-client', () => {
   res.send('ok');
 });
 
-app.post('/api/wifi', (req, res) => {
+app.get('/api/wifi', (req, res) => {
   const results = exec('sudo iwlist wlan0 scan | grep ESSID', (e, o, err) => {
     res.send(o);
   });

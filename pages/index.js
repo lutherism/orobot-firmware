@@ -76,7 +76,6 @@ class Home extends Component {
   componentDidMount() {
     if (!this.state.networks) {
       fetch('/api/wifi')
-        .then(r => r.json())
         .then((res) => {
           this.setState({
             networks: Object.values(res.networks.reduce((a, n) => {
