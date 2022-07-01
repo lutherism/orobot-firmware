@@ -28,7 +28,7 @@ network={
 
 const createDHCPConf = () => {
   return `interface wlan0
-    static ip_address=192.168.4.1/24
+    static ip_address=192.168.4.1
     nohook wpa_supplicant
     denyinterfaces veth*`
 }

@@ -10,4 +10,5 @@ nvm use 8
 cd ~/orobot-firmware
 npm i
 sudo apt-get update
+sudo apt-get install hostapd dnsmasq nginx
 printf 'y\n' | sudo apt-get install hostapd dnsmasq
