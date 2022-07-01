@@ -9,6 +9,7 @@ const wpaConfPath = "/etc/wpa_supplicant/wpa_supplicant.conf";
 const dnsConfPath = "/etc/dnsmasq.conf";
 const hostsPath = "/etc/hosts";
 const hostAPDPath = "/etc/hostapd/hostapd.conf";
+const dhcpPath = "/etc/dhcpcd.conf";
 
 const createWPAConf = () => {
   return `country=US
@@ -19,6 +20,12 @@ network={
  ssid="The Internet"
  psk="alexjansen"
 }`;
+}
+
+const createDHCPConf = () => {
+  return `interface wlan0
+    static ip_address=192.168.4.1/24
+    nohook wpa_supplicant`
 }
 
 const createDNSConf = () => {
@@ -43,6 +50,7 @@ const writeWPAConf = () => {
   fs.writeFileSync(dnsConfPath, createDNSConf());
   fs.writeFileSync(hostsPath, createHosts());
   fs.writeFileSync(hostAPDPath, hostAPDConf());
+  fs.writeFileSync(dhcpPath, createDHCPConf());
 }
 
 module.exports = {
