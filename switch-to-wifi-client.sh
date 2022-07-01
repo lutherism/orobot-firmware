@@ -4,4 +4,4 @@ sudo systemctl restart dnsmasq.service
 sudo rfkill unblock all
 sudo ifconfig wlan0 down
 sudo ifconfig wlan0 up
-wpa_cli -i wlan0 reconfigure
+sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf
