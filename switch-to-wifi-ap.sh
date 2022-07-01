@@ -7,3 +7,4 @@ sudo rfkill unblock all
 sudo ifconfig wlan0 down
 sudo ifconfig wlan0 up
 sudo wpa_cli -i wlan0 reconfigure
+sudo systemctl restart nginx
