@@ -3,3 +3,6 @@ sudo ip link set dev wlan0 down
 sudo ip addr add 192.168.0.172/24 dev wlan0
 sudo systemctl restart dnsmasq.service
 sudo systemctl restart hostapd.service
+sudo rfkill unblock all
+sudo ifconfig wlan0 down
+sudo ifconfig wlan0 up
