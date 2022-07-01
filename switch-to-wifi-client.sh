@@ -4,3 +4,4 @@ sudo systemctl stop dnsmasq.service
 sudo rfkill unblock all
 sudo ifconfig wlan0 down
 sudo ifconfig wlan0 up
+wpa_cli -i wlan0 reconfigure
