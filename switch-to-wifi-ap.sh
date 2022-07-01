@@ -1,8 +1,3 @@
-if [ "$EUID" -ne 0 ]
-  then echo "Please run as root"
-  exit
-fi
-
 /home/pi/.config/nvm/versions/node/v8.17.0/bin/node -e "require('./scripts/switch-to-wifi-ap.js').upWifiAP()"
 sudo ip link set dev wlan0 down
 sudo ip addr add 192.168.0.172/24 dev wlan0
