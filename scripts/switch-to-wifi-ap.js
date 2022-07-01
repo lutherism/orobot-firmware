@@ -21,7 +21,7 @@ network={
     mode=2
     proto=wpa
     key_mgmt=WPA-PSK
-    psk="wifisetup"
+    psk=wifisetup
     frequency=2412
 }`;
 }

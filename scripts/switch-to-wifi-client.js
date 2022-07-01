@@ -18,7 +18,7 @@ update_config=1
 
 network={
  ssid="The Internet"
- psk="alexjansen"
+ psk=alexjansen
 }`;
 }
 
