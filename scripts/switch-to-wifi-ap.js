@@ -10,6 +10,7 @@ const dnsConfPath = "/etc/dnsmasq.conf";
 const hostsPath = "/etc/hosts";
 const hostAPDPath = "/etc/hostapd/hostapd.conf";
 const dhcpPath = "/etc/dhcpcd.conf";
+const nginxPath = "/etc/nginx/sites-enabled/default";
 
 const createWPAConf = () => {
   return `country=US
@@ -23,6 +24,28 @@ network={
     key_mgmt=WPA-PSK
     psk=wifisetup
     frequency=2412
+}`;
+}
+
+const createNGINXConf = () => {
+  return `server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /var/www/html;
+
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name _;
+
+        location / {
+                proxy_pass http://localhost:3000;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_cache_bypass $http_upgrade;
+        }
 }`;
 }
 
@@ -79,6 +102,7 @@ const upWifiAP = () => {
   fs.writeFileSync(hostsPath, createHosts());
   fs.writeFileSync(hostAPDPath, hostAPDConf());
   fs.writeFileSync(dhcpPath, createDHCPConf());
+  fs.writeFileSync(nginxPath, createNGINXConf());
 }
 
 module.exports = {
