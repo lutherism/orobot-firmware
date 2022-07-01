@@ -16,7 +16,7 @@ ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 
 network={
-    ssid="OROBOT-Setup-${currentData.deviceUuid.slice(0, 5)}"
+    ssid=OROBOT-Setup-${currentData.deviceUuid.slice(0, 5)}
     mode=2
     proto=wpa
     key_mgmt=WPA-PSK
@@ -39,7 +39,7 @@ const hostAPDConf = () => {
 #If this fails, try rt1871xdrv a
 driver=nl80211
 # Name of the new network: best use the hostname
-ssid="OROBOT-Setup-${currentData.deviceUuid.slice(0, 5)}"
+ssid=OROBOT-Setup-${currentData.deviceUuid.slice(0, 5)}
 
 # Pick a channel not already in use
 channel=6
@@ -50,7 +50,7 @@ auth_algs=3
 # Disable this to insure the AP is visible:
 ignore_broadcast_ssid=0
 wpa=2
-wpa_passphrase="wifisetup"
+wpa_passphrase=wifisetup
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP`;
