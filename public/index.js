@@ -30623,6 +30623,15 @@ class Home extends Component {
           null,
           'Wifi Setup'
         ),
+        React.createElement(
+          'button',
+          { onClick: () => {
+              fetch('/api/goto-client', {
+                method: 'POST'
+              });
+            } },
+          'client mode'
+        ),
         React.createElement(ConnectionForm, { connection: this.state.connection }),
         React.createElement(ListWifi, { networks: this.state.networks, onSelect: () => {} })
       )

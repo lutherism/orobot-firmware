@@ -95,6 +95,13 @@ class Home extends Component {
           <h1>
             Wifi Setup
           </h1>
+          <button onClick={() => {
+            fetch('/api/goto-client', {
+              method: 'POST'
+            });
+          }}>
+            {'client mode'}
+          </button>
           <ConnectionForm connection={this.state.connection} />
           <ListWifi networks={this.state.networks} onSelect={() => {}} />
         </main>
