@@ -9,7 +9,7 @@ mkdir tmp
 touch tmp/reboot.log
 touch tmp/run.log
 touch tmp/run-err.log
-echo $(date) Run >> $BASEDIR/tmp/reboot.log
+echo "$(date) Run" >> $BASEDIR/tmp/reboot.log
 export DISPLAY=:0 #needed if you are running a simple gui app.
 
 process="$NODE_BIN $BASEDIR/scripts/keep-alive.js"
@@ -23,7 +23,7 @@ then
     exit
 else
     echo 'running.'
-    echo $makerun | bash >> $BASEDIR/tmp/reboot.log &
+    echo "$makerun" | bash >> $BASEDIR/tmp/reboot.log &
 fi
 
 exit
