@@ -47,7 +47,7 @@ function recursiveConnect() {
     if (backoffTime < MAX_DELAY) {
       backoffTime *= 2;
     } else {
-      COMMANDS['setup-wifi']();
+      //COMMANDS['setup-wifi']();
     }
     console.log(err);
     return delay(backoffTime).then(() => {
