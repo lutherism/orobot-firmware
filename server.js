@@ -2,12 +2,14 @@ const express = require('express')
 const app = express()
 const { spawn, exec } = require('child_process');
 const fs = require('fs');
+const bodyParser = require('body-parser');
 
-app.use(express.static('public'))
+app.use(express.static('public'));
+app.use(bodyParser.json());
 
 app.post('/api/goto-client', (req, res) => {
+  res.send('ok');
   exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
-    res.send('ok');
     exec('sudo /home/pi/orobot-firmware/reboot.sh');
   });
 });
