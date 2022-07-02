@@ -7,7 +7,7 @@ var pty = require('node-pty');
 var COMMANDS = require('./commands.js');
 const { Duplex } = require('stream');
 var {syncLogsIfAfterGap} = require('./upload-logs');
-
+const {exec} = require('child_process');
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
@@ -34,12 +34,16 @@ function end () { //optional
 const delay = ms => new Promise(res => setTimeout(res, ms))
 let backoffTime = 100;
 const MAX_DELAY = 20000;
+const RETRY_WIFI = 3000;
 
 function recursiveConnect() {
   return keepOpenGatewayConnection()
   .catch((err) => {
     console.log(`err happened, backoff at ${backoffTime}ms`);
     // assumes that the error is "request made too soon"
+    if (backoffTime > RETRY_WIFI) {
+      exec('sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf &');
+    }
     if (backoffTime < MAX_DELAY) {
       backoffTime *= 2;
     } else {
