@@ -6,8 +6,8 @@ app.use(express.static('public'))
 
 app.post('/api/goto-client', (req, res) => {
   exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
-    exec('sudo /home/pi/orobot-firmware/reboot.sh');
     res.send('ok');
+    exec('sudo /home/pi/orobot-firmware/reboot.sh');
   });
 });
 
@@ -23,6 +23,9 @@ app.post('/api/wifi', (req, res) => {
   const currentData = JSON.parse(
     fs.readFileSync(__dirname + '/openroboticsdata/data.json')
   );
+  if (!currentData.wifiSettings) {
+    currentData.wifiSettings = {};
+  }
   currentData.wifiSettings.ssid = req.body.ssid;
   currentData.wifiSettings.password = req.body.password;
   fs.writeFileSync(__dirname + '/openroboticsdata/data.json',
