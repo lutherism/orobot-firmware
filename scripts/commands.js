@@ -47,7 +47,7 @@ const COMMANDS = {
     });
   },
   'update': () => {
-    const st = exec('cd /home/pi/orobot-firmware && sudo git pull && ./kill-keep-alive.sh && ./reboot.sh');
+    const st = exec('cd /home/pi/orobot-firmware && sudo git pull && sudo ./kill-keep-alive.sh && sudo ./reboot.sh');
 
     st.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);
