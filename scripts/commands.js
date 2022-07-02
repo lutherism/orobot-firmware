@@ -1,7 +1,7 @@
 var gpio = require("gpio");
 var i2cBus = require("i2c-bus");
 var repl = require('repl');
-const { spawn } = require('child_process');
+const { exec } = require('child_process');
 
 var options = {
     i2c: i2cBus.openSync(1),
@@ -33,10 +33,10 @@ const addToCurrentPos = (angle) => {
 
 const COMMANDS = {
   'setup-wifi': () => {
-    spawn('sudo /home/pi/orobot-firmware/switch-to-wifi-ap.sh');
+    exec('sudo /home/pi/orobot-firmware/switch-to-wifi-ap.sh');
   },
   'update': () => {
-    const st = spawn('cd /home/pi/orobot-firmware && sudo git pull && sudo reboot');
+    const st = exec('cd /home/pi/orobot-firmware && sudo git pull && sudo reboot');
 
     st.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);
