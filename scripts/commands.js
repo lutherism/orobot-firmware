@@ -46,6 +46,9 @@ const COMMANDS = {
       console.log(`setup-wifi child process exited with code ${code}`);
     });
   },
+  'reboot': () => {
+    exec('reboot');
+  },
   'update': () => {
     const st = exec('cd /home/pi/orobot-firmware && sudo git pull && sudo ./kill-keep-alive.sh && sudo ./reboot.sh');
 
