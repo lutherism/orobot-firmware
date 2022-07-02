@@ -30514,6 +30514,8 @@ if (process.env.NODE_ENV === 'production') {
 const React = require('react');
 const Component = React.Component;
 
+const API_BASE = location.host === 'localhost:3006' ? 'http://192.168.4.1' : '';
+
 function ListWifi({
   networks,
   onSelect
@@ -30534,6 +30536,33 @@ function ListWifi({
   });
 }
 
+const lineDelineator = '\n                    ';
+
+function parseWifiScanOutput(output) {
+  const uniqueTable = {};
+  const parsed = output.slice(1).map(node => {
+    return node.split(lineDelineator).reduce((a, line) => {
+      if (line.indexOf('ESSID') === 0) {
+        a['ssid'] = line.slice(7, -1);
+      }
+      if (line.indexOf('Address:') > -1) {
+        a['mac'] = line.slice(15);
+      }
+      if (line.indexOf('Encryption key') === 0) {
+        a['password'] = line.slice(15);
+      }
+      return a;
+    }, {});
+  }).filter(x => {
+    if (uniqueTable[x.ssid]) {
+      return false;
+    }
+    uniqueTable[x.ssid] = true;
+    return x.ssid.length > 0;
+  });
+  return parsed;
+}
+
 class ConnectionForm extends Component {
   constructor(props) {
     super(props);
@@ -30545,13 +30574,11 @@ class ConnectionForm extends Component {
     if (!this.props.connection) {
       return React.createElement('div', null);
     }
-    const [password, setPassword] = useState('');
-    const [result, setResult] = useState('');
     return React.createElement(
       'form',
       { onSubmit: e => {
           e.preventDefault();
-          fetch('/api/wifi', {
+          fetch(API_BASE + '/api/wifi', {
             method: 'post',
             headers: {
               'Content-Type': 'application/json'
@@ -30579,8 +30606,13 @@ class ConnectionForm extends Component {
         }, type: 'text' }),
       React.createElement(
         'button',
-        null,
+        { type: 'submit' },
         'submit'
+      ),
+      React.createElement(
+        'button',
+        { onClick: this.props.clear },
+        'clear'
       ),
       React.createElement(
         'div',
@@ -30599,12 +30631,9 @@ class Home extends Component {
 
   componentDidMount() {
     if (!this.state.networks) {
-      fetch('/api/wifi').then(res => {
+      fetch(API_BASE + '/api/wifi').then(r => r.json()).then(res => {
         this.setState({
-          networks: Object.values(res.networks.reduce((a, n) => {
-            a[n.ssid] = n;
-            return a;
-          }, {}))
+          networks: parseWifiScanOutput(res.wifi)
         });
       });
     }
@@ -30626,14 +30655,17 @@ class Home extends Component {
         React.createElement(
           'button',
           { onClick: () => {
-              fetch('/api/goto-client', {
+              fetch(API_BASE + '/api/goto-client', {
                 method: 'POST'
               });
             } },
           'client mode'
         ),
-        React.createElement(ConnectionForm, { connection: this.state.connection }),
-        React.createElement(ListWifi, { networks: this.state.networks, onSelect: () => {} })
+        React.createElement(ConnectionForm, { connection: this.state.connection,
+          clear: () => this.setState({ connection: null }) }),
+        !this.state.connection ? React.createElement(ListWifi, {
+          networks: this.state.networks,
+          onSelect: ssid => this.setState({ connection: ssid }) }) : null
       )
     );
   }

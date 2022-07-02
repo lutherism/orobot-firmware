@@ -1,3 +1,6 @@
 {
-  wifiSettings: {}
+  wifiSettings: {
+    ssid: "The Internet",
+    password: "alexjansen"
+  }
 }

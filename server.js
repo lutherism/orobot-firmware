@@ -19,4 +19,18 @@ app.get('/api/wifi', (req, res) => {
   });
 });
 
+app.post('/api/wifi', (req, res) => {
+  const currentData = JSON.parse(
+    fs.readFileSync(__dirname + '/openroboticsdata/data.json')
+  );
+  currentData.wifiSettings.ssid = req.body.ssid;
+  currentData.wifiSettings.password = req.body.password;
+  fs.writeFileSync(__dirname + '/openroboticsdata/data.json',
+    JSON.stringify(currentData));
+  res.send('ok');
+  exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
+    exec('sudo /home/pi/orobot-firmware/reboot.sh');
+  });
+});
+
 app.listen(3006);

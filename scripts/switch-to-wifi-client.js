@@ -17,8 +17,8 @@ ctrl_interface=/run/wpa_supplicant
 update_config=1
 
 network={
- ssid="The Internet"
- psk="alexjansen"
+ ssid="${currentData.wifiSettings.ssid}"
+ psk="${currentData.wifiSettings.password}"
 }
 `;
 }
