@@ -4,8 +4,8 @@ const { spawn, exec } = require('child_process');
 
 app.use(express.static('public'))
 
-app.post('/api/goto-client', () => {
-  spawn('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh');
+app.post('/api/goto-client', (req, res) => {
+  exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh');
   res.send('ok');
 });
 
