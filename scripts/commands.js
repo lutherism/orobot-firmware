@@ -36,7 +36,7 @@ const COMMANDS = {
     exec('sudo /home/pi/orobot-firmware/switch-to-wifi-ap.sh');
   },
   'update': () => {
-    const st = exec('cd /home/pi/orobot-firmware && sudo git pull && sudo reboot');
+    const st = exec('cd /home/pi/orobot-firmware && sudo git pull && ./kill-keep-alive.sh && ./reboot.sh');
 
     st.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);
