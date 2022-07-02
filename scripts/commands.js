@@ -33,8 +33,8 @@ const addToCurrentPos = (angle) => {
 
 const COMMANDS = {
   'setup-wifi': () => {
-    spawn('/home/pi/orobot-firmware/switch-to-wifi-ap.sh');
-  }
+    spawn('sudo /home/pi/orobot-firmware/switch-to-wifi-ap.sh');
+  },
   'update': () => {
     const st = spawn('cd /home/pi/orobot-firmware && sudo git pull && sudo reboot');
 

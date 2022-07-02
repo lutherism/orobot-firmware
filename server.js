@@ -5,14 +5,16 @@ const { spawn, exec } = require('child_process');
 app.use(express.static('public'))
 
 app.post('/api/goto-client', () => {
-  spawn('/home/pi/orobot-firmware/switch-to-wifi-client.sh');
+  spawn('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh');
   res.send('ok');
 });
 
 app.get('/api/wifi', (req, res) => {
-  const results = exec('sudo iwlist wlan0 scan | grep ESSID', (e, o, err) => {
-    res.send(o);
+  const results = exec("sudo iwlist wlan0 scan", (e, o, err) => {
+    res.send({
+      wifi: o.split('      Cell')
+    });
   });
 });
 
-app.listen(3006)
+app.listen(3006);
