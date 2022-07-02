@@ -2,7 +2,7 @@ var path = require('path');
 var fs = require('fs');
 var {authRequest} = require('./api.js');
 
-const filesToUpload = ['run.log', 'run-err.log', 'reboot.log'];
+const filesToUpload = ['run.log', 'run-err.log', 'reboot.log', 'web.log'];
 const logsRootDir = 'tmp';
 const deleteLogsOnUpload = true;
 const dataFilePath = __dirname + '/openroboticsdata/data.json';

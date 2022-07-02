@@ -9,4 +9,4 @@ sudo ifconfig wlan0 up
 sudo killall wpa_supplicant
 sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf
 sudo systemctl restart nginx
-sudo /home/pi/.config/nvm/versions/node/v8.17.0/bin/node server.js
+sudo /home/pi/.config/nvm/versions/node/v8.17.0/bin/node server.js >> /home/pi/orobot-firmware/tmp/web.log
