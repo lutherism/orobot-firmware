@@ -33,7 +33,7 @@ const addToCurrentPos = (angle) => {
 
 const COMMANDS = {
   'setup-wifi': () => {
-    const st = exec('sudo /home/pi/orobot-firmware/switch-to-wifi-ap.sh');
+    const st = exec('sudo /home/pi/orobot-firmware/switch-to-wifi-ap.sh >> /home/pi/orobot-firmware/tmp/run.log');
     st.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);
     });
