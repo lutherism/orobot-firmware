@@ -1,1 +1,1 @@
-* * * * * /home/pi/orobot-firmware/reboot.sh
+* * * * * sudo /home/pi/orobot-firmware/reboot.sh
