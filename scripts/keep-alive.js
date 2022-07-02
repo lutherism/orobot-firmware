@@ -95,6 +95,13 @@ function keepOpenGatewayConnection() {
       });
 
       client.onopen = function() {
+          ptyProcess = pty.spawn(shell, [], {
+            name: 'xterm-color',
+            cols: 80,
+            rows: 30,
+            cwd: `${process.env.HOME}/orobot-firmware`,
+            env: process.env
+          });
           console.log(`WebSocket Client Connected to ${WS_URL} ${client.readyState}`);
           client.send(JSON.stringify({
             type: 'identify-connection',
