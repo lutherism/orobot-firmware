@@ -19,11 +19,11 @@ echo Running $makerun
 
 if ps ax | grep -v grep | grep "$process" > /dev/null
 then
-    echo 'Already running';
+    echo 'Already running' >> $BASEDIR/tmp/reboot.log;
     exit
 else
     echo 'running.'
-    echo $makerun | bash &
+    echo $makerun | bash >> $BASEDIR/tmp/reboot.log &
 fi
 
 exit
