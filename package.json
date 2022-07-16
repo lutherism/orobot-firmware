@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "web": "node server.js",
+    "web": "node ap-server.js",
     "build": "node node_modules/browserify/bin/cmd.js -t [ babelify --presets [ react ] ] ./src/index.js -o ./public/index.js"
   },
   "parserOptions": {
