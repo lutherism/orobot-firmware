@@ -7,6 +7,7 @@ do
   else
     status="1"
   fi
+  echo "toggle $i"
   echo $status | sudo tee /sys/class/leds/led0/brightness
   sleep .5s
 done
