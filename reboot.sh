@@ -11,7 +11,7 @@ touch tmp/run-err.log
 echo "$(date) Run" >> $BASEDIR/tmp/reboot.log
 export DISPLAY=:0 #needed if you are running a simple gui app.
 
-process="sudo $NODE_BIN $BASEDIR/scripts/keep-alive.js"
+process="keep-alive.js"
 makerun="sudo $NODE_BIN $BASEDIR/scripts/keep-alive.js >> $BASEDIR/tmp/run.log 2>> $BASEDIR/tmp/run-err.log"
 
 echo Running $makerun
