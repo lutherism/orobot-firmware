@@ -8,4 +8,4 @@
 # Description:       Enable service provided by daemon.
 ### END INIT INFO
 
-glogg /home/orobot-firmware/tmp/*
+glogg /home/pi/orobot-firmware/tmp/*
