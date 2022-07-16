@@ -21,10 +21,5 @@ fs.readFile('./openroboticsdata/data_template.json', data => {
     }
   }, (err, res) => {
     console.log(err, res);
-    setupCronJob();
   });
 });
-
-function setupCronJob() {
-  exec(`crontab ${__dirname}/reboot.cron`);
-}
