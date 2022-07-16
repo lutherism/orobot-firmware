@@ -1,8 +1,8 @@
-#! /bin/sh
-# /etc/init.d/orobot-boot.sh
+#!/bin/sh
+# /etc/init.d/orobot-boot
 
 ### BEGIN INIT INFO
-# Provides:          orobot-boot.sh
+# Provides:          orobot-boot
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
