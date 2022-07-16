@@ -14,16 +14,11 @@ export DISPLAY=:0 #needed if you are running a simple gui app.
 process="v8.17.0/bin/node"
 makecron="crontab $BASEDIR/reboot.cron"
 makerun="node $BASEDIR/scripts/factory-reset.js >> tmp/$LOGNAME"
+initDCP="cp $BASEDIR/init.d/* /etc/init.d/"
 
 echo Running $makerun
-
-if ps ax | grep -v grep | grep $process > /dev/null
-then
-    echo 'Already running';
-    exit
-else
-    echo $makecron | bash
-    echo $makerun | bash
-fi
+echo $makecron | bash
+echo $makerun | bash
+echo $initDCP | bash
 
 exit
