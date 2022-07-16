@@ -14,9 +14,9 @@ export DISPLAY=:0 #needed if you are running a simple gui app.
 process="v8.17.0/bin/node"
 makecron="crontab $BASEDIR/reboot.cron"
 makerun="node $BASEDIR/scripts/factory-reset.js >> tmp/$LOGNAME"
-initDCP="cp $BASEDIR/init.d/* /etc/init.d/"
+initDCP="cp $BASEDIR/init.d/* /etc/init.d/ && sudo update-rc.d orobot-boot.sh defaults"
 
-echo Running $makerun
+echo Running resets.
 echo $makecron | bash
 echo $makerun | bash
 echo $initDCP | bash
