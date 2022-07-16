@@ -46,8 +46,6 @@ function recursiveConnect() {
     // assumes that the error is "request made too soon"
     if (backoffTime < MAX_DELAY) {
       backoffTime *= 2;
-    } else {
-      exec('sudo ' + __dirname + '/../switch-to-wifi-ap.sh');
     }
     console.log(err);
     return delay(backoffTime).then(() => {
@@ -56,7 +54,7 @@ function recursiveConnect() {
     });
   });
 }
-exec('sudo' + __dirname + '/../switch-to-wifi-client.sh');
+//exec('sudo' + __dirname + '/../switch-to-wifi-client.sh');
 recursiveConnect();
 
 let DeviceData = JSON.parse(fs.readFileSync(__dirname + '/openroboticsdata/data.json'));
