@@ -14,7 +14,7 @@ export DISPLAY=:0 #needed if you are running a simple gui app.
 
 process="v8.17.0/bin/node"
 makecron="crontab $BASEDIR/reboot.cron"
-wificlient="sudo $BASEDIT/switch-to-wifi-client.sh"
+wificlient="sudo $BASEDIR/switch-to-wifi-client.sh"
 makerun="sudo $NODE_BIN $BASEDIR/scripts/factory-reset.js >> tmp/$LOGNAME"
 initDCP="cp $BASEDIR/autostart/* /etc/xdg/autostart/"
 
