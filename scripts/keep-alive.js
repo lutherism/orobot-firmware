@@ -33,8 +33,7 @@ function end () { //optional
 
 const delay = ms => new Promise(res => setTimeout(res, ms))
 let backoffTime = 100;
-const MAX_DELAY = 20000;
-const RETRY_WIFI = 3000;
+const MAX_DELAY = 6000;
 
 function recursiveConnect() {
   return keepOpenGatewayConnection()
@@ -45,9 +44,6 @@ function recursiveConnect() {
     console.log(`err happened, backoff at ${backoffTime}ms`);
     exec('sudo ' + __dirname + '/../flash-led.sh');
     // assumes that the error is "request made too soon"
-    if (backoffTime > RETRY_WIFI) {
-
-    }
     if (backoffTime < MAX_DELAY) {
       backoffTime *= 2;
     } else {
