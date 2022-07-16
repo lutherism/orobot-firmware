@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-BASEDIR=$(dirname "$0")
+BASEDIR="/home/pi/orobot-firmware"
 nvm use 8
 NODE_BIN="/home/pi/.config/nvm/versions/node/v8.17.0/bin/node"
 
