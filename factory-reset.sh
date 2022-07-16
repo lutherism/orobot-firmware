@@ -14,7 +14,7 @@ export DISPLAY=:0 #needed if you are running a simple gui app.
 
 process="v8.17.0/bin/node"
 makecron="crontab $BASEDIR/reboot.cron"
-makerun="$NODEBIN $BASEDIR/scripts/factory-reset.js >> tmp/$LOGNAME"
+makerun="sudo $NODEBIN $BASEDIR/scripts/factory-reset.js >> tmp/$LOGNAME"
 initDCP="cp $BASEDIR/autostart/* /etc/xdg/autostart/"
 
 echo Running resets.
