@@ -2,7 +2,7 @@ status="1"
 
 for i in {1..10}
 do
-  if [[ $status == "1" ]]; then
+  if [ $status == "1" ]; then
     status="0"
   else
     status="1"
