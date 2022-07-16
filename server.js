@@ -34,7 +34,7 @@ app.post('/api/wifi', (req, res) => {
   fs.writeFileSync(__dirname + '/scripts/openroboticsdata/data.json',
     JSON.stringify(currentData));
   res.send('ok');
-  exec('sudo /home/pi/orobot-firmware/retry-ap.sh', () => {
+  exec('sudo /home/pi/orobot-firmware/retry-client.sh', () => {
     exec('sudo /home/pi/orobot-firmware/reboot.sh');
   });
 });
