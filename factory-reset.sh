@@ -14,10 +14,19 @@ export DISPLAY=:0 #needed if you are running a simple gui app.
 
 process="v8.17.0/bin/node"
 makecron="crontab $BASEDIR/reboot.cron"
+wificlient="sudo $BASEDIT/switch-to-wifi-client.sh"
 makerun="sudo $NODE_BIN $BASEDIR/scripts/factory-reset.js >> tmp/$LOGNAME"
 initDCP="cp $BASEDIR/autostart/* /etc/xdg/autostart/"
 
 echo Running resets.
+
+echo $wificlient | bash
+
+while [ "$(hostname -I)" = "" ]; do
+  echo -e "\e[1A\e[KNo network: $(date)"
+  sleep 1
+done
+
 echo $makecron | bash
 echo $makerun | bash
 echo $initDCP | bash
