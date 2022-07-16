@@ -42,12 +42,12 @@ function recursiveConnect() {
     console.log(`err happened, backoff at ${backoffTime}ms`);
     // assumes that the error is "request made too soon"
     if (backoffTime > RETRY_WIFI) {
-      exec('sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf &');
+      exec(__dirname + '/../switch-to-wifi-client.sh');
     }
     if (backoffTime < MAX_DELAY) {
       backoffTime *= 2;
     } else {
-      //COMMANDS['setup-wifi']();
+      exec(__dirname + '/../switch-to-wifi-ap.sh');
     }
     console.log(err);
     return delay(backoffTime).then(() => {
