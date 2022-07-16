@@ -2,6 +2,7 @@
 
 BASEDIR=$(dirname "$0")
 nvm use 8
+NODE_BIN="/home/pi/.config/nvm/versions/node/v8.17.0/bin/node"
 
 $LOGNAME="reset.log"
 
@@ -13,7 +14,7 @@ export DISPLAY=:0 #needed if you are running a simple gui app.
 
 process="v8.17.0/bin/node"
 makecron="crontab $BASEDIR/reboot.cron"
-makerun="node $BASEDIR/scripts/factory-reset.js >> tmp/$LOGNAME"
+makerun="$NODEBIN $BASEDIR/scripts/factory-reset.js >> tmp/$LOGNAME"
 initDCP="cp $BASEDIR/autostart/* /etc/xdg/autostart/"
 
 echo Running resets.
