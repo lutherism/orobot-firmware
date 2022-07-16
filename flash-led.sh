@@ -8,6 +8,6 @@ do
     status="1"
   fi
   echo $status | sudo tee /sys/class/leds/led0/brightness
-  sleep .05s
+  sleep .5s
 done
 echo 1 | sudo tee /sys/class/leds/led0/brightness
