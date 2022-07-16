@@ -9,6 +9,6 @@ do
   fi
   echo "toggle $i"
   echo $status | sudo tee /sys/class/leds/led0/brightness
-  sleep .005s
+  sleep .0005s
 done
 echo 1 | sudo tee /sys/class/leds/led0/brightness
