@@ -6,3 +6,4 @@ while [ "$(iw wlan0 info | grep 'type AP')" = "" ]; do
   sleep 5
   echo "sudo $BASEDIR/switch-to-wifi-ap.sh &" | bash >> $BASEDIR/tmp/run.log &
 done
+echo "Updated to Access Provider mode"

@@ -6,3 +6,4 @@ while [ "$(iw wlan0 info | grep 'type managed')" = "" ]; do
   sleep 5s
   echo "sudo $BASEDIR/switch-to-wifi-client.sh" | bash >> $BASEDIR/tmp/run.log &
 done
+echo "Update to Wifi Client mode"
