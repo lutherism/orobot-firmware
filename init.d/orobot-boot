@@ -11,5 +11,5 @@
 # Description:       Enable service provided by daemon.
 ### END INIT INFO
 
-klogg -f /home/pi/orobot-firmware/tmp/*
+glogg /home/pi/orobot-firmware/tmp/*
 sudo /home/pi/orobot-firmware/retry-client.sh
