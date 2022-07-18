@@ -34,6 +34,7 @@ class PTYContainer {
     });
     this.ptyProcess.on('exit', () => {
       console.log('pty exit');
+      this.ptyProcess.kill();
       setTimeout(() => {
         this.init();
       }, 1000);
