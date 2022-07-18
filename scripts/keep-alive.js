@@ -36,6 +36,7 @@ class PTYContainer {
     return this.ptyProcess.on(...args);
   }
   write(...args) {
+    console.log(`pty writing ${args[0]}`)
     this.mutated = false;
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
@@ -153,7 +154,6 @@ function keepOpenGatewayConnection() {
           const messageObj = JSON.parse(e.data);
           console.log('got ws message', messageObj);
           if (messageObj.type === 'pty-in') {
-
             ptyProcess.write(messageObj.data);
           } else if (messageObj.type === 'command-in' &&
             COMMANDS[messageObj.data]) {
