@@ -40,7 +40,7 @@ class PTYContainer {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       if (!this.mutated) {
-        this.pytProcess.kill();
+        this.ptyProcess.kill();
         this.init();
       }
     }, 1000);
