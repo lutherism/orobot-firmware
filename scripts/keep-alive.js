@@ -40,6 +40,7 @@ class PTYContainer {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       if (!this.mutated) {
+        console.log('resetting pty')
         this.ptyProcess.kill();
         this.init();
       }
