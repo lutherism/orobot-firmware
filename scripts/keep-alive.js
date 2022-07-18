@@ -25,7 +25,6 @@ class PTYContainer {
       name: 'xterm-color',
       cols: 80,
       rows: 30,
-      cwd: `${process.env.HOME}/orobot-firmware`,
       env: process.env
     });
     this.ptyProcess.on('data', () => {
@@ -34,7 +33,7 @@ class PTYContainer {
     });
     this.ptyProcess.on('exit', () => {
       console.log('pty exit');
-      this.ptyProcess.kill();
+      this.ptyProcess.kill(9);
       setTimeout(() => {
         this.init();
       }, 1000);
@@ -50,7 +49,7 @@ class PTYContainer {
     this.timer = setTimeout(() => {
       if (!this.mutated) {
         console.log('resetting pty')
-        this.ptyProcess.kill();
+        this.ptyProcess.kill(9);
         this.init();
       }
     }, 5000);
