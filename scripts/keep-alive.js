@@ -29,7 +29,14 @@ class PTYContainer {
       env: process.env
     });
     this.ptyProcess.on('data', () => {
+      console.log('mutated data');
       this.mutated = true;
+    });
+    this.ptyProcess.on('exit', () => {
+      console.log('pty exit');
+      setTimeout(() => {
+        this.init();
+      }, 1000);
     });
   }
   on(...args) {
