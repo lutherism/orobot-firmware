@@ -15,13 +15,40 @@ const WS_URL = process.env.NODE_ENV === 'local' ?
 const API_URL = process.env.NODE_ENV === 'local' ?
   'http://localhost:8080' : 'https://robots-gateway.uc.r.appspot.com';
 
-var ptyProcess = pty.spawn(shell, [], {
-  name: 'xterm-color',
-  cols: 80,
-  rows: 30,
-  cwd: `${process.env.HOME}/orobot-firmware`,
-  env: process.env
-});
+class PTYContainer {
+  constructor() {
+    this.init();
+    this.mutated = false;
+  }
+  init() {
+    this.ptyProcess = pty.spawn(shell, [], {
+      name: 'xterm-color',
+      cols: 80,
+      rows: 30,
+      cwd: `${process.env.HOME}/orobot-firmware`,
+      env: process.env
+    });
+    this.ptyProcess.on('data', () => {
+      this.mutated = true;
+    });
+  }
+  on(...args) {
+    return this.ptyProcess.on(...args);
+  }
+  write(...args) {
+    this.mutated = false;
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      if (!this.mutated) {
+        this.pytProcess.kill();
+        this.init();
+      }
+    }, 1000);
+    return this.ptyProcess.write(...args);
+  }
+}
+
+var ptyProcess = new PTYContainer();
 
 var ts = through(function write(data) {
   console.log('through data', data);
@@ -98,13 +125,6 @@ function keepOpenGatewayConnection() {
       });
 
       client.onopen = function() {
-          /*ptyProcess = pty.spawn(shell, [], {
-            name: 'xterm-color',
-            cols: 80,
-            rows: 30,
-            cwd: `${process.env.HOME}/orobot-firmware`,
-            env: process.env
-          });*/
           console.log(`WebSocket Client Connected to ${WS_URL} ${client.readyState}`);
           client.send(JSON.stringify({
             type: 'identify-connection',
