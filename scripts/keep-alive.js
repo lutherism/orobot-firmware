@@ -44,7 +44,7 @@ class PTYContainer {
         this.ptyProcess.kill();
         this.init();
       }
-    }, 1000);
+    }, 5000);
     return this.ptyProcess.write(...args);
   }
 }
