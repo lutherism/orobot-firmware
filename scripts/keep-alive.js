@@ -171,7 +171,10 @@ function keepOpenGatewayConnection() {
           } else if (messageObj.data.indexOf('gotoangle') === 0){
             COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
           }
-          client.send(JSON.stringify({type: 'command-recieved', data: `ok:${messageObj.data}`}));
+          client.send(JSON.stringify({
+            type: 'command-recieved',
+            data: `ok:${messageObj.data}`,
+            deviceUuid: DeviceData.deviceUuid}));
         }
       };
     } catch (e) {
