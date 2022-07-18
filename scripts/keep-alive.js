@@ -117,6 +117,7 @@ function keepOpenGatewayConnection() {
   return new Promise((resolve, reject) => {
     try {
       const client = new WebSocket(WS_URL, 'ssh-protocol');
+      let connected = false;
       //console.log(client.on)
       var clientStream = WebSocket.createWebSocketStream(client);
       clientStream.on('error', () => {});
@@ -126,12 +127,15 @@ function keepOpenGatewayConnection() {
       });
       ptyProcess.on('data', (data) => {
         console.log('pyt out data');
-        client.send(JSON.stringify({
-          type: 'pty-out',
-          data,
-          deviceUuid: DeviceData.deviceUuid}));
+        if (connected) {
+          client.send(JSON.stringify({
+            type: 'pty-out',
+            data,
+            deviceUuid: DeviceData.deviceUuid}));
+        }
       });
       client.onopen = function() {
+        connected = true;
           console.log(`WebSocket Client Connected to ${WS_URL} ${client.readyState}`);
           client.send(JSON.stringify({
             type: 'identify-connection',
