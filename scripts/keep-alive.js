@@ -124,26 +124,18 @@ function keepOpenGatewayConnection() {
             console.log('WebSocket Connection Error');
             reject();
       });
-
+      ptyProcess.on('data', (data) => {
+        console.log('pyt out data');
+        client.send(JSON.stringify({
+          type: 'pty-out',
+          data,
+          deviceUuid: DeviceData.deviceUuid}));
+      });
       client.onopen = function() {
           console.log(`WebSocket Client Connected to ${WS_URL} ${client.readyState}`);
           client.send(JSON.stringify({
             type: 'identify-connection',
             deviceUuid: DeviceData.deviceUuid}));
-          if (client.readyState === client.OPEN) {
-            ptyProcess.on('data', (data) => {
-              console.log('pyt out data');
-              client.send(JSON.stringify({
-                type: 'pty-out',
-                data,
-                deviceUuid: DeviceData.deviceUuid}));
-            });
-            ptyProcess.write('sudo -u pi -i && cd /home/pi/orobot-firmware');
-            ptyProcess.write('echo \'' +
-              `Welcome to Open Robotics Terminal! Device UUID: ${DeviceData.deviceUuid}`
-              + '`\'\r');
-          }
-
           intervalHeartbeat();
       };
 
