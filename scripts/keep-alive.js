@@ -176,8 +176,11 @@ function keepOpenGatewayConnection() {
               authRequest({
                 url: '/device-frame',
                 method: 'post',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
-                  key: deviceDataJSON.deviceUuid + '/last-frame.jpg',
+                  key: deviceDataJSON.deviceUuid + '/last-frame',
                   body: body
                 })
               }).catch(e => console.error(e))

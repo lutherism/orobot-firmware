@@ -12,7 +12,6 @@ function authRequest(options) {
     const filledOptions = Object.assign(options, {
       url: API_URL + options.url,
       headers: Object.assign((options.headers || {}), {
-        'Content-Type': 'application/json',
         'Cookies': ((options.headers || {}).Cookies || '') + '_oss=' + sessionUuid + ';'
       })
     });

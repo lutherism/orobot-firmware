@@ -23,6 +23,9 @@ function uploadAndClearLogs() {
     return authRequest({
       url: '/device-log',
       method: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
         key: deviceDataJSON.deviceUuid + '/' + logTime + '/' + fileName,
         body: fileContent.toString()
