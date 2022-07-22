@@ -73,6 +73,13 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 logging.warning(
                     'Removed streaming client %s: %s',
                     self.client_address, str(e))
+        elif self.path == '/frame.jpg':
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/jpeg')
+            self.send_header('Content-Length', len(frame))
+            self.end_headers()
+            self.wfile.write(frame)
+            self.wfile.write(b'\r\n')
         else:
             self.send_error(404)
             self.end_headers()

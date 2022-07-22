@@ -169,6 +169,14 @@ function keepOpenGatewayConnection() {
               .then(() => {
                 COMMANDS[messageObj.data]();
               });
+          } else if (messageObj.type === 'getframe') {
+            request('http://localhost:8000/frame.jpg', (err, response, body) => {
+              client.send(JSON.stringify({
+                type: 'frame',
+                data: body,
+                deviceUuid: DeviceData.deviceUuid
+              }));
+            })
           } else if (messageObj.data.indexOf('gotoangle') === 0){
             COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
           }
