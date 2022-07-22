@@ -13,10 +13,10 @@ export DISPLAY=:0 #needed if you are running a simple gui app.
 
 process="keep-alive.js"
 makerun="sudo $NODE_BIN $BASEDIR/scripts/keep-alive.js >> $BASEDIR/tmp/run.log 2>> $BASEDIR/tmp/run-err.log"
-camprocess="keep-alive.js"
+camprocess="rpi_camera_surveillance_system.py"
 cammakerun="sudo python3 $BASEDIR/scripts/python/rpi_camera_surveillance_system.py >> $BASEDIR/tmp/run.log 2>> $BASEDIR/tmp/run-err.log"
 echo Running $makerun
-
+echo Running $cammakerun
 if ps ax | grep -v grep | grep "$process" > /dev/null
 then
     echo 'Already running node' >> $BASEDIR/tmp/reboot.log;
