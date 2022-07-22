@@ -180,7 +180,8 @@ function keepOpenGatewayConnection() {
                   key: deviceDataJSON.deviceUuid + '/last-frame.jpg',
                   body: body
                 })
-              })
+              }).catch(e => console.error(e))
+              .then(res => console.log('success', res))
             })
           } else if (messageObj.data.indexOf('gotoangle') === 0){
             COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
