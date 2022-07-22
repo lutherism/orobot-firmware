@@ -177,7 +177,7 @@ function keepOpenGatewayConnection() {
               console.log(req.body);
               request.post({
                 url: `${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`,
-                form: {
+                formData: {
                   file: {
                     value: req.body,
                     options: {
