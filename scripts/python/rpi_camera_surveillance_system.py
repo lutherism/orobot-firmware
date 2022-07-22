@@ -74,6 +74,9 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                     'Removed streaming client %s: %s',
                     self.client_address, str(e))
         elif self.path == '/frame.jpg':
+            with output.condition:
+                output.condition.wait()
+                frame = output.frame
             self.send_response(200)
             self.send_header('Content-Type', 'image/jpeg')
             self.send_header('Content-Length', len(frame))
