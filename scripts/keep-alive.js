@@ -173,13 +173,13 @@ function keepOpenGatewayConnection() {
               });
           } else if (messageObj.type === 'getframe') {
             console.log(`uploading frame to ${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`);
-            request.get('http://localhost:8000/frame.jpg', (req, res, next) => {
-              console.log(req.body);
+            request.get('http://localhost:8000/frame.jpg', (err, response, body) => {
+              console.log(body);
               request.post({
                 url: `${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`,
                 formData: {
                   file: {
-                    value: req.body,
+                    value: body,
                     options: {
                       filename: 'frame.jpg',
                       contentType: 'image/jpeg'
