@@ -173,8 +173,21 @@ function keepOpenGatewayConnection() {
               });
           } else if (messageObj.type === 'getframe') {
             console.log(`uploading frame to ${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`);
-            request.get('http://localhost:8000/frame.jpg')
-              .pipe(request.put(`${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`));
+            request.get('http://localhost:8000/frame.jpg', (req, res, next) => {
+              console.log(req.body);
+              request.post({
+                url: `${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`,
+                form: {
+                  file: {
+                    value: req.body,
+                    options: {
+                      filename: 'frame.jpg',
+                      contentType: 'image/jpeg'
+                    }
+                  }
+                }
+              });
+            });
           } else if (messageObj.data.indexOf('gotoangle') === 0){
             COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
           }
