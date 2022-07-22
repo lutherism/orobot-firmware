@@ -14,8 +14,8 @@ var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
   'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
-const API_URL = //process.env.NODE_ENV === 'local' ?
-  'http://192.168.86.222:8080';// : 'https://robots-gateway.uc.r.appspot.com';
+const DEV_URL = 'http://192.168.86.222:8080';
+const API_URL = process.env.NODE_ENV === 'local' ? DEV_URL : 'https://robots-gateway.uc.r.appspot.com';
 
 class PTYContainer {
   constructor() {
@@ -172,9 +172,9 @@ function keepOpenGatewayConnection() {
                 COMMANDS[messageObj.data]();
               });
           } else if (messageObj.type === 'getframe') {
-            console.log(`uploading frame to ${API_URL}/api/device-cam/${DeviceData.deviceUuid}`);
+            console.log(`uploading frame to ${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`);
             request.get('http://localhost:8000/frame.jpg')
-              .pipe(request.post(`${API_URL}/api/device-cam/${DeviceData.deviceUuid}`));
+              .pipe(request.post(`${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`));
           } else if (messageObj.data.indexOf('gotoangle') === 0){
             COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
           }
