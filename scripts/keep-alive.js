@@ -176,7 +176,7 @@ function keepOpenGatewayConnection() {
                 uri: `${API_URL}/api/device-frame`,
                 json: true,
                 body: {
-                  key: deviceDataJSON.deviceUuid + '/last-frame',
+                  key: DeviceData.deviceUuid + '/last-frame',
                   body: body
                 }
               });
