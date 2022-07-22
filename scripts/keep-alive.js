@@ -8,6 +8,8 @@ var COMMANDS = require('./commands.js');
 const { Duplex } = require('stream');
 var {syncLogsIfAfterGap} = require('./upload-logs');
 const {exec} = require('child_process');
+var {authRequest} = require('./api.js');
+
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
