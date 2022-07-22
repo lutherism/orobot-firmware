@@ -172,19 +172,24 @@ function keepOpenGatewayConnection() {
           } else if (messageObj.type === 'getframe') {
             request('http://localhost:8000/frame.jpg', (err, response, body) => {
               console.log(body);
-              console.log('type of body', typeof body)
-              authRequest({
+              console.log('type of body', typeof body);
+              request.post({
+                uri: `${API_URL}/api/device-frame`,
+                json: true,
+                body: {
+                  key: deviceDataJSON.deviceUuid + '/last-frame',
+                  body: body
+                }
+              });
+              /*authRequest({
                 url: '/device-frame',
                 method: 'post',
                 headers: {
                   'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                  key: deviceDataJSON.deviceUuid + '/last-frame',
-                  body: body
-                })
+                body: JSON.stringify()
               }).catch(e => console.error(e))
-              .then(res => console.log('success', res))
+              .then(res => console.log('success', res))*/
             })
           } else if (messageObj.data.indexOf('gotoangle') === 0){
             COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
