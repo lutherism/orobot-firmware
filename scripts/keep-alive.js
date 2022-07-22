@@ -173,11 +173,14 @@ function keepOpenGatewayConnection() {
             request('http://localhost:8000/frame.jpg', (err, response, body) => {
               console.log(body);
               console.log('type of body', typeof body)
-              client.send(JSON.stringify({
-                type: 'frame',
-                data: body,
-                deviceUuid: DeviceData.deviceUuid
-              }));
+              authRequest({
+                url: '/device-frame',
+                method: 'post',
+                body: JSON.stringify({
+                  key: deviceDataJSON.deviceUuid + '/last-frame.jpg',
+                  body: body
+                })
+              })
             })
           } else if (messageObj.data.indexOf('gotoangle') === 0){
             COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
