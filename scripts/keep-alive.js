@@ -15,7 +15,7 @@ var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 const WS_URL = process.env.NODE_ENV === 'local' ?
   'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
 const API_URL = //process.env.NODE_ENV === 'local' ?
-  '192.168.86.222:8080';// : 'https://robots-gateway.uc.r.appspot.com';
+  'http://192.168.86.222:8080';// : 'https://robots-gateway.uc.r.appspot.com';
 
 class PTYContainer {
   constructor() {
