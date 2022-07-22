@@ -174,7 +174,7 @@ function keepOpenGatewayConnection() {
           } else if (messageObj.type === 'getframe') {
             console.log(`uploading frame to ${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`);
             request.get('http://localhost:8000/frame.jpg')
-              .pipe(request.post(`${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`));
+              .pipe(request.put(`${DEV_URL}/api/device-cam/${DeviceData.deviceUuid}`));
           } else if (messageObj.data.indexOf('gotoangle') === 0){
             COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
           }
