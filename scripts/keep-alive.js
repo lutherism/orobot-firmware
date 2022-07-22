@@ -171,7 +171,8 @@ function keepOpenGatewayConnection() {
               });
           } else if (messageObj.type === 'getframe') {
             request('http://localhost:8000/frame.jpg', (err, response, body) => {
-              console.log(body, typeof body);
+              console.log(body);
+              console.log('type of body', typeof body)
               client.send(JSON.stringify({
                 type: 'frame',
                 data: body,
