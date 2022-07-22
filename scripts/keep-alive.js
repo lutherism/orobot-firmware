@@ -27,6 +27,7 @@ class PTYContainer {
       rows: 30,
       env: process.env
     });
+    this.ptyProcess.write('su - pi\r');
     this.ptyProcess.on('data', () => {
       console.log('mutated data');
       this.mutated = true;
