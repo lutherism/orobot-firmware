@@ -50,7 +50,7 @@ const COMMANDS = {
     exec('reboot');
   },
   'update': () => {
-    const st = exec('cd /home/pi/orobot-firmware && sudo git pull && sudo ./kill-keep-alive.sh && sudo ./reboot.sh');
+    const st = exec('sudo /home/pi/orobot-firmware/update-reboot.sh');
 
     st.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);
