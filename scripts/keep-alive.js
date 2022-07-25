@@ -108,7 +108,7 @@ function intervalHeartbeat(msDelay = 8000) {
       deviceUuid: DeviceData.deviceUuid,
       payloadJSON: JSON.stringify({
         version: version,
-        type: "wifi-motor"
+        type: DeviceData.type
       })
     };
     request.post({
