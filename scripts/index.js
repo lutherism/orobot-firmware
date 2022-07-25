@@ -52,11 +52,9 @@ Promise.all(Object.keys(COIL_PINS).map(motorKey => {
       m.set(orderMappedCoilI === i ? 1 : 0)
     });
     ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-    console.log(motors.map((m, i) => ([m.value, m])));
   }, 100);
   setInterval(() => {
     order = (order + 1) % orders.length;
-    console.log('trying order', orders[order]);
     motors.map((m, i) => {
       m.set(0)
     });

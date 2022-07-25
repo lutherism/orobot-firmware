@@ -7,7 +7,7 @@ export NVM_DIR="$HOME/.config/nvm"
 nvm bash_completion
 nvm install 8
 nvm use 8
-cd ~/orobot-firmware
+cd /home/pi/orobot-firmware
 npm i
 sudo apt-get update
 printf 'y\n' | sudo apt-get install hostapd dnsmasq nginx
