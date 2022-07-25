@@ -20,6 +20,7 @@ const WS_URL = process.env.NODE_ENV === 'local' ?
 const DEV_URL = 'http://192.168.86.222:8080';
 const DEV_WS_URL = 'ws://192.168.86.222:8080';
 const API_URL = 'https://robots-gateway.uc.r.appspot.com';
+let client;
 
 class PTYContainer {
   constructor() {
@@ -128,8 +129,6 @@ function intervalHeartbeat(msDelay = 8000) {
   clearInterval(interval);
   interval = setInterval(heartPump, msDelay);
 }
-
-let client;
 
 function keepOpenGatewayConnection() {
   return new Promise((resolve, reject) => {
