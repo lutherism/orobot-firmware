@@ -9,13 +9,17 @@ const { Duplex } = require('stream');
 var {syncLogsIfAfterGap} = require('./upload-logs');
 const {exec} = require('child_process');
 var {authRequest} = require('./api.js');
+const {singleton,
+  upsertDeviceData,
+  refreshDeviceData} = require('./device-data.js');
 
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
   'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
 const DEV_URL = 'http://192.168.86.222:8080';
-const API_URL = process.env.NODE_ENV === 'local' ? DEV_URL : 'https://robots-gateway.uc.r.appspot.com';
+const DEV_WS_URL = 'ws://192.168.86.222:8080';
+const API_URL = 'https://robots-gateway.uc.r.appspot.com';
 
 class PTYContainer {
   constructor() {
@@ -99,14 +103,6 @@ function recursiveConnect() {
 //exec('sudo' + __dirname + '/../switch-to-wifi-client.sh');
 recursiveConnect();
 
-let DeviceData;
-
-function refreshDeviceData() {
-  DeviceData = JSON.parse(fs.readFileSync(__dirname + '/openroboticsdata/data.json'));
-}
-
-refreshDeviceData();
-
 let interval = null;
 
 let version = fs.readFileSync(__dirname + '/../.git/refs/heads/master').toString();
@@ -114,14 +110,14 @@ let version = fs.readFileSync(__dirname + '/../.git/refs/heads/master').toString
 function intervalHeartbeat(msDelay = 8000) {
   const heartPump = () => {
     const hb = {
-      deviceUuid: DeviceData.deviceUuid,
+      deviceUuid: singleton.DeviceData.deviceUuid,
       payloadJSON: JSON.stringify({
         version: version,
-        type: DeviceData.type
+        type: singleton.DeviceData.type
       })
     };
     request.post({
-      uri: `${API_URL}/api/device/state`,
+      uri: `${singleton.DeviceData.networkMode === 'dev' ? DEV_URL : API_URL}/api/device/state`,
       json: true,
       body: hb
     });
@@ -133,12 +129,15 @@ function intervalHeartbeat(msDelay = 8000) {
   interval = setInterval(heartPump, msDelay);
 }
 
+let client;
+
 function keepOpenGatewayConnection() {
   return new Promise((resolve, reject) => {
     try {
-      const client = new WebSocket(WS_URL, 'ssh-protocol');
+      client = new WebSocket(
+        singleton.DeviceData.networkMode === 'dev' ? DEV_WS_URL : WS_URL,
+        'ssh-protocol');
       let connected = false;
-      //console.log(client.on)
       var clientStream = WebSocket.createWebSocketStream(client);
       clientStream.on('error', () => {});
       client.on('error', function() {
@@ -151,7 +150,7 @@ function keepOpenGatewayConnection() {
           client.send(JSON.stringify({
             type: 'pty-out',
             data,
-            deviceUuid: DeviceData.deviceUuid}));
+            deviceUuid: singleton.DeviceData.deviceUuid}));
         }
       });
       client.onopen = function() {
@@ -159,7 +158,7 @@ function keepOpenGatewayConnection() {
           console.log(`WebSocket Client Connected to ${WS_URL} ${client.readyState}`);
           client.send(JSON.stringify({
             type: 'identify-connection',
-            deviceUuid: DeviceData.deviceUuid}));
+            deviceUuid: singleton.DeviceData.deviceUuid}));
           intervalHeartbeat();
       };
 
@@ -182,7 +181,7 @@ function keepOpenGatewayConnection() {
               });
           } else if (messageObj.type === 'getframe') {
             request.post({
-              url: `${API_URL}/api/device-cam/${DeviceData.deviceUuid}`,
+              url: `${API_URL}/api/device-cam/${singleton.DeviceData.deviceUuid}`,
               formData: {
                 file: {
                   value: request.get('http://localhost:8000/frame.jpg'),
@@ -193,13 +192,25 @@ function keepOpenGatewayConnection() {
                 }
               }
             });
+          } else if (messageObj.type === 'networkmode') {
+            upsertsingleton.DeviceData({
+              networkMode: messageObj.data
+            });
+            client.close();
+            if (client.readyState === 3) {
+              recursiveConnect();
+            } else {
+              client.addEventListener('close', () => {
+                recursiveConnect();
+              });
+            }
           } else if (messageObj.data.indexOf('gotoangle') === 0){
             COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
           }
           client.send(JSON.stringify({
             type: 'command-recieved',
             data: `ok:${messageObj.data}`,
-            deviceUuid: DeviceData.deviceUuid}));
+            deviceUuid: singleton.DeviceData.deviceUuid}));
         }
       };
     } catch (e) {

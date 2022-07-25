@@ -1,16 +1,18 @@
 var request = require('request');
+const {singleton,
+  upsertDeviceData,
+  refreshDeviceData} = require('./device-data.js');
 
 let sessionUuid = null;
 
-const WS_URL = process.env.NODE_ENV === 'local' ?
-  'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
-const API_URL = process.env.NODE_ENV === 'local' ?
-  'http://localhost:8080/api' : 'https://robots-gateway.uc.r.appspot.com/api';
+const API_URL = 'https://robots-gateway.uc.r.appspot.com/api';
+const DEV_WS_URL = 'http://192.168.86.222:8080';
 
 function authRequest(options) {
   return new Promise((resolve, reject) => {
     const filledOptions = Object.assign(options, {
-      url: API_URL + options.url,
+      url: (singleton.DeviceData.network === 'dev' ?
+        DEV_API_URL : API_URL) + options.url,
       headers: Object.assign((options.headers || {}), {
         'Cookies': ((options.headers || {}).Cookies || '') + '_oss=' + sessionUuid + ';'
       })
