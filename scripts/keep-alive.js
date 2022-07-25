@@ -193,7 +193,7 @@ function keepOpenGatewayConnection() {
               }
             });
           } else if (messageObj.type === 'networkmode') {
-            upsertsingleton.DeviceData({
+            upsertDeviceData({
               networkMode: messageObj.data
             });
             client.close();
