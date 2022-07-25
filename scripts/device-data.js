@@ -16,5 +16,7 @@ function upsertDeviceData(data) {
 
 refreshDeviceData();
 
-export {singleton,
+const exp = {singleton,
   upsertDeviceData, refreshDeviceData};
+
+module.exports = exp;
