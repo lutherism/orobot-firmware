@@ -7,7 +7,7 @@ function refreshDeviceData() {
 
 function upsertDeviceData(data) {
   refreshDeviceData();
-  fs.writeFileSync(__dirname + '/openroboticsdata/data.json', JSON.stringiy({
+  fs.writeFileSync(__dirname + '/openroboticsdata/data.json', JSON.stringify({
     ...singleton.DeviceData,
     ...data
   }));
