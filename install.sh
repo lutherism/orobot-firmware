@@ -11,5 +11,6 @@ cd /home/pi/orobot-firmware
 npm i
 sudo apt-get update
 printf 'y\n' | sudo apt-get install hostapd dnsmasq nginx
-crontab /home/pi/reboot.cron
+sudo crontab /home/pi/reboot.cron
+sudo service cron reload
 ./factory-reset.sh

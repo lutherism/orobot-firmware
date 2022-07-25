@@ -93,7 +93,7 @@ function recursiveConnect() {
     return delay(backoffTime).then(() => {
       console.log('retrying...');
       failsTillAPMode--;
-      if !(failsTillAPMode) {
+      if (!failsTillAPMode) {
         exec('sudo ' + __dirname + '/../retry-ap.sh');
       }
       return recursiveConnect();
