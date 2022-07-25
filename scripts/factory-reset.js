@@ -11,6 +11,7 @@ fs.readFile('./openroboticsdata/data_template.json', data => {
   const newDriverUuid = uuid.v4();
   fs.unlinkSync(__dirname + '/openroboticsdata/data.json');
   fs.writeFileSync(__dirname + '/openroboticsdata/data.json', JSON.stringify({
+    ...data,
     deviceUuid: newDriverUuid
   }));
   request.post('https://robots-gateway.uc.r.appspot.com/api/device', {

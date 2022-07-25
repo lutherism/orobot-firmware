@@ -73,15 +73,14 @@ function end () { //optional
 const delay = ms => new Promise(res => setTimeout(res, ms))
 let backoffTime = 100;
 const MAX_DELAY = 6000;
+let failsTillAPMode = 100;
 
 function recursiveConnect() {
   return keepOpenGatewayConnection()
   .then(() => {
-    exec('sudo ' + __dirname + '/../kill-flash-led.sh');
   })
   .catch((err) => {
     console.log(`err happened, backoff at ${backoffTime}ms`);
-    exec('sudo ' + __dirname + '/../flash-led.sh');
     // assumes that the error is "request made too soon"
     if (backoffTime < MAX_DELAY) {
       backoffTime *= 2;
@@ -89,6 +88,10 @@ function recursiveConnect() {
     console.log(err);
     return delay(backoffTime).then(() => {
       console.log('retrying...');
+      failsTillAPMode--;
+      if !(failsTillAPMode) {
+        exec('sudo ' + __dirname + '/../retry-ap.sh');
+      }
       return recursiveConnect();
     });
   });
@@ -96,7 +99,13 @@ function recursiveConnect() {
 //exec('sudo' + __dirname + '/../switch-to-wifi-client.sh');
 recursiveConnect();
 
-let DeviceData = JSON.parse(fs.readFileSync(__dirname + '/openroboticsdata/data.json'));
+let DeviceData;
+
+function refreshDeviceData() {
+  DeviceData = JSON.parse(fs.readFileSync(__dirname + '/openroboticsdata/data.json'));
+}
+
+refreshDeviceData();
 
 let interval = null;
 
