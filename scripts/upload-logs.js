@@ -1,16 +1,16 @@
 var path = require('path');
 var fs = require('fs');
 var {authRequest} = require('./api.js');
+const {singleton,
+  upsertDeviceData,
+  refreshDeviceData} = require('./device-data.js');
 
 const filesToUpload = ['run.log', 'run-err.log', 'reboot.log', 'web.log'];
 const logsRootDir = 'tmp';
 const deleteLogsOnUpload = true;
-const dataFilePath = __dirname + '/openroboticsdata/data.json';
 const gapBetweenUploads = 1000 * 60 * 60 * 24;
 
 function uploadAndClearLogs() {
-  const deviceData = fs.readFileSync(dataFilePath);
-  const deviceDataJSON = JSON.parse(deviceData);
   const logTime = (new Date()).toLocaleString();
 
   return Promise.all(filesToUpload.map(fileName => {
@@ -27,7 +27,7 @@ function uploadAndClearLogs() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        key: deviceDataJSON.deviceUuid + '/' + logTime + '/' + fileName,
+        key: singleton.DeviceData.deviceUuid + '/' + logTime + '/' + fileName,
         body: fileContent.toString()
       })
     }).catch(() => Promise.resolve());
@@ -35,10 +35,8 @@ function uploadAndClearLogs() {
 }
 
 function syncLogsIfAfterGap() {
-  const deviceData = fs.readFileSync(dataFilePath);
-  const deviceDataJSON = JSON.parse(deviceData);
-  if (!deviceDataJSON.lastLogUpload ||
-    Date.now() - deviceDataJSON.lastLogUpload > gapBetweenUploads) {
+  if (!singleton.DeviceData.lastLogUpload ||
+    Date.now() - singleton.DeviceData.lastLogUpload > gapBetweenUploads) {
     uploadAndClearLogs().then(() => {
       filesToUpload.map(fileName => {
         const targetLogFile = __dirname + '/../' + logsRootDir + '/' + fileName;
@@ -48,8 +46,9 @@ function syncLogsIfAfterGap() {
           return Promise.resolve();
         }
       });
-      deviceDataJSON.lastLogUpload = Date.now();
-      fs.writeFileSync(dataFilePath, JSON.stringify(deviceDataJSON));
+      upsertDeviceData({
+        lastLogUpload: Date.now()
+      });
     });
   }
 }
