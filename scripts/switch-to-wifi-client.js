@@ -1,9 +1,9 @@
 const {spawn} = require('child_process');
 const fs = require('fs');
+const {singleton,
+  upsertDeviceData,
+  refreshDeviceData} = require('./device-data.js');
 
-const currentData = JSON.parse(
-  fs.readFileSync(__dirname + '/openroboticsdata/data.json')
-);
 
 const wpaConfPath = "/etc/wpa_supplicant/wpa_supplicant.conf";
 const dnsConfPath = "/etc/dnsmasq.conf";
@@ -17,8 +17,8 @@ ctrl_interface=/run/wpa_supplicant
 update_config=1
 
 network={
- ssid="${currentData.wifiSettings.ssid}"
- psk="${currentData.wifiSettings.password}"
+ ssid="${singleton.DeviceData.wifiSettings.ssid}"
+ psk="${singleton.DeviceData.wifiSettings.password}"
 }
 `;
 }

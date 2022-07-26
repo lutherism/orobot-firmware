@@ -1,9 +1,8 @@
 const {spawn} = require('child_process');
 const fs = require('fs');
-
-const currentData = JSON.parse(
-  fs.readFileSync(__dirname + '/openroboticsdata/data.json')
-);
+const {singleton,
+  upsertDeviceData,
+  refreshDeviceData} = require('./device-data.js');
 
 const wpaConfPath = "/etc/wpa_supplicant/wpa_supplicant.conf";
 const dnsConfPath = "/etc/dnsmasq.conf";
@@ -18,7 +17,7 @@ ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 
 network={
-    ssid=OROBOT-Setup-${currentData.deviceUuid.slice(0, 5)}
+    ssid=OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}
     mode=2
     proto=wpa
     key_mgmt=WPA-PSK
@@ -71,7 +70,7 @@ const hostAPDConf = () => {
 #If this fails, try rt1871xdrv a
 driver=nl80211
 # Name of the new network: best use the hostname
-ssid=OROBOT-Setup-${currentData.deviceUuid.slice(0, 5)}
+ssid=OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}
 
 # Pick a channel not already in use
 channel=6
