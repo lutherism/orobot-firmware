@@ -20,7 +20,11 @@ function initDataFile() {
   refreshDeviceData();
 }
 
-refreshDeviceData();
+try {
+  refreshDeviceData();
+} catch (err) {
+  initDataFile();
+}
 
 const exp = {singleton,
   upsertDeviceData, refreshDeviceData, initDataFile};
