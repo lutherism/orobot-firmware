@@ -14,6 +14,10 @@ function upsertDeviceData(data) {
   refreshDeviceData();
 }
 
+function initDataFile() {
+  fs.writeFileSync(__dirname + '/openroboticsdata/data.json', '{}');
+}
+
 refreshDeviceData();
 
 const exp = {singleton,
