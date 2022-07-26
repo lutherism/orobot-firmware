@@ -4,7 +4,8 @@ var request = require('request');
 var childProcess = require('child_process');
 const {singleton,
   upsertDeviceData,
-  refreshDeviceData} = require('./device-data.js');
+  refreshDeviceData,
+  initDataFile} = require('./device-data.js');
 
 const {exec} = childProcess;
 
