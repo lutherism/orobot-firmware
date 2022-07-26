@@ -10,20 +10,19 @@ const {exec} = childProcess;
 
 const DEFAULT_DEVICE_UUID = '6be50aff-6f10-4643-bfda-7d5bf15319c9';
 
-fs.readFile(__dirname + '/datatemplates/camera_data_template.json', (err, data) => {
-  const newDriverUuid = uuid.v4();
-  initDataFile();
-  upsertDeviceData({
-    ...JSON.parse(data),
-    deviceUuid: newDriverUuid
-  });
-  request.post('https://robots-gateway.uc.r.appspot.com/api/device', {
-    json: true,
-    body: {
-      uuid: newDriverUuid,
-      name: 'newborn'
-    }
-  }, (err, res) => {
-    console.log(err, res);
-  });
+const data = fs.readFile(__dirname + '/datatemplates/camera_data_template.json');
+const newDriverUuid = uuid.v4();
+initDataFile();
+upsertDeviceData({
+  ...JSON.parse(data),
+  deviceUuid: newDriverUuid
+});
+request.post('https://robots-gateway.uc.r.appspot.com/api/device', {
+  json: true,
+  body: {
+    uuid: newDriverUuid,
+    name: 'newborn'
+  }
+}, (err, res) => {
+  console.log(err, res);
 });
