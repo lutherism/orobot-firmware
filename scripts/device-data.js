@@ -15,6 +15,7 @@ function upsertDeviceData(data) {
 }
 
 function initDataFile() {
+  fs.link(__dirname + '/openroboticsdata/data.json');
   fs.writeFileSync(__dirname + '/openroboticsdata/data.json', '{}');
   refreshDeviceData();
 }
