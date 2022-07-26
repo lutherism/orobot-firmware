@@ -16,11 +16,12 @@ function upsertDeviceData(data) {
 
 function initDataFile() {
   fs.writeFileSync(__dirname + '/openroboticsdata/data.json', '{}');
+  refreshDeviceData();
 }
 
 refreshDeviceData();
 
 const exp = {singleton,
-  upsertDeviceData, refreshDeviceData};
+  upsertDeviceData, refreshDeviceData, initDataFile};
 
 module.exports = exp;
