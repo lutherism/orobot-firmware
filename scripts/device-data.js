@@ -1,13 +1,13 @@
 var fs = require('fs');
 const singleton = {};
-
+const dataPath = __dirname + '/openroboticsdata/data.json';
 function refreshDeviceData() {
   singleton.DeviceData = JSON.parse(fs.readFileSync(__dirname + '/openroboticsdata/data.json'));
 }
 
 function upsertDeviceData(data) {
   refreshDeviceData();
-  fs.writeFileSync(__dirname + '/openroboticsdata/data.json', JSON.stringify({
+  fs.writeFileSync(dataPath, JSON.stringify({
     ...singleton.DeviceData,
     ...data
   }));
@@ -15,7 +15,8 @@ function upsertDeviceData(data) {
 }
 
 function initDataFile() {
-  fs.writeFileSync(__dirname + '/openroboticsdata/data.json', '{}');
+  console.log('creating datafile at ' + dataPath);
+  fs.writeFileSync(dataPath, '{}');
   refreshDeviceData();
 }
 
