@@ -1,7 +1,7 @@
 {
-  wifiSettings: {
-    ssid: "The Internet",
-    password: "alexjansen"
+  "wifiSettings": {
+    "ssid": "The Internet",
+    "password": "alexjansen"
   },
-  type: "wifi-motor"
+  "type": "wifi-motor"
 }
