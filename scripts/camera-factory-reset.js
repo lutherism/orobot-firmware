@@ -11,7 +11,7 @@ const {exec} = childProcess;
 
 const DEFAULT_DEVICE_UUID = '6be50aff-6f10-4643-bfda-7d5bf15319c9';
 
-const data = fs.readFile(__dirname + '/datatemplates/camera_data_template.json');
+const data = fs.readFileSync(__dirname + '/datatemplates/camera_data_template.json');
 const newDriverUuid = uuid.v4();
 initDataFile();
 upsertDeviceData({
