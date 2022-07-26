@@ -10,7 +10,7 @@ const {exec} = childProcess;
 
 const DEFAULT_DEVICE_UUID = '6be50aff-6f10-4643-bfda-7d5bf15319c9';
 
-fs.readFile('./openroboticsdata/data_template.json', (err, data) => {
+fs.readFile('./datatemplates/data_template.json', (err, data) => {
   const newDriverUuid = uuid.v4();
   upsertDeviceData({
     ...JSON.parse(data),
