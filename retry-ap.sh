@@ -1,6 +1,8 @@
 BASEDIR="/home/pi/orobot-firmware"
 NODE_BIN="/home/pi/.config/nvm/versions/node/v8.17.0/bin/node"
 
+echo "sudo $BASEDIR/switch-to-wifi-ap.sh &" | bash >> $BASEDIR/tmp/run.log &
+sleep 15s
 while [ "$(iw wlan0 info | grep 'type AP')" = "" ]; do
   echo "No network: $(date)"
   sleep 15s
