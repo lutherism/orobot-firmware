@@ -173,13 +173,6 @@ function handleWebSocketMessage(e) {
         networkMode: messageObj.data
       });
       client.close();
-      if (client.readyState === 3) {
-        recursiveConnect();
-      } else {
-        client.addEventListener('close', () => {
-          recursiveConnect();
-        });
-      }
     } else if (messageObj.data.indexOf('gotoangle') === 0){
       COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
     }
@@ -188,6 +181,11 @@ function handleWebSocketMessage(e) {
       data: `ok:${messageObj.data}`,
       deviceUuid: singleton.DeviceData.deviceUuid}));
   }
+};
+
+function rebootConnection() {
+    console.log('ssh-protocol Client Closed. Rebooting...');
+    recursiveConnect();
 };
 
 function keepOpenGatewayConnection() {
@@ -222,10 +220,7 @@ function keepOpenGatewayConnection() {
           resolve();
       };
 
-      client.onclose = function() {
-          console.log('ssh-protocol Client Closed');
-          reject();
-      };
+      client.addEventListener('close', rebootConnection);
 
       client.addEventListener('message', handleWebSocketMessage);
 
