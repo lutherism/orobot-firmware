@@ -81,6 +81,7 @@ const MAX_DELAY = 6000;
 let failsTillAPMode = 100;
 
 function recursiveConnect() {
+  console.log('attempting to connect');
   if (!singleton.DeviceData.wifiSettings ||
   !singleton.DeviceData.wifiSettings.ssid) {
     upsertDeviceData({
