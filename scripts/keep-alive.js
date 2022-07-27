@@ -99,6 +99,9 @@ function recursiveConnect() {
     // assumes that the error is "request made too soon"
     if (backoffTime < MAX_DELAY) {
       backoffTime *= 2;
+    } else {
+      console.log('should retry client');
+      //return exec('sudo ' + __dirname + '/../retry-client.sh');
     }
     console.log(err);
     return delay(backoffTime).then(() => {
