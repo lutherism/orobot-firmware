@@ -16,7 +16,7 @@ process="v8.17.0/bin/node"
 makecron="crontab $BASEDIR/reboot.cron"
 wificlient="sudo $BASEDIR/switch-to-wifi-client.sh"
 makerun="sudo $NODE_BIN $BASEDIR/scripts/factory-reset.js >> tmp/$LOGNAME"
-initDCP="cp $BASEDIR/autostart/* /etc/xdg/autostart/"
+initDCP="sudo cp $BASEDIR/autostart/* /etc/xdg/autostart/"
 
 echo Running resets.
 
