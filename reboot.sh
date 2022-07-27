@@ -20,7 +20,6 @@ echo Running $cammakerun
 if ps ax | grep -v grep | grep "$process" > /dev/null
 then
     echo 'Already running node' >> $BASEDIR/tmp/reboot.log;
-    exit
 else
     echo 'running.'
     echo "$makerun" | bash >> $BASEDIR/tmp/reboot.log &
@@ -29,7 +28,6 @@ fi
 if ps ax | grep -v grep | grep "$camprocess" > /dev/null
 then
     echo 'Already running python' >> $BASEDIR/tmp/reboot.log;
-    exit
 else
     echo 'running.'
     echo "$cammakerun" | bash >> $BASEDIR/tmp/reboot.log &

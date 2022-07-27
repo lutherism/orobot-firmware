@@ -81,14 +81,14 @@ const MAX_DELAY = 6000;
 let failsTillAPMode = 100;
 
 function recursiveConnect() {
-  if (singleton.DeviceData.wifiSettings ||
+  if (!singleton.DeviceData.wifiSettings ||
   !singleton.DeviceData.wifiSettings.ssid) {
     upsertDeviceData({
       networkMode: 'ap'
     });
   }
   if (singleton.DeviceData.networkMode === 'ap') {
-    exec('sudo ' + __dirname + '/../retry-ap.sh');
+    return exec('sudo ' + __dirname + '/../retry-ap.sh');
   }
   return keepOpenGatewayConnection()
   .then(() => {
