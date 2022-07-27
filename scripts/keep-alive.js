@@ -128,7 +128,6 @@ function intervalHeartbeat(msDelay = 8000) {
       json: true,
       body: hb
     });
-    console.log(`heartbeat ${Date.now()}`);
     syncLogsIfAfterGap();
   };
   heartPump();
