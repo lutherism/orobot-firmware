@@ -12,4 +12,4 @@
 ### END INIT INFO
 
 glogg /home/pi/orobot-firmware/tmp/* &
-sudo /home/pi/orobot-firmware/retry-client.sh >> /home/pi/orobot-firmware/tmp/reboot.log
+# sudo /home/pi/orobot-firmware/retry-client.sh >> /home/pi/orobot-firmware/tmp/reboot.log
