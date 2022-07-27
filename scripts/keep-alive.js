@@ -92,7 +92,6 @@ function recursiveConnect() {
     return console.log('should switch to AP');
     return exec('sudo ' + __dirname + '/../retry-ap.sh');
   }
-  exec('sudo ' + __dirname + '/../retry-client.sh');
   return keepOpenGatewayConnection()
   .then(() => {
   })
@@ -117,7 +116,8 @@ function recursiveConnect() {
   });
 }
 
-recursiveConnect();
+exec('sudo ' + __dirname + '/../retry-client.sh');
+delay(2000).then(() => recursiveConnect());
 
 let interval = null;
 
