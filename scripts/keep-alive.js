@@ -214,6 +214,7 @@ function keepOpenGatewayConnection() {
             type: 'identify-connection',
             deviceUuid: singleton.DeviceData.deviceUuid}));
           intervalHeartbeat();
+          resolve();
       };
 
       client.onclose = function() {
