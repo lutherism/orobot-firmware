@@ -3,6 +3,10 @@ const app = express()
 const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const bodyParser = require('body-parser');
+const {
+  singleton,
+  upsertDeviceData
+} = require('./scripts/device-data.js');
 
 app.use(express.static('public'));
 app.use(bodyParser.json());
@@ -23,16 +27,13 @@ app.get('/api/wifi', (req, res) => {
 });
 
 app.post('/api/wifi', (req, res) => {
-  const currentData = JSON.parse(
-    fs.readFileSync(__dirname + '/scripts/openroboticsdata/data.json')
-  );
-  if (!currentData.wifiSettings) {
-    currentData.wifiSettings = {};
-  }
-  currentData.wifiSettings.ssid = req.body.ssid;
-  currentData.wifiSettings.password = req.body.password;
-  fs.writeFileSync(__dirname + '/scripts/openroboticsdata/data.json',
-    JSON.stringify(currentData));
+  upsertDeviceData({
+    wifiSettings: {
+      ssid: req.body.ssid,
+      password: req.body.password
+    },
+    networkMode: 'client'
+  });
   res.send('ok');
   exec('sudo /home/pi/orobot-firmware/retry-client.sh', () => {
     exec('sudo /home/pi/orobot-firmware/reboot.sh');

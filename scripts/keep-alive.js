@@ -81,6 +81,15 @@ const MAX_DELAY = 6000;
 let failsTillAPMode = 100;
 
 function recursiveConnect() {
+  if (singleton.DeviceData.wifiSettings ||
+  !singleton.DeviceData.wifiSettings.ssid) {
+    upsertDeviceData({
+      networkMode: 'ap'
+    });
+  }
+  if (singleton.DeviceData.networkMode === 'ap') {
+    exec('sudo ' + __dirname + '/../retry-ap.sh');
+  }
   return keepOpenGatewayConnection()
   .then(() => {
   })
@@ -93,15 +102,11 @@ function recursiveConnect() {
     console.log(err);
     return delay(backoffTime).then(() => {
       console.log('retrying...');
-      failsTillAPMode--;
-      if (!failsTillAPMode) {
-        exec('sudo ' + __dirname + '/../retry-ap.sh');
-      }
       return recursiveConnect();
     });
   });
 }
-//exec('sudo' + __dirname + '/../switch-to-wifi-client.sh');
+
 recursiveConnect();
 
 let interval = null;
@@ -129,6 +134,53 @@ function intervalHeartbeat(msDelay = 8000) {
   clearInterval(interval);
   interval = setInterval(heartPump, msDelay);
 }
+
+function handleWebSocketMessage(e) {
+  if (typeof e.data === 'string') {
+    const messageObj = JSON.parse(e.data);
+    console.log('got ws message', messageObj);
+    if (messageObj.type === 'pty-in') {
+      ptyProcess.write(messageObj.data);
+    } else if (messageObj.type === 'command-in' &&
+      COMMANDS[messageObj.data]) {
+      COMMANDS.export()
+        .then(() => {
+          COMMANDS[messageObj.data]();
+        });
+    } else if (messageObj.type === 'getframe') {
+      request.post({
+        url: `${API_URL}/api/device-cam/${singleton.DeviceData.deviceUuid}`,
+        formData: {
+          file: {
+            value: request.get('http://localhost:8000/frame.jpg'),
+            options: {
+              filename: 'frame.jpg',
+              contentType: 'image/jpeg'
+            }
+          }
+        }
+      });
+    } else if (messageObj.type === 'networkmode') {
+      upsertDeviceData({
+        networkMode: messageObj.data
+      });
+      client.close();
+      if (client.readyState === 3) {
+        recursiveConnect();
+      } else {
+        client.addEventListener('close', () => {
+          recursiveConnect();
+        });
+      }
+    } else if (messageObj.data.indexOf('gotoangle') === 0){
+      COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
+    }
+    client.send(JSON.stringify({
+      type: 'command-recieved',
+      data: `ok:${messageObj.data}`,
+      deviceUuid: singleton.DeviceData.deviceUuid}));
+  }
+};
 
 function keepOpenGatewayConnection() {
   return new Promise((resolve, reject) => {
@@ -166,52 +218,8 @@ function keepOpenGatewayConnection() {
           reject();
       };
 
-      client.onmessage = function(e) {
-        if (typeof e.data === 'string') {
-          const messageObj = JSON.parse(e.data);
-          console.log('got ws message', messageObj);
-          if (messageObj.type === 'pty-in') {
-            ptyProcess.write(messageObj.data);
-          } else if (messageObj.type === 'command-in' &&
-            COMMANDS[messageObj.data]) {
-            COMMANDS.export()
-              .then(() => {
-                COMMANDS[messageObj.data]();
-              });
-          } else if (messageObj.type === 'getframe') {
-            request.post({
-              url: `${API_URL}/api/device-cam/${singleton.DeviceData.deviceUuid}`,
-              formData: {
-                file: {
-                  value: request.get('http://localhost:8000/frame.jpg'),
-                  options: {
-                    filename: 'frame.jpg',
-                    contentType: 'image/jpeg'
-                  }
-                }
-              }
-            });
-          } else if (messageObj.type === 'networkmode') {
-            upsertDeviceData({
-              networkMode: messageObj.data
-            });
-            client.close();
-            if (client.readyState === 3) {
-              recursiveConnect();
-            } else {
-              client.addEventListener('close', () => {
-                recursiveConnect();
-              });
-            }
-          } else if (messageObj.data.indexOf('gotoangle') === 0){
-            COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
-          }
-          client.send(JSON.stringify({
-            type: 'command-recieved',
-            data: `ok:${messageObj.data}`,
-            deviceUuid: singleton.DeviceData.deviceUuid}));
-        }
-      };
+      client.addEventListener('message', handleWebSocketMessage);
+
     } catch (e) {
       console.log('error caught', e)
       reject();
