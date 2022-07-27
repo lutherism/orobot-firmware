@@ -116,7 +116,6 @@ function recursiveConnect() {
   });
 }
 
-exec('sudo ' + __dirname + '/../retry-client.sh');
 delay(2000).then(() => recursiveConnect());
 
 let interval = null;
