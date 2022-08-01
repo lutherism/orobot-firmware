@@ -17,8 +17,12 @@ var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
   'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
-const DEV_URL = 'http://192.168.86.222:8080';
-const DEV_WS_URL = 'ws://192.168.86.222:8080';
+const DEV_URL = () => {
+  return `http://${singleton.DeviceData.devIP}:8080`
+};
+const DEV_WS_URL = () => {
+  return `ws://${singleton.DeviceData.devIP}:8080`
+};
 const API_URL = 'https://robots-gateway.uc.r.appspot.com';
 let client;
 
@@ -100,6 +104,11 @@ function recursiveConnect() {
     // assumes that the error is "request made too soon"
     if (backoffTime < MAX_DELAY) {
       backoffTime *= 2;
+    } else if (singleton.DeviceData.networkMode === 'dev') {
+      upsertDeviceData({
+        networkMode: 'client'
+      });
+      backoffTime = 100;
     } else {
       console.log('should retry client');
       exec('sudo ' + __dirname + '/../retry-client.sh');
@@ -132,7 +141,7 @@ function intervalHeartbeat(msDelay = 8000) {
       })
     };
     request.post({
-      uri: `${singleton.DeviceData.networkMode === 'dev' ? DEV_URL : API_URL}/api/device/state`,
+      uri: `${singleton.DeviceData.networkMode === 'dev' ? DEV_URL() : API_URL}/api/device/state`,
       json: true,
       body: hb
     });
@@ -168,7 +177,7 @@ function handleWebSocketMessage(e) {
           }
         }
       });
-    } else if (messageObj.type === 'networkmode') {
+    } else if (messageObj.type.indexOf('networkmode') > -1) {
       upsertDeviceData({
         networkMode: messageObj.data
       });
@@ -192,7 +201,7 @@ function keepOpenGatewayConnection() {
   return new Promise((resolve, reject) => {
     try {
       client = new WebSocket(
-        singleton.DeviceData.networkMode === 'dev' ? DEV_WS_URL : WS_URL,
+        singleton.DeviceData.networkMode === 'dev' ? DEV_WS_URL() : WS_URL,
         'ssh-protocol');
       let connected = false;
       var clientStream = WebSocket.createWebSocketStream(client);
