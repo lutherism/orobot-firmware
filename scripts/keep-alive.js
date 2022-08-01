@@ -182,6 +182,12 @@ function handleWebSocketMessage(e) {
         networkMode: messageObj.data
       });
       client.close();
+    } else if (messageObj.type === 'getDeviceData') {
+      client.send(JSON.stringify({
+        type: 'device-data-read',
+        data: singleton.DeviceData,
+        deviceUuid: singleton.DeviceData.deviceUuid
+      }));
     } else if (messageObj.data.indexOf('gotoangle') === 0){
       COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
     }
