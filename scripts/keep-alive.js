@@ -18,10 +18,12 @@ var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 const WS_URL = process.env.NODE_ENV === 'local' ?
   'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
 const DEV_URL = () => {
-  return `http://${singleton.DeviceData.devIP}:8080`
+  return `http://${singleton.DeviceData.devIP ||
+    '192.168.68.224'}:8080`
 };
 const DEV_WS_URL = () => {
-  return `ws://${singleton.DeviceData.devIP}:8080`
+  return `ws://${singleton.DeviceData.devIP ||
+    '192.168.68.224'}:8080`
 };
 const API_URL = 'https://robots-gateway.uc.r.appspot.com';
 let client;
