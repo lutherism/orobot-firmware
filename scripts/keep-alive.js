@@ -113,7 +113,7 @@ function recursiveConnect() {
       backoffTime = 100;
     } else {
       console.log('should retry client');
-      exec('sudo ' + __dirname + '/../retry-client.sh');
+      //exec('sudo ' + __dirname + '/../retry-client.sh');
       return delay(3000).then(() => {
         backoffTime = 100;
         recursiveConnect();
