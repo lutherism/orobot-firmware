@@ -240,9 +240,9 @@ function keepOpenGatewayConnection() {
       let connected = false;
       var clientStream = WebSocket.createWebSocketStream(client);
       clientStream.on('error', () => {});
-      client.on('error', function() {
+      client.on('error', function(e) {
             console.log('WebSocket Connection Error');
-            reject();
+            reject(e);
       });
       ptyProcess.on('data', (data) => {
         console.log('pyt out data');
@@ -272,7 +272,7 @@ function keepOpenGatewayConnection() {
 
     } catch (e) {
       console.log('error caught', e)
-      reject();
+      reject(e);
     }
   });
 }
