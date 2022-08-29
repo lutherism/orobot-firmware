@@ -259,6 +259,9 @@ function keepOpenGatewayConnection() {
           client.send(JSON.stringify({
             type: 'identify-connection',
             deviceUuid: singleton.DeviceData.deviceUuid}));
+          client.send(JSON.stringify({
+            type: 'connect-to-user',
+            deviceUuid: singleton.DeviceData.deviceUuid}));
           intervalHeartbeat();
           resolve();
       };
