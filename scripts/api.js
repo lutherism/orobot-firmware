@@ -22,8 +22,10 @@ function authRequest(options) {
     });
     request(filledOptions, (res, err) => {
       if (err) {
+        console.error(err);
         return reject(err);
       }
+      console.log('got repsonse', res);
       resolve(res);
     });
   });

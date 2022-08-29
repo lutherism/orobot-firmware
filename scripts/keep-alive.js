@@ -108,6 +108,7 @@ function recursiveConnect() {
   }
   return keepOpenGatewayConnection()
   .then(() => {
+    console.log('getting owner info');
     authRequest({
       url: `/device/${singleton.DeviceData.deviceUuid}`
     }).then((res) => res.json())
