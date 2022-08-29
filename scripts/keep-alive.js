@@ -100,6 +100,14 @@ function recursiveConnect() {
   }
   return keepOpenGatewayConnection()
   .then(() => {
+    authRequest({
+      url: `/device/${singleton.DeviceData.deviceUuid}`
+    }).then((res) => res.json())
+    .then(jsonRes => {
+      upsertDeviceData({
+        ownerUuid: jsonRes.owner.uuid
+      });
+    });
   })
   .catch((err) => {
     console.log(`err happened, backoff at ${backoffTime}ms`);
@@ -188,15 +196,14 @@ function handleWebSocketMessage(e) {
       client.send(JSON.stringify({
         type: 'device-data-read',
         data: singleton.DeviceData,
-        deviceUuid: singleton.DeviceData.deviceUuid
+        userUuid: singleton.DeviceData.ownerUuid
       }));
     } else if (messageObj.data.indexOf('gotoangle') === 0){
       COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
     }
     client.send(JSON.stringify({
-      type: 'command-recieved',
-      data: `ok:${messageObj.data}`,
-      deviceUuid: singleton.DeviceData.deviceUuid}));
+      type: 'message-ack',
+      ackId: messageObj.ackId}));
   }
 };
 
@@ -224,7 +231,7 @@ function keepOpenGatewayConnection() {
           client.send(JSON.stringify({
             type: 'pty-out',
             data,
-            deviceUuid: singleton.DeviceData.deviceUuid}));
+            userUuid: singleton.DeviceData.ownerUuid}));
         }
       });
       client.onopen = function() {
