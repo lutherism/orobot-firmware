@@ -217,6 +217,7 @@ function handleWebSocketMessage(e) {
     } else if (messageObj.data.indexOf('gotoangle') === 0){
       COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
     }
+    console.log('acking');
     client.send(JSON.stringify({
       type: 'message-ack',
       ackId: messageObj.ackId}));
