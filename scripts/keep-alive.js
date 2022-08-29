@@ -112,6 +112,7 @@ function recursiveConnect() {
       url: `/device/${singleton.DeviceData.deviceUuid}`
     }).then((res) => res.json())
     .then(jsonRes => {
+      console.log('got owner info', jsonRes)
       upsertDeviceData({
         ownerUuid: jsonRes.owner.uuid
       });
