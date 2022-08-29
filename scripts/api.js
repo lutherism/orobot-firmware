@@ -22,7 +22,7 @@ function authRequest(options) {
     });
     request(filledOptions, (err, resp, body) => {
       if (err) {
-        console.error(err);
+        console.log('req error', err);
         return reject(err);
       }
       console.log('got repsonse', res);
