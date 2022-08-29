@@ -17,6 +17,7 @@ function authRequest(options) {
       url: (singleton.DeviceData.networkMode === 'dev' ?
         DEV_URL : API_URL) + options.url,
       headers: Object.assign((options.headers || {}), {
+        'Content-Type': 'application/json',
         'Cookies': ((options.headers || {}).Cookies || '') + '_oss=' + sessionUuid + ';'
       })
     });
