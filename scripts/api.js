@@ -26,7 +26,7 @@ function authRequest(options) {
         console.log('req error', err);
         return reject(err);
       }
-      console.log('got repsonse', res);
+      console.log('got repsonse', body);
       resolve(body);
     });
   });
