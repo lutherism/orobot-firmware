@@ -120,7 +120,7 @@ function recursiveConnect() {
     });
   })
   .catch((err) => {
-    console.log(`err happened, backoff at ${backoffTime}ms`);
+    console.log(`err happened, backoff at ${backoffTime}ms`, err);
     // assumes that the error is "request made too soon"
     if (backoffTime < MAX_DELAY) {
       backoffTime *= 2;
