@@ -111,11 +111,10 @@ function recursiveConnect() {
     console.log('getting owner info');
     authRequest({
       url: `/device/${singleton.DeviceData.deviceUuid}`
-    }).then((res) => res.json())
-    .then(jsonRes => {
-      console.log('got owner info', jsonRes)
+    }).then(body => {
+      console.log('got owner info', body)
       upsertDeviceData({
-        ownerUuid: jsonRes.owner.uuid
+        ownerUuid: JSON.parse(body).owner.uuid
       });
     });
   })

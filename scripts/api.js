@@ -20,13 +20,13 @@ function authRequest(options) {
         'Cookies': ((options.headers || {}).Cookies || '') + '_oss=' + sessionUuid + ';'
       })
     });
-    request(filledOptions, (res, err) => {
+    request(filledOptions, (err, resp, body) => {
       if (err) {
         console.error(err);
         return reject(err);
       }
       console.log('got repsonse', res);
-      resolve(res);
+      resolve(body);
     });
   });
 };
