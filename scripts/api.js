@@ -14,7 +14,7 @@ const DEV_URL = () => {
 function authRequest(options) {
   return new Promise((resolve, reject) => {
     const filledOptions = Object.assign(options, {
-      url: (singleton.DeviceData.network === 'dev' ?
+      url: (singleton.DeviceData.networkMode === 'dev' ?
         DEV_URL : API_URL) + options.url,
       headers: Object.assign((options.headers || {}), {
         'Cookies': ((options.headers || {}).Cookies || '') + '_oss=' + sessionUuid + ';'
