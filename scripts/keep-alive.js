@@ -195,10 +195,18 @@ function handleWebSocketMessage(e) {
           }
         }
       });
-    } else if (messageObj.type.indexOf('networkmode') > -1) {
-      upsertDeviceData({
-        networkMode: messageObj.data
-      });
+    } else if (messageObj.type === 'networkmode') {
+      if (messageObj.data.indexOf('dev') > -1) {
+        const [mode, ip] = messageObj.data.split(':');
+        upsertDeviceData({
+          networkMode: mode,
+          devIP: ip
+        });
+      } else {
+        upsertDeviceData({
+          networkMode: messageObj.data
+        });
+      }
       client.close();
     } else if (messageObj.type === 'getDeviceData') {
       client.send(JSON.stringify({
