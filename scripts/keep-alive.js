@@ -28,6 +28,14 @@ const DEV_WS_URL = () => {
 const API_URL = 'https://robots-gateway.uc.r.appspot.com';
 let client;
 
+function getConfigedWSURL() {
+  return singleton.DeviceData.networkMode === 'dev' ? DEV_WS_URL() : WS_URL;
+}
+
+function getConfigedURL() {
+  return singleton.DeviceData.networkMode === 'dev' ? DEV_URL() : API_URL
+}
+
 class PTYContainer {
   constructor() {
     this.init();
@@ -151,7 +159,7 @@ function intervalHeartbeat(msDelay = 8000) {
       })
     };
     request.post({
-      uri: `${singleton.DeviceData.networkMode === 'dev' ? DEV_URL() : API_URL}/api/device/state`,
+      uri: `${getConfigedURL()}/api/device/state`,
       json: true,
       body: hb
     });
@@ -176,7 +184,7 @@ function handleWebSocketMessage(e) {
         });
     } else if (messageObj.type === 'getframe') {
       request.post({
-        url: `${API_URL}/api/device-cam/${singleton.DeviceData.deviceUuid}`,
+        url: `${getConfigedURL()}/api/device-cam/${singleton.DeviceData.deviceUuid}`,
         formData: {
           file: {
             value: request.get('http://localhost:8000/frame.jpg'),
@@ -216,7 +224,7 @@ function keepOpenGatewayConnection() {
   return new Promise((resolve, reject) => {
     try {
       client = new WebSocket(
-        singleton.DeviceData.networkMode === 'dev' ? DEV_WS_URL() : WS_URL,
+        getConfigedWSURL(),
         'ssh-protocol');
       let connected = false;
       var clientStream = WebSocket.createWebSocketStream(client);
@@ -236,7 +244,7 @@ function keepOpenGatewayConnection() {
       });
       client.onopen = function() {
         connected = true;
-          console.log(`WebSocket Client Connected to ${WS_URL} ${client.readyState}`);
+          console.log(`WebSocket Client Connected to ${getConfigedWSURL()} ${client.readyState}`);
           client.send(JSON.stringify({
             type: 'identify-connection',
             deviceUuid: singleton.DeviceData.deviceUuid}));
