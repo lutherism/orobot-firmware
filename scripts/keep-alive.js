@@ -250,7 +250,7 @@ function keepOpenGatewayConnection() {
           client.send(JSON.stringify({
             type: 'pty-out',
             data,
-            userUuid: singleton.DeviceData.ownerUuid}));
+            deviceUuid: singleton.DeviceData.deviceUuid}));
         }
       });
       client.onopen = function() {
