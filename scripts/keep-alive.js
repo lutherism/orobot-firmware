@@ -133,11 +133,8 @@ function recursiveConnect() {
     });
   });
 }
-delay(2000)
-  .then(() => exec(wifiCmd, () => {
-    delay(2000).then(() => recursiveConnect());
-  }));
 
+delay(2000).then(() => recursiveConnect());
 
 let interval = null;
 
