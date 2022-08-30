@@ -93,6 +93,7 @@ const delay = ms => new Promise(res => setTimeout(res, ms))
 let backoffTime = 100;
 const MAX_DELAY = 6000;
 let failsTillAPMode = 100;
+let connected =
 
 function recursiveConnect() {
   console.log('attempting to connect');
@@ -222,13 +223,14 @@ function handleWebSocketMessage(e) {
     console.log('acking');
     client.send(JSON.stringify({
       type: 'message-ack',
-      ackId: messageObj.ackId}));
+      ackId: messageObj.ackId,
+      deviceUuid: singleton.DeviceData.deviceUuid}));
   }
 };
 
 function rebootConnection() {
     console.log('ssh-protocol Client Closed. Rebooting...');
-    recursiveConnect();
+    delay(200).then(() => recursiveConnect());
 };
 
 function keepOpenGatewayConnection() {
