@@ -120,7 +120,7 @@ function recursiveConnect() {
       console.log('should retry client');
       exec(wifiCmd, () => {
         return process.exit(0);
-      }
+      });
       return;
     }
     console.log(err);
