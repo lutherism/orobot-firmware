@@ -120,7 +120,7 @@ function recursiveConnect() {
       });
       backoffTime = 100;
     } else {
-      console.log('should retry client');
+      console.log('should retry client', wifiCmd);
       exec(wifiCmd, () => {
         return process.exit(0);
       });
