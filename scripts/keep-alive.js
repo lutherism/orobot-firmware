@@ -81,6 +81,8 @@ class PTYContainer {
   }
 }
 
+var ptyProcess;
+
 var ts = through(function write(data) {
   console.log('through data', data);
   this.queue(data);
@@ -136,7 +138,6 @@ delay(2000)
     delay(2000).then(() => recursiveConnect());
   }));
 
-var ptyProcess = new PTYContainer();
 
 let interval = null;
 
@@ -254,6 +255,7 @@ function keepOpenGatewayConnection() {
           client.send(JSON.stringify({
             type: 'connect-to-user',
             deviceUuid: singleton.DeviceData.deviceUuid}));
+          ptyProcess = new PTYContainer();
           intervalHeartbeat();
           const deviceUrl = `/device/${singleton.DeviceData.deviceUuid}`;
           console.log('getting owner info', deviceUrl);
