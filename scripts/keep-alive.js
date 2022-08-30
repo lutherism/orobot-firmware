@@ -129,7 +129,7 @@ function recursiveConnect() {
       backoffTime = 100;
     } else {
       console.log('should retry client');
-      //exec('sudo ' + __dirname + '/../kill-switch-network.sh && sudo ' + __dirname + '/../retry-client.sh');
+      process.exit(0);
       return delay(5000).then(() => {
         backoffTime = 100;
         recursiveConnect();
