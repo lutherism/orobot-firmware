@@ -129,8 +129,8 @@ function recursiveConnect() {
       backoffTime = 100;
     } else {
       console.log('should retry client');
-      //exec('sudo ' + __dirname + '/../retry-client.sh');
-      return delay(3000).then(() => {
+      exec('sudo ' + __dirname + '/../kill-switch-network.sh && sudo ' + __dirname + '/../retry-client.sh');
+      return delay(5000).then(() => {
         backoffTime = 100;
         recursiveConnect();
       });
@@ -142,7 +142,7 @@ function recursiveConnect() {
     });
   });
 }
-exec('sudo ' + __dirname + '/../retry-client.sh');
+exec('sudo ' + __dirname + '/../kill-switch-network.sh && sudo ' + __dirname + '/../retry-client.sh');
 delay(2000).then(() => recursiveConnect());
 
 var ptyProcess = new PTYContainer();
