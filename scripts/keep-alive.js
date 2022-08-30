@@ -138,7 +138,7 @@ function recursiveConnect() {
     console.log(err);
     return delay(backoffTime).then(() => {
       console.log('retrying...');
-      return recursiveConnect();
+      recursiveConnect();
     });
   });
 }
