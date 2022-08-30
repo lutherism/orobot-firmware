@@ -14,8 +14,8 @@ const {singleton,
   refreshDeviceData} = require('./device-data.js');
 
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
-const wifiCmd = 'sudo ' + __dirname + '/../kill-switch-network.sh && sudo ' +
-  __dirname + '/../retry-client.sh >> ' + __dirname + '/../tmp/run.log';
+const wifiCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh && sudo' +
+  __dirname + '/../retry-client.sh >> ' + __dirname + '/../tmp/run.log\'';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
   'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
