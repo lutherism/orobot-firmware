@@ -129,11 +129,7 @@ function recursiveConnect() {
       backoffTime = 100;
     } else {
       console.log('should retry client');
-      process.exit(0);
-      return delay(5000).then(() => {
-        backoffTime = 100;
-        recursiveConnect();
-      });
+      return process.exit(0);
     }
     console.log(err);
     return delay(backoffTime).then(() => {
