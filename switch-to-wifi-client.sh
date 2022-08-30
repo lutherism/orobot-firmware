@@ -8,6 +8,4 @@ sudo killall wpa_supplicant
 sudo ifconfig wlan0 down
 sudo ifconfig wlan0 up
 sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf &
-sudo systemctl start hostapd.service
-sudo systemctl start dnsmasq.service
 sudo /home/pi/orobot-firmware/kill-keep-alive.sh
