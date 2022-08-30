@@ -14,6 +14,7 @@ const {singleton,
   refreshDeviceData} = require('./device-data.js');
 
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+const wifiCmd = 'sudo ' + __dirname + '/../kill-switch-network.sh && sudo ' + __dirname + '/../retry-client.sh';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
   'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
@@ -105,18 +106,6 @@ function recursiveConnect() {
     return exec('sudo ' + __dirname + '/../retry-ap.sh');
   }
   return keepOpenGatewayConnection()
-  .then(() => {
-    const deviceUrl = `/device/${singleton.DeviceData.deviceUuid}`;
-    console.log('getting owner info', deviceUrl);
-    authRequest({
-      url: deviceUrl
-    }).then(body => {
-      console.log('got owner info', body)
-      upsertDeviceData({
-        ownerUuid: JSON.parse(body).owner.uuid
-      });
-    });
-  })
   .catch((err) => {
     console.log(`err happened, backoff at ${backoffTime}ms`, err);
     // assumes that the error is "request made too soon"
@@ -129,7 +118,10 @@ function recursiveConnect() {
       backoffTime = 100;
     } else {
       console.log('should retry client');
-      return process.exit(0);
+      exec(wifiCmd, () => {
+        return process.exit(0);
+      }
+      return;
     }
     console.log(err);
     return delay(backoffTime).then(() => {
@@ -138,7 +130,6 @@ function recursiveConnect() {
     });
   });
 }
-const wifiCmd = 'sudo ' + __dirname + '/../kill-switch-network.sh && sudo ' + __dirname + '/../retry-client.sh';
 delay(2000)
   .then(() => exec(wifiCmd, () => {
     delay(2000).then(() => recursiveConnect());
@@ -263,6 +254,16 @@ function keepOpenGatewayConnection() {
             type: 'connect-to-user',
             deviceUuid: singleton.DeviceData.deviceUuid}));
           intervalHeartbeat();
+          const deviceUrl = `/device/${singleton.DeviceData.deviceUuid}`;
+          console.log('getting owner info', deviceUrl);
+          authRequest({
+            url: deviceUrl
+          }).then(body => {
+            console.log('got owner info', body)
+            upsertDeviceData({
+              ownerUuid: JSON.parse(body).owner.uuid
+            });
+          });
           client.addEventListener('close', rebootConnection);
           resolve();
       };
