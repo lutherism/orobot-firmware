@@ -230,45 +230,41 @@ function keepOpenGatewayConnection() {
       client = new WebSocket(
         getConfigedWSURL(),
         'ssh-protocol');
-      let connected = false;
       var clientStream = WebSocket.createWebSocketStream(client);
       clientStream.on('error', () => {});
       client.on('error', function(e) {
             console.log('WebSocket Connection Error');
             reject(e);
       });
-      ptyProcess.on('data', (data) => {
-        console.log('pyt out data');
-        if (connected) {
+      client.onopen = function() {
+        console.log(`WebSocket Client Connected to ${getConfigedWSURL()} ${client.readyState}`);
+        client.send(JSON.stringify({
+          type: 'identify-connection',
+          deviceUuid: singleton.DeviceData.deviceUuid}));
+        client.send(JSON.stringify({
+          type: 'connect-to-user',
+          deviceUuid: singleton.DeviceData.deviceUuid}));
+        ptyProcess = new PTYContainer();
+        ptyProcess.on('data', (data) => {
+          console.log('pyt out data');
           client.send(JSON.stringify({
             type: 'pty-out',
             data,
             deviceUuid: singleton.DeviceData.deviceUuid}));
-        }
-      });
-      client.onopen = function() {
-        connected = true;
-          console.log(`WebSocket Client Connected to ${getConfigedWSURL()} ${client.readyState}`);
-          client.send(JSON.stringify({
-            type: 'identify-connection',
-            deviceUuid: singleton.DeviceData.deviceUuid}));
-          client.send(JSON.stringify({
-            type: 'connect-to-user',
-            deviceUuid: singleton.DeviceData.deviceUuid}));
-          ptyProcess = new PTYContainer();
-          intervalHeartbeat();
-          const deviceUrl = `/device/${singleton.DeviceData.deviceUuid}`;
-          console.log('getting owner info', deviceUrl);
-          authRequest({
-            url: deviceUrl
-          }).then(body => {
-            console.log('got owner info', body)
-            upsertDeviceData({
-              ownerUuid: JSON.parse(body).owner.uuid
-            });
+        });
+        intervalHeartbeat();
+        const deviceUrl = `/device/${singleton.DeviceData.deviceUuid}`;
+        console.log('getting owner info', deviceUrl);
+        authRequest({
+          url: deviceUrl
+        }).then(body => {
+          console.log('got owner info', body)
+          upsertDeviceData({
+            ownerUuid: JSON.parse(body).owner.uuid
           });
-          client.addEventListener('close', rebootConnection);
-          resolve();
+        });
+        client.addEventListener('close', rebootConnection);
+        resolve();
       };
 
       client.addEventListener('message', handleWebSocketMessage);
