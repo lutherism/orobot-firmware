@@ -91,7 +91,6 @@ const delay = ms => new Promise(res => setTimeout(res, ms))
 let backoffTime = 100;
 const MAX_DELAY = 6000;
 let failsTillAPMode = 100;
-let connected =
 
 function recursiveConnect() {
   console.log('attempting to connect');
