@@ -79,8 +79,6 @@ class PTYContainer {
   }
 }
 
-var ptyProcess = new PTYContainer();
-
 var ts = through(function write(data) {
   console.log('through data', data);
   this.queue(data);
@@ -147,6 +145,8 @@ function recursiveConnect() {
 }
 
 delay(2000).then(() => recursiveConnect());
+
+var ptyProcess = new PTYContainer();
 
 let interval = null;
 
