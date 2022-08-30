@@ -143,12 +143,10 @@ function recursiveConnect() {
   });
 }
 const wifiCmd = 'sudo ' + __dirname + '/../kill-switch-network.sh && sudo ' + __dirname + '/../retry-client.sh';
-exec(wifiCmd, () => {
-  delay(2000)
+delay(2000)
   .then(() => exec(wifiCmd, () => {
     delay(2000).then(() => recursiveConnect());
   }));
-});
 
 var ptyProcess = new PTYContainer();
 
