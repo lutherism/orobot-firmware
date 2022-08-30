@@ -129,7 +129,7 @@ function recursiveConnect() {
       backoffTime = 100;
     } else {
       console.log('should retry client');
-      exec('sudo ' + __dirname + '/../kill-switch-network.sh && sudo ' + __dirname + '/../retry-client.sh');
+      //exec('sudo ' + __dirname + '/../kill-switch-network.sh && sudo ' + __dirname + '/../retry-client.sh');
       return delay(5000).then(() => {
         backoffTime = 100;
         recursiveConnect();
@@ -264,10 +264,9 @@ function keepOpenGatewayConnection() {
             type: 'connect-to-user',
             deviceUuid: singleton.DeviceData.deviceUuid}));
           intervalHeartbeat();
+          client.addEventListener('close', rebootConnection);
           resolve();
       };
-
-      client.addEventListener('close', rebootConnection);
 
       client.addEventListener('message', handleWebSocketMessage);
 
