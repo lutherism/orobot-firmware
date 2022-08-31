@@ -64,6 +64,34 @@ const COMMANDS = {
       addToCurrentPos(36);
     }, 2000);
   },
+  'fastright': () => {
+    const job = setInterval(() => {
+      const orderMappedCoilI = orders[order][ActiveCoil]
+      motorsContext.map((m, i) => {
+        m.set(orderMappedCoilI === i ? 1 : 0)
+      });
+      ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+    }, 25);
+    setTimeout(() => {
+      clearInterval(job);
+      COMMANDS.stop();
+      addToCurrentPos(36);
+    }, 2000);
+  },
+  'fastleft': () => {
+    const job = setInterval(() => {
+      const orderMappedCoilI = orders[order][ActiveCoil]
+      motorsContext.reverse().map((m, i) => {
+        m.set(orderMappedCoilI === i ? 1 : 0)
+      });
+      ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+    }, 25);
+    setTimeout(() => {
+      clearInterval(job);
+      COMMANDS.stop();
+      addToCurrentPos(36);
+    }, 2000);
+  },
   'left': () => {
     const job = setInterval(() => {
       const orderMappedCoilI = orders[order][ActiveCoil]
