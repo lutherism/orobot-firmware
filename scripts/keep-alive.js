@@ -198,7 +198,7 @@ function handleWebSocketMessage(e) {
           networkMode: messageObj.data
         });
       }
-      client.close();
+      delay(1000).then(() => client.close());
     } else if (messageObj.type === 'getDeviceData') {
       client.send(JSON.stringify({
         type: 'device-data-read',
