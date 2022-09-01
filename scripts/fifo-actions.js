@@ -4,7 +4,7 @@
   of other do calls
 */
 
-export class FIFOActions {
+module.exports = class FIFOActions {
   messageQueue = [];
   processing = false;
   chew() {
