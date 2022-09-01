@@ -12,6 +12,7 @@ var {authRequest} = require('./api.js');
 const {singleton,
   upsertDeviceData,
   refreshDeviceData} = require('./device-data.js');
+require('log-timestamp');
 
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 const wifiCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh & sudo ' +

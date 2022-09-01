@@ -1534,6 +1534,18 @@
   "resolved" "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz"
   "version" "4.17.21"
 
+"log-prefix@0.1.1":
+  "integrity" "sha512-aP1Lst8OCdZKATqzXDN0JBissNVZuiKLyo6hOXDBxaQ1jHDsaxh2J1i5Pp0zMy6ayTKDWfUlLMXyLaQe1PJ48g=="
+  "resolved" "https://registry.npmjs.org/log-prefix/-/log-prefix-0.1.1.tgz"
+  "version" "0.1.1"
+
+"log-timestamp@^0.3.0":
+  "integrity" "sha512-luRz6soxijd1aJh0GkLXFjKABihxthvTfWTzu3XhCgg5EivG2bsTpSd63QFbUgS+/KmFtL+0RfSpeaD2QvOV8Q=="
+  "resolved" "https://registry.npmjs.org/log-timestamp/-/log-timestamp-0.3.0.tgz"
+  "version" "0.3.0"
+  dependencies:
+    "log-prefix" "0.1.1"
+
 "loose-envify@^1.0.0", "loose-envify@^1.1.0":
   "integrity" "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q=="
   "resolved" "https://registry.npmjs.org/loose-envify/-/loose-envify-1.4.0.tgz"
