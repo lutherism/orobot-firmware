@@ -5,8 +5,12 @@
 */
 
 module.exports = class FIFOActions {
-  messageQueue = [];
-  processing = false;
+  constructor() {
+    super();
+    this.messageQueue = [];
+    this.processing = false;
+  }
+
   chew() {
     if (this.messageQueue.length < 1 || this.processing) {
       return;
