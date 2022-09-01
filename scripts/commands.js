@@ -2,6 +2,7 @@ var gpio = require("gpio");
 var i2cBus = require("i2c-bus");
 var repl = require('repl');
 const { exec } = require('child_process');
+const fifoActions = require('fifoActions');
 
 var options = {
     i2c: i2cBus.openSync(1),
@@ -9,6 +10,8 @@ var options = {
     frequency: 60,
     debug: true
 };
+
+const fifoActions = new FIFOActions();
 
 const COIL_PINS = [
   17,
@@ -51,60 +54,78 @@ const COMMANDS = {
     });
   },
   'right': () => {
-    const job = setInterval(() => {
-      const orderMappedCoilI = orders[order][ActiveCoil]
-      motorsContext.map((m, i) => {
-        m.set(orderMappedCoilI === i ? 1 : 0)
+    fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        const job = setInterval(() => {
+          const orderMappedCoilI = orders[order][ActiveCoil]
+          motorsContext.map((m, i) => {
+            m.set(orderMappedCoilI === i ? 1 : 0)
+          });
+          ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+        }, 100);
+        setTimeout(() => {
+          clearInterval(job);
+          COMMANDS.stop();
+          addToCurrentPos(36);
+          resolve();
+        }, 2000);
       });
-      ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-    }, 100);
-    setTimeout(() => {
-      clearInterval(job);
-      COMMANDS.stop();
-      addToCurrentPos(36);
-    }, 2000);
+    });
   },
   'fastright': () => {
-    const job = setInterval(() => {
-      const orderMappedCoilI = orders[order][ActiveCoil]
-      motorsContext.map((m, i) => {
-        m.set(orderMappedCoilI === i ? 1 : 0)
+    fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        const job = setInterval(() => {
+          const orderMappedCoilI = orders[order][ActiveCoil]
+          motorsContext.map((m, i) => {
+            m.set(orderMappedCoilI === i ? 1 : 0)
+          });
+          ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+        }, 25);
+        setTimeout(() => {
+          clearInterval(job);
+          COMMANDS.stop();
+          addToCurrentPos(36);
+          resolve();
+        }, 2000);
       });
-      ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-    }, 25);
-    setTimeout(() => {
-      clearInterval(job);
-      COMMANDS.stop();
-      addToCurrentPos(36);
-    }, 2000);
+    });
   },
   'fastleft': () => {
-    const job = setInterval(() => {
-      const orderMappedCoilI = orders[order][ActiveCoil]
-      motorsContext.reverse().map((m, i) => {
-        m.set(orderMappedCoilI === i ? 1 : 0)
+    fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        const job = setInterval(() => {
+          const orderMappedCoilI = orders[order][ActiveCoil]
+          motorsContext.reverse().map((m, i) => {
+            m.set(orderMappedCoilI === i ? 1 : 0)
+          });
+          ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+        }, 25);
+        setTimeout(() => {
+          clearInterval(job);
+          COMMANDS.stop();
+          addToCurrentPos(36);
+        }, 2000);
       });
-      ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-    }, 25);
-    setTimeout(() => {
-      clearInterval(job);
-      COMMANDS.stop();
-      addToCurrentPos(36);
-    }, 2000);
+    });
   },
   'left': () => {
-    const job = setInterval(() => {
-      const orderMappedCoilI = orders[order][ActiveCoil]
-      motorsContext.reverse().map((m, i) => {
-        m.set(orderMappedCoilI === i ? 1 : 0)
+    fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        const job = setInterval(() => {
+          const orderMappedCoilI = orders[order][ActiveCoil]
+          motorsContext.reverse().map((m, i) => {
+            m.set(orderMappedCoilI === i ? 1 : 0)
+          });
+          ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+        }, 100);
+        setTimeout(() => {
+          clearInterval(job);
+          COMMANDS.stop();
+          addToCurrentPos(-36);
+        }, 2000);
       });
-      ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-    }, 100);
-    setTimeout(() => {
-      clearInterval(job);
-      COMMANDS.stop();
-      addToCurrentPos(-36);
-    }, 2000);
+    });
   },
   'stop': () => {
     return new Promise((resolve, reject) => {
@@ -156,50 +177,40 @@ const COMMANDS = {
      });
   },
   gotoangle: (angle) => {
-    if (goToAngleRunnning) {
-      pendingGotoAngle = angle;
-      return;
-    } else {
-      goToAngleRunnning = true;
-    }
-    COMMANDS.stop()
-      .then(() => COMMANDS.export())
-      .then(() => {
-        const diff = currentPos - angle;
-        let job;
-        const timeToRotate = Math.floor(Math.abs(diff) * (200/360)) * 100;
-        if (diff < 0) {
-          job = setInterval(() => {
-            const orderMappedCoilI = orders[order][ActiveCoil]
-            motorsContext.map((m, i) => {
-              m.set(orderMappedCoilI === i ? 1 : 0)
-            });
-            ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-          }, 100);
-        } else if (diff > 0) {
-          job = setInterval(() => {
-            const orderMappedCoilI = orders[order][ActiveCoil]
-            motorsContext.reverse().map((m, i) => {
-              m.set(orderMappedCoilI === i ? 1 : 0)
-            });
-            ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-          }, 100);
-        }
-        console.log(`rotating by ${diff} for ${timeToRotate}ms`);
-        setTimeout(() => {
-          clearInterval(job);
-          goToAngleRunnning = false;
-          currentPos = angle;
-          if (pendingGotoAngle) {
-            console.log(`resuming for ${pendingGotoAngle}`);
-            const tmpAngle = pendingGotoAngle;
-            pendingGotoAngle = null;
-            COMMANDS.gotoangle(tmpAngle);
-          } else {
-            COMMANDS.stop();
-          }
-        }, timeToRotate);
+    fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        COMMANDS.stop()
+          .then(() => COMMANDS.export())
+          .then(() => {
+            const diff = currentPos - angle;
+            let job;
+            const timeToRotate = Math.floor(Math.abs(diff) * (200/360)) * 100;
+            if (diff < 0) {
+              job = setInterval(() => {
+                const orderMappedCoilI = orders[order][ActiveCoil]
+                motorsContext.map((m, i) => {
+                  m.set(orderMappedCoilI === i ? 1 : 0)
+                });
+                ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+              }, 100);
+            } else if (diff > 0) {
+              job = setInterval(() => {
+                const orderMappedCoilI = orders[order][ActiveCoil]
+                motorsContext.reverse().map((m, i) => {
+                  m.set(orderMappedCoilI === i ? 1 : 0)
+                });
+                ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+              }, 100);
+            }
+            console.log(`rotating by ${diff} for ${timeToRotate}ms`);
+            setTimeout(() => {
+              clearInterval(job);
+              COMMANDS.stop();
+              resolve();
+            }, timeToRotate);
+          });
       });
+    });
   },
   export: () => {
     return Promise.all(Object.keys(COIL_PINS).map(motorKey => {
