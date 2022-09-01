@@ -9,6 +9,7 @@ const { Duplex } = require('stream');
 var {syncLogsIfAfterGap} = require('./upload-logs');
 const {exec} = require('child_process');
 var {authRequest} = require('./api.js');
+
 const {singleton,
   upsertDeviceData,
   refreshDeviceData} = require('./device-data.js');
