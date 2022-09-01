@@ -6,7 +6,6 @@
 
 module.exports = class FIFOActions {
   constructor() {
-    super();
     this.messageQueue = [];
     this.processing = false;
   }
