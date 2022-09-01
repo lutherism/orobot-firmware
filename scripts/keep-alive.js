@@ -12,8 +12,7 @@ var {authRequest} = require('./api.js');
 const {singleton,
   upsertDeviceData,
   refreshDeviceData} = require('./device-data.js');
-require('log-timestamp');
-
+require('log-timestamp')
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 const wifiCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh & sudo ' +
   __dirname + '/../retry-client.sh >> ' + __dirname + '/../tmp/run.log\'';
@@ -53,11 +52,9 @@ class PTYContainer {
     });
     this.ptyProcess.write('su - pi\r');
     this.ptyProcess.on('data', () => {
-      console.log('mutated data');
       this.mutated = true;
     });
     this.ptyProcess.on('exit', () => {
-      console.log('pty exit');
       this.ptyProcess.kill(9);
       setTimeout(() => {
         this.init();
@@ -244,7 +241,6 @@ function keepOpenGatewayConnection() {
           deviceUuid: singleton.DeviceData.deviceUuid}));
         ptyProcess = new PTYContainer();
         ptyProcess.on('data', (data) => {
-          console.log('pyt out data');
           client.send(JSON.stringify({
             type: 'pty-out',
             data,
