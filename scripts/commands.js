@@ -105,6 +105,25 @@ const COMMANDS = {
       });
     });
   },
+  varySpeed: (speed) => {
+    return fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        const job = setInterval(() => {
+          const orderMappedCoilI = orders[order][ActiveCoil]
+          motorsContext.reverse().map((m, i) => {
+            m.set(orderMappedCoilI === i ? 1 : 0)
+          });
+          ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+        }, speed);
+        setTimeout(() => {
+          clearInterval(job);
+          resolve();
+          COMMANDS.stop();
+          addToCurrentPos(36);
+        }, 2000);
+      });
+    });
+  },
   'stop': () => {
     return fifoActions.do(() => {
       return Promise.all(

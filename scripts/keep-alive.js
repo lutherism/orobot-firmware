@@ -177,7 +177,15 @@ function handleWebSocketMessage(e) {
         });
     } else if (messageObj.type === 'command-in' &&
       messageObj.data === 'reboot') {
-        exec('reboot');
+      exec('reboot');
+    } else if (messageObj.type === 'command-in' &&
+      messageObj.data.indexOf('varyspeed') > -1) {
+        COMMANDS.export()
+          .then(() => COMMANDS.varySpeed(Number(messageObj.data.split(':')[1])))
+          .then(() => COMMANDS.stop())
+          .catch(err => {
+            console.error(err);
+          });
     } else if (messageObj.type === 'command-in' &&
       messageObj.data === 'update') {
         const st = exec('sudo /home/pi/orobot-firmware/update-reboot.sh');
