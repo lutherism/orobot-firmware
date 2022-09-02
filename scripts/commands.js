@@ -107,12 +107,11 @@ const COMMANDS = {
   },
   'stop': () => {
     return fifoActions.do(() => {
-      return new Promise((resolve, reject) => {
-        let numStops = motorsContext.length
-        motorsContext.map((m, i) => {
+      return Promise.all(
+        motorsContext.map((m, i) => new Promise((resolve, reject) => {
           m.set(0);
-        });
-      });
+        }));
+      );
     });
   },
   flicker: n => {
