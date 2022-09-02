@@ -125,8 +125,8 @@ const COMMANDS = {
     return new Promise((resolve, reject) => {
       motorsContext.map((m, i) => {
         m.set(0);
+        m.unexport();
       });
-      gpio.unexport();
       resolve();
     });
   },
