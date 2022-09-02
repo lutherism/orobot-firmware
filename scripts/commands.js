@@ -91,7 +91,7 @@ const COMMANDS = {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
-          motorsContext.reverse().map((m, i) => {
+          [...motorsContext].reverse().map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
@@ -110,7 +110,7 @@ const COMMANDS = {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
-          motorsContext.reverse().map((m, i) => {
+          [...motorsContext].reverse().map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
@@ -129,7 +129,7 @@ const COMMANDS = {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
-          motorsContext.reverse().map((m, i) => {
+          [...motorsContext].reverse().map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
@@ -148,7 +148,7 @@ const COMMANDS = {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
-          motorsContext.reverse().map((m, i) => {
+          [...motorsContext].reverse().map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
@@ -220,7 +220,7 @@ const COMMANDS = {
         let diff = Math.abs(currentPos - angle);
         let job;
         let clockwise = true;
-        while (diff > 180) {
+        if (diff > 180) {
           diff = 360 - diff;
           clockwise = false;
         }
@@ -228,7 +228,7 @@ const COMMANDS = {
         job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
           const orderedMotors = clockwise ?
-            motorsContext : motorsContext.reverse();
+            motorsContext : [...motorsContext].reverse();
           orderedMotors.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
