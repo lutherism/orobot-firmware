@@ -25,7 +25,7 @@ else
     echo "$makerun" | bash >> $BASEDIR/tmp/reboot.log &
 fi
 
-if jq .type $BASEDIR/scripts/openroboticsdata/data.json == "wifi-camera"
+if $(jq .type $BASEDIR/scripts/openroboticsdata/data.json) == "wifi-camera"
 then
   if ps ax | grep -v grep | grep "$camprocess" > /dev/null
   then
