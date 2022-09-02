@@ -171,6 +171,9 @@ function handleWebSocketMessage(e) {
       COMMANDS.export()
         .then(() => {
           COMMANDS[messageObj.data]();
+        })
+        .catch(err => {
+          console.error(err);
         });
     } else if (messageObj.type === 'getframe') {
       request.post({

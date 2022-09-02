@@ -1,15 +1,9 @@
 var gpio = require("gpio");
-var i2cBus = require("i2c-bus");
 var repl = require('repl');
 const { exec } = require('child_process');
 const FIFOActions = require('./fifo-actions.js');
 
-var options = {
-    i2c: i2cBus.openSync(1),
-    address: 0x40,
-    frequency: 60,
-    debug: true
-};
+gpio.logging = true;
 
 const fifoActions = new FIFOActions();
 
