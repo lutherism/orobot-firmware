@@ -169,7 +169,8 @@ function handleWebSocketMessage(e) {
       ptyProcess.write(messageObj.data);
     } else if (messageObj.type === 'command-in' &&
       COMMANDS[messageObj.data]) {
-      COMMANDS.export()
+      COMMANDS.stop()
+        .then(() => COMMANDS.export())
         .then(() => {
           COMMANDS[messageObj.data]();
         })
