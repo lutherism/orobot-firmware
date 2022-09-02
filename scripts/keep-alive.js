@@ -170,9 +170,7 @@ function handleWebSocketMessage(e) {
     } else if (messageObj.type === 'command-in' &&
       COMMANDS[messageObj.data]) {
       COMMANDS.export()
-        .then(() => {
-          COMMANDS[messageObj.data]();
-        })
+        .then(() => COMMANDS[messageObj.data]())
         .then(() => COMMANDS.stop())
         .catch(err => {
           console.error(err);

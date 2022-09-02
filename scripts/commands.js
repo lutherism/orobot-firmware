@@ -30,7 +30,7 @@ const addToCurrentPos = (angle) => {
 
 const COMMANDS = {
   'right': () => {
-    fifoActions.do(() => {
+    return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
@@ -49,7 +49,7 @@ const COMMANDS = {
     });
   },
   'fastright': () => {
-    fifoActions.do(() => {
+    return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
@@ -68,7 +68,7 @@ const COMMANDS = {
     });
   },
   'fastleft': () => {
-    fifoActions.do(() => {
+    return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
@@ -87,7 +87,7 @@ const COMMANDS = {
     });
   },
   'left': () => {
-    fifoActions.do(() => {
+    return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
@@ -106,7 +106,7 @@ const COMMANDS = {
     });
   },
   'stop': () => {
-    fifoActions.do(() => {
+    return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         let numStops = motorsContext.length
         motorsContext.map((m, i) => {
@@ -163,7 +163,7 @@ const COMMANDS = {
      });
   },
   gotoangle: (angle) => {
-    fifoActions.do(() => {
+    return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         COMMANDS.stop()
           .then(() => COMMANDS.export())
@@ -199,7 +199,7 @@ const COMMANDS = {
     });
   },
   export: () => {
-    fifoActions.do(() => {
+    return fifoActions.do(() => {
       return Promise.all(Object.keys(COIL_PINS).map((motorKey, i) => {
         return new Promise((resolve, reject) => {
           const motor = gpio.export(COIL_PINS[motorKey], {
