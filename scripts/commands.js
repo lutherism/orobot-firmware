@@ -122,14 +122,16 @@ const COMMANDS = {
     });
   },
   'stop': () => {
-    return new Promise((resolve, reject) => {
-      let numStops = motorsContext.length
-      motorsContext.map((m, i) => {
-        m.unexport(() => {
-          numStops--;
-          if (numStops === 0) {
-            resolve();
-          }
+    fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        let numStops = motorsContext.length
+        motorsContext.map((m, i) => {
+          m.unexport(() => {
+            numStops--;
+            if (numStops === 0) {
+              resolve();
+            }
+          });
         });
       });
     });
@@ -212,27 +214,29 @@ const COMMANDS = {
     });
   },
   export: () => {
-    return Promise.all(Object.keys(COIL_PINS).map((motorKey, i) => {
-      return new Promise((resolve, reject) => {
-        const motor = gpio.export(COIL_PINS[motorKey], {
-           // When you export a pin, the default direction is out. This allows you to set
-           // the pin value to either LOW or HIGH (3.3V) from your program.
-           direction: 'out',
+    fifoActions.do(() => {
+      return Promise.all(Object.keys(COIL_PINS).map((motorKey, i) => {
+        return new Promise((resolve, reject) => {
+          const motor = gpio.export(COIL_PINS[motorKey], {
+             // When you export a pin, the default direction is out. This allows you to set
+             // the pin value to either LOW or HIGH (3.3V) from your program.
+             direction: 'out',
 
-           // set the time interval (ms) between each read when watching for value changes
-           // note: this is default to 100, setting value too low will cause high CPU usage
-           interval: 100,
+             // set the time interval (ms) between each read when watching for value changes
+             // note: this is default to 100, setting value too low will cause high CPU usage
+             interval: 100,
 
-           // Due to the asynchronous nature of exporting a header, you may not be able to
-           // read or write to the header right away. Place your logic in this ready
-           // function to guarantee everything will get fired properly
-           ready: function() {
-             resolve(motor);
-           }
+             // Due to the asynchronous nature of exporting a header, you may not be able to
+             // read or write to the header right away. Place your logic in this ready
+             // function to guarantee everything will get fired properly
+             ready: function() {
+               resolve(motor);
+             }
+           });
+           motorsContext[i] = motor;
          });
-         motorsContext[i] = motor;
-       });
-    }));
+      }));
+    });
   },
   motorsContext
 }
