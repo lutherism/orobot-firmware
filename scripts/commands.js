@@ -217,26 +217,23 @@ const COMMANDS = {
   gotoangle: (angle) => {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
-        const diff = currentPos - angle;
+        let diff = Math.abs(currentPos - angle);
         let job;
-        const timeToRotate = Math.floor(Math.abs(diff) * (200/360)) * 25;
-        if (diff < 0) {
-          job = setInterval(() => {
-            const orderMappedCoilI = orders[order][ActiveCoil]
-            motorsContext.map((m, i) => {
-              m.set(orderMappedCoilI === i ? 1 : 0)
-            });
-            ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-          }, 25);
-        } else if (diff > 0) {
-          job = setInterval(() => {
-            const orderMappedCoilI = orders[order][ActiveCoil]
-            motorsContext.reverse().map((m, i) => {
-              m.set(orderMappedCoilI === i ? 1 : 0)
-            });
-            ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-          }, 25);
+        let clockwise = true;
+        while (diff > 180) {
+          diff = 360 - diff;
+          clockwise = false;
         }
+        const timeToRotate = Math.floor(Math.abs(diff) * (200/360)) * 25;
+        job = setInterval(() => {
+          const orderMappedCoilI = orders[order][ActiveCoil]
+          const orderedMotors = clockwise ?
+            motorsContext : motorsContext.reverse();
+          orderedMotors.map((m, i) => {
+            m.set(orderMappedCoilI === i ? 1 : 0)
+          });
+          ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+        }, 25);
         console.log(`rotating by ${diff} for ${timeToRotate}ms`);
         setTimeout(() => {
           clearInterval(job);
