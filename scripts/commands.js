@@ -219,7 +219,7 @@ const COMMANDS = {
       return new Promise((resolve, reject) => {
         const diff = currentPos - angle;
         let job;
-        const timeToRotate = Math.floor(Math.abs(diff) * (200/360)) * 100;
+        const timeToRotate = Math.floor(Math.abs(diff) * (200/360)) * 25;
         if (diff < 0) {
           job = setInterval(() => {
             const orderMappedCoilI = orders[order][ActiveCoil]
@@ -240,8 +240,9 @@ const COMMANDS = {
         console.log(`rotating by ${diff} for ${timeToRotate}ms`);
         setTimeout(() => {
           clearInterval(job);
-          COMMANDS.stop();
+          currentPos = angle;
           resolve();
+          COMMANDS.stop();
         }, timeToRotate);
       });
     });
