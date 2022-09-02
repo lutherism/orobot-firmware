@@ -67,6 +67,25 @@ const COMMANDS = {
       });
     });
   },
+  'xfastright': () => {
+    return fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        const job = setInterval(() => {
+          const orderMappedCoilI = orders[order][ActiveCoil]
+          motorsContext.map((m, i) => {
+            m.set(orderMappedCoilI === i ? 1 : 0)
+          });
+          ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+        }, 6);
+        setTimeout(() => {
+          clearInterval(job);
+          resolve();
+          COMMANDS.stop();
+          addToCurrentPos(36);
+        }, 2000);
+      });
+    });
+  },
   'fastleft': () => {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
@@ -96,6 +115,25 @@ const COMMANDS = {
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
         }, 100);
+        setTimeout(() => {
+          clearInterval(job);
+          resolve();
+          COMMANDS.stop();
+          addToCurrentPos(-36);
+        }, 2000);
+      });
+    });
+  },
+  'xfastleft': () => {
+    return fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        const job = setInterval(() => {
+          const orderMappedCoilI = orders[order][ActiveCoil]
+          motorsContext.reverse().map((m, i) => {
+            m.set(orderMappedCoilI === i ? 1 : 0)
+          });
+          ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
+        }, 6);
         setTimeout(() => {
           clearInterval(job);
           resolve();
@@ -189,7 +227,7 @@ const COMMANDS = {
               m.set(orderMappedCoilI === i ? 1 : 0)
             });
             ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-          }, 100);
+          }, 25);
         } else if (diff > 0) {
           job = setInterval(() => {
             const orderMappedCoilI = orders[order][ActiveCoil]
@@ -197,7 +235,7 @@ const COMMANDS = {
               m.set(orderMappedCoilI === i ? 1 : 0)
             });
             ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
-          }, 100);
+          }, 25);
         }
         console.log(`rotating by ${diff} for ${timeToRotate}ms`);
         setTimeout(() => {
