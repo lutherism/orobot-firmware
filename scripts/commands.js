@@ -126,6 +126,7 @@ const COMMANDS = {
       motorsContext.map((m, i) => {
         m.set(0);
       });
+      gpio.unexport();
       resolve();
     });
   },
