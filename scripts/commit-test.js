@@ -39,5 +39,5 @@ require('./keep-alive.js')
 
 setTimeout(() => {
   console.log('==== PASS ====');
-  process.exit(1)
+  process.exit(0)
 }, 3000)
