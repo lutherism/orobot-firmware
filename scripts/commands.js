@@ -29,24 +29,6 @@ const addToCurrentPos = (angle) => {
 }
 
 const COMMANDS = {
-  'reboot': () => {
-    exec('reboot');
-  },
-  'update': () => {
-    const st = exec('sudo /home/pi/orobot-firmware/update-reboot.sh');
-
-    st.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-    });
-
-    st.stderr.on('data', (data) => {
-      console.error(`stderr: ${data}`);
-    });
-
-    st.on('close', (code) => {
-      console.log(`child process exited with code ${code}`);
-    });
-  },
   'right': () => {
     fifoActions.do(() => {
       return new Promise((resolve, reject) => {

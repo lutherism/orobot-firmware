@@ -177,7 +177,23 @@ function handleWebSocketMessage(e) {
         .catch(err => {
           console.error(err);
         });
-    } else if (messageObj.type === 'getframe') {
+    } else if (messageObj.type === 'reboot') {
+        exec('reboot');
+    } else if (messageObj.type === 'update') {
+        const st = exec('sudo /home/pi/orobot-firmware/update-reboot.sh');
+
+        st.stdout.on('data', (data) => {
+          console.log(`stdout: ${data}`);
+        });
+
+        st.stderr.on('data', (data) => {
+          console.error(`stderr: ${data}`);
+        });
+
+        st.on('close', (code) => {
+          console.log(`child process exited with code ${code}`);
+        });
+      } else if (messageObj.type === 'getframe') {
       request.post({
         url: `${getConfigedURL()}/api/device-cam/${singleton.DeviceData.deviceUuid}`,
         formData: {
