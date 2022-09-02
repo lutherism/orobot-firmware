@@ -59,9 +59,9 @@ const COMMANDS = {
         }, 100);
         setTimeout(() => {
           clearInterval(job);
+          resolve();
           COMMANDS.stop();
           addToCurrentPos(36);
-          resolve();
         }, 2000);
       });
     });
@@ -78,9 +78,9 @@ const COMMANDS = {
         }, 25);
         setTimeout(() => {
           clearInterval(job);
+          resolve();
           COMMANDS.stop();
           addToCurrentPos(36);
-          resolve();
         }, 2000);
       });
     });
@@ -97,6 +97,7 @@ const COMMANDS = {
         }, 25);
         setTimeout(() => {
           clearInterval(job);
+          resolve();
           COMMANDS.stop();
           addToCurrentPos(36);
         }, 2000);
