@@ -52,6 +52,7 @@ class PTYContainer {
       env: process.env
     });
     this.ptyProcess.write('su - pi\r');
+    this.ptyProcess.write('echo Welcome to ORobot SSH\r');
     this.ptyProcess.on('data', () => {
       this.mutated = true;
     });
@@ -220,6 +221,7 @@ function handleWebSocketMessage(e) {
 
 function rebootConnection() {
     console.log('ssh-protocol Client Closed. Rebooting...');
+    clearInterval(interval);
     delay(200).then(() => recursiveConnect());
 };
 
@@ -232,8 +234,8 @@ function keepOpenGatewayConnection() {
       var clientStream = WebSocket.createWebSocketStream(client);
       clientStream.on('error', () => {});
       client.on('error', function(e) {
-            console.log('WebSocket Connection Error');
-            reject(e);
+        console.log('WebSocket Connection Error');
+        reject(e);
       });
       client.onopen = function() {
         console.log(`WebSocket Client Connected to ${getConfigedWSURL()} ${client.readyState}`);
@@ -243,13 +245,17 @@ function keepOpenGatewayConnection() {
         client.send(JSON.stringify({
           type: 'connect-to-user',
           deviceUuid: singleton.DeviceData.deviceUuid}));
-        ptyProcess = new PTYContainer();
-        ptyProcess.on('data', (data) => {
-          client.send(JSON.stringify({
-            type: 'pty-out',
-            data,
-            deviceUuid: singleton.DeviceData.deviceUuid}));
-        });
+        if (!ptyProcess) {
+          ptyProcess = new PTYContainer();
+          ptyProcess.on('data', (data) => {
+            if (client.readyState === 1) {
+              client.send(JSON.stringify({
+                type: 'pty-out',
+                data,
+                deviceUuid: singleton.DeviceData.deviceUuid}));
+            }
+          });
+        }
         intervalHeartbeat();
         const deviceUrl = `/device/${singleton.DeviceData.deviceUuid}`;
         console.log('getting owner info', deviceUrl);

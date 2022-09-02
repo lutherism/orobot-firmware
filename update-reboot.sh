@@ -1,3 +1,5 @@
+BASEDIR="/home/pi/orobot-firmware"
+
 sudo git pull
-sudo ./kill-keep-alive.sh
-sudo ./reboot.sh
+sudo $BASEDIR/kill-keep-alive.sh
+sudo $BASEDIR/reboot.sh
