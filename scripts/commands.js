@@ -108,9 +108,11 @@ const COMMANDS = {
   'stop': () => {
     return fifoActions.do(() => {
       return Promise.all(
-        motorsContext.map((m, i) => new Promise((resolve, reject) => {
-          m.set(0, resolve);
-        }));
+        motorsContext.map((m, i) => new Promise(
+          (resolve, reject) => {
+            m.set(0, resolve);
+          }
+        ))
       );
     });
   },
