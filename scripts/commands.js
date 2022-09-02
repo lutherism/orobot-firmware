@@ -98,6 +98,7 @@ const COMMANDS = {
         }, 100);
         setTimeout(() => {
           clearInterval(job);
+          resolve();
           COMMANDS.stop();
           addToCurrentPos(-36);
         }, 2000);
@@ -110,6 +111,7 @@ const COMMANDS = {
         let numStops = motorsContext.length
         motorsContext.map((m, i) => {
           m.unexport(() => {
+            console.log('unexported', numStops)
             numStops--;
             if (numStops === 0) {
               resolve();
