@@ -25,12 +25,15 @@ else
     echo "$makerun" | bash >> $BASEDIR/tmp/reboot.log &
 fi
 
-if ps ax | grep -v grep | grep "$camprocess" > /dev/null
+if jq .type $BASEDIR/scripts/openroboticsdata/data.json == "wifi-camera"
 then
-    echo 'Already running python' >> $BASEDIR/tmp/reboot.log;
-else
-    echo 'running python.'
-    echo "$cammakerun" | bash >> $BASEDIR/tmp/reboot.log &
+  if ps ax | grep -v grep | grep "$camprocess" > /dev/null
+  then
+      echo 'Already running python' >> $BASEDIR/tmp/reboot.log;
+  else
+      echo 'running python.'
+      echo "$cammakerun" | bash >> $BASEDIR/tmp/reboot.log &
+  fi
 fi
 
 exit
