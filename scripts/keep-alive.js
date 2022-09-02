@@ -169,11 +169,11 @@ function handleWebSocketMessage(e) {
       ptyProcess.write(messageObj.data);
     } else if (messageObj.type === 'command-in' &&
       COMMANDS[messageObj.data]) {
-      COMMANDS.stop()
-        .then(() => COMMANDS.export())
+      COMMANDS.export()
         .then(() => {
           COMMANDS[messageObj.data]();
         })
+        .then(() => COMMANDS.stop())
         .catch(err => {
           console.error(err);
         });
