@@ -123,11 +123,15 @@ const COMMANDS = {
   },
   'stop': () => {
     return new Promise((resolve, reject) => {
+      let numStops = motorsContext.length
       motorsContext.map((m, i) => {
-        m.set(0);
-        m.unexport();
+        m.unexport(() => {
+          numStops--;
+          if (numStops === 0) {
+            resolve();
+          }
+        });
       });
-      resolve();
     });
   },
   flicker: n => {
@@ -208,7 +212,7 @@ const COMMANDS = {
     });
   },
   export: () => {
-    return Promise.all(Object.keys(COIL_PINS).map(motorKey => {
+    return Promise.all(Object.keys(COIL_PINS).map((motorKey, i) => {
       return new Promise((resolve, reject) => {
         const motor = gpio.export(COIL_PINS[motorKey], {
            // When you export a pin, the default direction is out. This allows you to set
@@ -226,10 +230,9 @@ const COMMANDS = {
              resolve(motor);
            }
          });
+         motorsContext[i] = motor;
        });
-    })).then(motors => {
-      motorsContext = motors;
-    });
+    }));
   },
   motorsContext
 }
