@@ -175,9 +175,11 @@ function handleWebSocketMessage(e) {
         .catch(err => {
           console.error(err);
         });
-    } else if (messageObj.type === 'reboot') {
+    } else if (messageObj.type === 'command-in' &&
+      messageObj.data === 'reboot') {
         exec('reboot');
-    } else if (messageObj.type === 'update') {
+    } else if (messageObj.type === 'command-in' &&
+      messageObj.data === 'update') {
         const st = exec('sudo /home/pi/orobot-firmware/update-reboot.sh');
 
         st.stdout.on('data', (data) => {
