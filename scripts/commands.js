@@ -110,13 +110,7 @@ const COMMANDS = {
       return new Promise((resolve, reject) => {
         let numStops = motorsContext.length
         motorsContext.map((m, i) => {
-          m.unexport(() => {
-            console.log('unexported', numStops)
-            numStops--;
-            if (numStops === 0) {
-              resolve();
-            }
-          });
+          m.set(0);
         });
       });
     });
