@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "web": "node ap-server.js",
+    "test": "node scripts/commit-test.js",
     "build": "node node_modules/browserify/bin/cmd.js -t [ babelify --presets [ react ] ] ./src/index.js -o ./public/index.js"
   },
   "parserOptions": {
@@ -19,6 +20,7 @@
     "gpio": "^0.2.10",
     "i2c-bus": "^5.2.2",
     "log-timestamp": "^0.3.0",
+    "mock-require": "^3.0.3",
     "node-pty": "^0.10.1",
     "react": "17.0.1",
     "react-dom": "17.0.1",
