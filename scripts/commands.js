@@ -220,13 +220,15 @@ const COMMANDS = {
         const mod = (a, n) => a - Math.floor(a/n) * n
         let diff = angle - currentPos
         diff = mod(diff + 180, 360) - 180;
-        console.log(`moving ${diff} to go from ${currentPos} to ${angle}`);
         let job;
         let clockwise = true;
         if (diff < 0) {
           diff = diff * -1;
           clockwise = false;
         }
+        console.log(`moving ${diff} ${
+          clockwise ? 'clockwise' : 'counterclockwise'
+        } to go from ${currentPos} to ${angle}`);
         const timeToRotate = Math.floor(diff * (200/360)) * 25;
         job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
@@ -237,7 +239,6 @@ const COMMANDS = {
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
         }, 25);
-        console.log(`rotating by ${diff} for ${timeToRotate}ms`);
         setTimeout(() => {
           clearInterval(job);
           currentPos = angle;
