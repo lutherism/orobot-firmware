@@ -15,7 +15,7 @@ const COIL_PINS = [
 ];
 const orders = [
   [0, 1, 3, 2],
-  //[2, 3, 1, 0]
+  [2, 3, 1, 0]
 ];
 let motorsContext = [];
 let order = 0;
@@ -230,10 +230,10 @@ const COMMANDS = {
           clockwise ? 'counterclockwise' : 'clockwise'
         } to go from ${currentPos} to ${angle}`);
         const timeToRotate = Math.floor(diff * (200/360)) * 25;
+        const orderedMotors = !clockwise ?
+          motorsContext : Array.from(motorsContext).reverse();
         job = setInterval(() => {
-          const orderMappedCoilI = orders[order][ActiveCoil]
-          const orderedMotors = !clockwise ?
-            motorsContext : Array.from(motorsContext).reverse();
+          const orderMappedCoilI = orders[clockwise ? 1 : 0][ActiveCoil]
           orderedMotors.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
