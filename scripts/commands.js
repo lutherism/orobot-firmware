@@ -217,14 +217,17 @@ const COMMANDS = {
   gotoangle: (angle) => {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
-        let diff = Math.abs(currentPos - angle);
+        const mod = (a, n) => a - Mth.floor(a/n) * n
+        let diff = angle - currentPos
+        diff = mod(diff + 180, 360) - 180;
+        console.log(`moving ${diff} to go from ${currentPos} to ${angle}`);
         let job;
         let clockwise = true;
-        if (diff > 180) {
-          diff = 360 - diff;
+        if (diff < 0) {
+          diff = diff * -1;
           clockwise = false;
         }
-        const timeToRotate = Math.floor(Math.abs(diff) * (200/360)) * 25;
+        const timeToRotate = Math.floor(diff * (200/360)) * 25;
         job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
           const orderedMotors = clockwise ?
