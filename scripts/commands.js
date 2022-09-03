@@ -230,11 +230,9 @@ const COMMANDS = {
           clockwise ? 'counterclockwise' : 'clockwise'
         } to go from ${currentPos} to ${angle}`);
         const timeToRotate = Math.floor(diff * (200/360)) * 25;
-        const orderedMotors = !clockwise ?
-          motorsContext : Array.from(motorsContext).reverse();
         job = setInterval(() => {
-          const orderMappedCoilI = orders[clockwise ? 1 : 0][ActiveCoil]
-          orderedMotors.map((m, i) => {
+          const orderMappedCoilI = orders[clockwise ? 0 : 1][ActiveCoil]
+          motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
