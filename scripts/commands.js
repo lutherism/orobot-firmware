@@ -227,12 +227,12 @@ const COMMANDS = {
           clockwise = false;
         }
         console.log(`moving ${diff} ${
-          clockwise ? 'clockwise' : 'counterclockwise'
+          clockwise ? 'counterclockwise' : 'clockwise'
         } to go from ${currentPos} to ${angle}`);
         const timeToRotate = Math.floor(diff * (200/360)) * 25;
         job = setInterval(() => {
           const orderMappedCoilI = orders[order][ActiveCoil]
-          const orderedMotors = clockwise ?
+          const orderedMotors = !clockwise ?
             motorsContext : Array.from(motorsContext).reverse();
           orderedMotors.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
