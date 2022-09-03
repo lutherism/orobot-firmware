@@ -217,7 +217,7 @@ const COMMANDS = {
   gotoangle: (angle) => {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
-        const mod = (a, n) => a - Mth.floor(a/n) * n
+        const mod = (a, n) => a - Math.floor(a/n) * n
         let diff = angle - currentPos
         diff = mod(diff + 180, 360) - 180;
         console.log(`moving ${diff} to go from ${currentPos} to ${angle}`);
