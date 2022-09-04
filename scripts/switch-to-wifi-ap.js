@@ -17,7 +17,7 @@ ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 
 network={
-    ssid=OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}
+    ssid="OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}"
     mode=2
     proto=wpa
     key_mgmt=WPA-PSK
@@ -66,12 +66,13 @@ address=/gw.wlan/192.168.4.1
 }
 
 const hostAPDConf = () => {
-  return `interface=wlan0
+  return `
+interface=wlan0
 #If this fails, try rt1871xdrv a
 driver=nl80211
 # Name of the new network: best use the hostname
-ssid=OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}
-
+ssid="OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}"
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
 # Pick a channel not already in use
 channel=6
 # Change to b for older devices?
