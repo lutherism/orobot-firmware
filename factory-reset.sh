@@ -22,6 +22,7 @@ echo Running resets.
 
 echo $wificlient | bash
 
+hostname -I
 while [ "$(hostname -I)" = "" ]; do
   echo -e "\e[1A\e[KNo network: $(date)"
   sleep 1
