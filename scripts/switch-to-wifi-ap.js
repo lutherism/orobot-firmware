@@ -72,7 +72,6 @@ interface=wlan0
 driver=nl80211
 # Name of the new network: best use the hostname
 ssid="OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}"
-DAEMON_CONF="/etc/hostapd/hostapd.conf"
 # Pick a channel not already in use
 channel=6
 # Change to b for older devices?
@@ -88,6 +87,14 @@ wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP`;
 }
+
+const defaultHostAPDConf = () => {
+  return `
+  DAEMON_CONF="/etc/hostapd/hostapd.conf"
+`;
+};
+
+const defaultHostAPDConfPath = '/etc/default/hostapd';
 
 const createHosts = () => {
   return `127.0.0.1	localhost
@@ -106,6 +113,7 @@ const upWifiAP = () => {
   fs.writeFileSync(hostAPDPath, hostAPDConf());
   fs.writeFileSync(dhcpPath, createDHCPConf());
   fs.writeFileSync(nginxPath, createNGINXConf());
+  fs.writeFileSync(defaultHostAPDConfPath, defaultHostAPDConf());
 }
 
 module.exports = {
