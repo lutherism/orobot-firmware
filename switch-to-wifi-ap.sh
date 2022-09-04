@@ -6,7 +6,6 @@ sudo rfkill unblock all
 sudo systemctl restart dnsmasq.service
 sudo systemctl unmask hostapd
 sudo systemctl enable hostapd
-sudo systemctl start hostapd
 sudo systemctl restart hostapd.service
 sudo ifconfig wlan0 down
 sudo ifconfig wlan0 up
