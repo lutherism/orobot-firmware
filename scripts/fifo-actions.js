@@ -15,7 +15,6 @@ module.exports = class FIFOActions {
       return;
     }
     const [[act, resolve]] = this.messageQueue.slice(0, 1);
-    console.log(this.messageQueue);
     this.messageQueue = [...this.messageQueue.slice(1)];
     this.processing = true;
     act().then((...args) => {

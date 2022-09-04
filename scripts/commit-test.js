@@ -8,6 +8,7 @@ mock('child_process', {
 var fs = require('fs')
 mock('fs', {
   ...fs,
+  unlink: () => {},
   writeFileSync: function() {
     console.log('writeFileSync called');
   }

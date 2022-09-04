@@ -81,6 +81,7 @@ auth_algs=3
 # Disable this to insure the AP is visible:
 ignore_broadcast_ssid=0
 wpa=2
+country_code=US
 wpa_passphrase=wifisetup
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
