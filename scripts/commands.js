@@ -33,7 +33,7 @@ const COMMANDS = {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
-          const orderMappedCoilI = orders[order][ActiveCoil]
+          const orderMappedCoilI = orders[1][ActiveCoil]
           motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
@@ -52,7 +52,7 @@ const COMMANDS = {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
-          const orderMappedCoilI = orders[order][ActiveCoil]
+          const orderMappedCoilI = orders[1][ActiveCoil]
           motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
@@ -71,7 +71,7 @@ const COMMANDS = {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
-          const orderMappedCoilI = orders[order][ActiveCoil]
+          const orderMappedCoilI = orders[1][ActiveCoil]
           motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
@@ -90,7 +90,7 @@ const COMMANDS = {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
-          const orderMappedCoilI = orders[1][ActiveCoil]
+          const orderMappedCoilI = orders[0][ActiveCoil]
           motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
@@ -109,7 +109,7 @@ const COMMANDS = {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
-          const orderMappedCoilI = orders[1][ActiveCoil]
+          const orderMappedCoilI = orders[0][ActiveCoil]
           motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
@@ -128,7 +128,7 @@ const COMMANDS = {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
-          const orderMappedCoilI = orders[1][ActiveCoil]
+          const orderMappedCoilI = orders[0][ActiveCoil]
           motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
