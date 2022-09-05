@@ -90,8 +90,8 @@ const COMMANDS = {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
-          const orderMappedCoilI = orders[order][ActiveCoil]
-          Array.from(motorsContext).reverse().map((m, i) => {
+          const orderMappedCoilI = orders[1][ActiveCoil]
+          motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
@@ -109,8 +109,8 @@ const COMMANDS = {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
-          const orderMappedCoilI = orders[order][ActiveCoil]
-          Array.from(motorsContext).reverse().map((m, i) => {
+          const orderMappedCoilI = orders[1][ActiveCoil]
+          motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
@@ -128,8 +128,8 @@ const COMMANDS = {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
         const job = setInterval(() => {
-          const orderMappedCoilI = orders[order][ActiveCoil]
-          Array.from(motorsContext).reverse().map((m, i) => {
+          const orderMappedCoilI = orders[1][ActiveCoil]
+          motorsContext.map((m, i) => {
             m.set(orderMappedCoilI === i ? 1 : 0)
           });
           ActiveCoil = (ActiveCoil + 1) % COIL_PINS.length;
