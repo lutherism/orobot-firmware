@@ -1,5 +1,5 @@
 BASEDIR="/home/pi/orobot-firmware"
-NODE_BIN="/home/pi/.config/nvm/versions/node/v8.17.0/bin/node"
+NODE_BIN="/root/.nvm/versions/node/v8.17.0/bin/node"
 
 echo "sudo $BASEDIR/switch-to-wifi-ap.sh &" | bash >> $BASEDIR/tmp/run.log &
 sleep 15s

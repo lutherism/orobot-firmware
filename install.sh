@@ -5,7 +5,7 @@ wpa_supplicant -iwlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf &
 dhclient wlan0
 sleep 3
 sudo apt-get update
-printf 'y\n' | sudo apt-get install hostapd dnsmasq nginx curl
+printf 'y\n' | sudo apt-get install hostapd dnsmasq nginx curl jq
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 source /root/.nvm/install.sh
 nvm bash_completion
