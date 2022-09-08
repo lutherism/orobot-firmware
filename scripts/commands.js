@@ -229,6 +229,14 @@ const COMMANDS = {
        });
      });
   },
+  setzero: () => {
+    return fifoActions.do(() => {
+      return new Promise((resolve, reject) => {
+        currentPos = 0;
+        resolve();
+      });
+    });
+  },
   gotoangle: (angle) => {
     return fifoActions.do(() => {
       return new Promise((resolve, reject) => {
