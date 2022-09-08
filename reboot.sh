@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 BASEDIR="/home/pi/orobot-firmware"
-NODE_BIN="/home/pi/.config/nvm/versions/node/v8.17.0/bin/node"
+NODE_BIN="node"
 
 #!/bin/bash
 mkdir tmp

@@ -9,8 +9,9 @@ printf 'y\n' | sudo apt-get install hostapd dnsmasq nginx curl
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 source /root/.nvm/install.sh
 nvm bash_completion
-nvm install 8
-nvm use 8
+source ~/.bashrc
+nvm install 8.17.0
+nvm use 8.17.0
 cd /home/pi/orobot-firmware
 npm i
 sudo crontab /home/pi/reboot.cron
