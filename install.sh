@@ -13,6 +13,7 @@ source ~/.bashrc
 nvm install 8.17.0
 nvm use 8.17.0
 cd /home/pi/orobot-firmware
+git pull
 npm i
 sudo crontab /home/pi/reboot.cron
 sudo service cron reload

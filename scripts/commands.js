@@ -3,16 +3,31 @@ var repl = require('repl');
 const { exec } = require('child_process');
 const FIFOActions = require('./fifo-actions.js');
 
+const {singleton,
+  upsertDeviceData,
+  refreshDeviceData} = require('./device-data.js');
 gpio.logging = true;
 
 const fifoActions = new FIFOActions();
 
-const COIL_PINS = [
-  17,
-  18,
-  22,
-  27
-];
+let COIL_PINS;
+
+if (singleton.DeviceData.hardware === 'banana') {
+  COIL_PINS= [
+    11,
+    12,
+    15,
+    13
+  ];
+} else {
+  COIL_PINS= [
+    17,
+    18,
+    22,
+    27
+  ];
+}
+
 const orders = [
   [0, 1, 3, 2],
   [2, 3, 1, 0]
