@@ -264,7 +264,7 @@ const COMMANDS = {
           clearInterval(job);
           currentPos = angle;
           resolve();
-          COMMANDS.stop();
+          //COMMANDS.stop();
         }, timeToRotate);
       });
     });
