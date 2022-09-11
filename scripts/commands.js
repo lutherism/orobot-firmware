@@ -297,6 +297,7 @@ const COMMANDS = {
   motorsContext
 }
 
-COMMANDS.export();
+COMMANDS.export()
+  .then(() => COMMANDS.stop());
 
 module.exports = COMMANDS;

@@ -134,8 +134,6 @@ function recursiveConnect() {
   });
 }
 
-COMMANDS.export();
-COMMANDS.stop();
 recursiveConnect();
 
 let interval = null;
