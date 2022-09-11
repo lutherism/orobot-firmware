@@ -149,11 +149,13 @@ function intervalHeartbeat(msDelay = 8000) {
         type: singleton.DeviceData.type
       })
     };
-    request.post({
+    console.log('heartbeat');
+    authRequest({
       uri: `${getConfigedURL()}/api/device/state`,
       json: true,
       body: hb
-    });
+    }).then(b => console.log('hb res', b))
+    .catch(e => console.log('hb err', e));
     syncLogsIfAfterGap();
   };
   heartPump();
