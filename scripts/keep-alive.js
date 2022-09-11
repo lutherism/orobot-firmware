@@ -16,7 +16,10 @@ const {singleton,
 let heartbeatLogging = false;
 var _log = console.log;
 console.log = function(...args) {
-  heartbeatLogging = false;
+  if (heartbeatLogging) {
+    heartbeatLogging = false;
+    process.stdout.write('\n')
+  }
   _log.apply(this, args);
 }
 require('log-timestamp')
@@ -164,7 +167,7 @@ function intervalHeartbeat(msDelay = 8000) {
       if (heartbeatLogging) {
         process.stdout.write(".");
       } else {
-        console.log("hearbeating: .");
+        process.stdout.write(`[${(new Date().toISOString())}] heartbeat .`);
         heartbeatLogging = true;
       }
     })
