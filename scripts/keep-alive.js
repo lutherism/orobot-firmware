@@ -152,6 +152,7 @@ function intervalHeartbeat(msDelay = 8000) {
     console.log('heartbeat', hb);
     authRequest({
       url: `/device/state`,
+      method: 'post',
       json: true,
       body: hb
     }).then(b => console.log('hb res'))
