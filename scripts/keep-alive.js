@@ -13,6 +13,12 @@ var {authRequest} = require('./api.js');
 const {singleton,
   upsertDeviceData,
   refreshDeviceData} = require('./device-data.js');
+let heartbeatLogging = false;
+var _log = console.log;
+console.log = function(...args) {
+  heartbeatLogging = false;
+  _log.apply(this, args);
+}
 require('log-timestamp')
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 const wifiCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh & sudo ' +
@@ -149,13 +155,19 @@ function intervalHeartbeat(msDelay = 8000) {
         type: singleton.DeviceData.type
       })
     };
-    console.log('heartbeat', hb);
     authRequest({
       url: `/device/state`,
       method: 'post',
       json: true,
       body: hb
-    }).then(b => console.log('hb res'))
+    }).then(b => {
+      if (heartbeatLogging) {
+        process.stdout.write(".");
+      } else {
+        console.log("hearbeating: .");
+        heartbeatLogging = true;
+      }
+    })
     .catch(e => console.log('hb err'));
     syncLogsIfAfterGap();
   };
