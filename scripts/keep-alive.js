@@ -153,7 +153,7 @@ function intervalHeartbeat(msDelay = 8000) {
     authRequest({
       url: `/device/state`,
       json: true,
-      body: hb
+      body: JSON.stringify(hb)
     }).then(b => console.log('hb res', b))
     .catch(e => console.log('hb err', e));
     syncLogsIfAfterGap();
