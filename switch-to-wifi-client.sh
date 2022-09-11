@@ -5,10 +5,12 @@ sudo systemctl stop dnsmasq.service
 sudo rfkill unblock all
 sudo killall dhcpd
 sudo killall wpa_supplicant
+sudo killall dnsmasq
 sudo ifconfig wlan0 down
 sudo ifconfig wlan0 up
 sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf &
 sleep 5
 sudo dhclient &
+sudo systemctl restart dnsmasq
 sudo /home/pi/orobot-firmware/kill-keep-alive.sh
 sudo /home/pi/orobot-firmware/reboot.sh
