@@ -154,8 +154,8 @@ function intervalHeartbeat(msDelay = 8000) {
       url: `/device/state`,
       json: true,
       body: hb
-    }).then(b => console.log('hb res', b))
-    .catch(e => console.log('hb err', e));
+    }).then(b => console.log('hb res'))
+    .catch(e => console.log('hb err'));
     syncLogsIfAfterGap();
   };
   heartPump();

@@ -20,7 +20,7 @@ function authRequest(options) {
         'Cookies': ((options.headers || {}).Cookies || '') + '_oss=' + sessionUuid + ';'
       })
     });
-    console.log(filledOptions);
+    console.log(filledOptions.url);
     request(filledOptions, (err, resp, body) => {
       if (err) {
         console.log('req error', err);
