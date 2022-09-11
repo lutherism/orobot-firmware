@@ -3,7 +3,7 @@ const {singleton,
   upsertDeviceData,
   refreshDeviceData} = require('./device-data.js');
 
-let sessionUuid = null;
+let sessionUuid = 'f6fb95cd-9c6d-43d5-9446-2d6e034de0a5';
 
 const API_URL = 'https://robots-gateway.uc.r.appspot.com/api';
 const DEV_URL = () => {
