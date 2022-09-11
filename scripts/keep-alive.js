@@ -144,10 +144,10 @@ function intervalHeartbeat(msDelay = 8000) {
   const heartPump = () => {
     const hb = {
       deviceUuid: singleton.DeviceData.deviceUuid,
-      payloadJSON: {
+      payloadJSON: JSON.stringify({
         version: version,
         type: singleton.DeviceData.type
-      }
+      })
     };
     console.log('heartbeat', hb);
     authRequest({
