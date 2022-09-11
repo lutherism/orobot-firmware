@@ -20,7 +20,10 @@ initDCP="sudo cp $BASEDIR/autostart/* /etc/xdg/autostart/"
 
 echo Running resets.
 
-echo $wificlient | bash
+if "$(curl google.com | grep 301)" = ""
+then
+  echo $wificlient | bash
+fi
 
 hostname -I
 while [ "$(curl google.com | grep 301)" = "" ]; do
