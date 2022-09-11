@@ -1,2 +1,3 @@
 * * * * * sudo /home/pi/orobot-firmware/reboot.sh
 @reboot /home/pi/orobot-firmware/reboot.sh
+@reboot /home/pi/orobot-firmware/gpio-boot-off.sh
