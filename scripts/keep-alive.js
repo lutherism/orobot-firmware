@@ -149,7 +149,7 @@ function intervalHeartbeat(msDelay = 8000) {
         type: singleton.DeviceData.type
       })
     };
-    console.log('heartbeat');
+    console.log('heartbeat', hb);
     authRequest({
       url: `/device/state`,
       json: true,
