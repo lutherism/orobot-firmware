@@ -144,16 +144,16 @@ function intervalHeartbeat(msDelay = 8000) {
   const heartPump = () => {
     const hb = {
       deviceUuid: singleton.DeviceData.deviceUuid,
-      payloadJSON: JSON.stringify({
+      payloadJSON: {
         version: version,
         type: singleton.DeviceData.type
-      })
+      }
     };
     console.log('heartbeat', hb);
     authRequest({
       url: `/device/state`,
       json: true,
-      body: JSON.stringify(hb)
+      body: hb
     }).then(b => console.log('hb res', b))
     .catch(e => console.log('hb err', e));
     syncLogsIfAfterGap();
