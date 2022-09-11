@@ -151,7 +151,7 @@ function intervalHeartbeat(msDelay = 8000) {
     };
     console.log('heartbeat');
     authRequest({
-      uri: `${getConfigedURL()}/api/device/state`,
+      uri: `/device/state`,
       json: true,
       body: hb
     }).then(b => console.log('hb res', b))
