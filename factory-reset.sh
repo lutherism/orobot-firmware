@@ -23,7 +23,7 @@ echo Running resets.
 echo $wificlient | bash
 
 hostname -I
-while [ "$(hostname -I)" = "" ]; do
+while [ "$(curl google.com | grep 301)" = "" ]; do
   echo -e "\e[1A\e[KNo network: $(date)"
   sleep 1
 done
