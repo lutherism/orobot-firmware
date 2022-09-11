@@ -25,7 +25,7 @@ const motorsSingleton = {
   motorsContext: []
 };
 
-const export = Promise.all(Object.keys(COIL_PINS).map((motorKey, i) => {
+const exportMotors = Promise.all(Object.keys(COIL_PINS).map((motorKey, i) => {
   return new Promise((resolve, reject) => {
     const motor = gpio.export(COIL_PINS[motorKey], {
        // When you export a pin, the default direction is out. This allows you to set
@@ -49,5 +49,5 @@ const export = Promise.all(Object.keys(COIL_PINS).map((motorKey, i) => {
 
 module.exports = {
   motorsSingleton,
-  export
+  exportMotors
 };
