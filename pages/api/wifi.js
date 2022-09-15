@@ -2,7 +2,7 @@ var WiFiControl = require('wifi-control');
 const {singleton,
   upsertDeviceData,
   refreshDeviceData} = require('./device-data.js');
-const {exec} = require('child_process');
+const {fork} = require('child_process');
 
 //  Initialize wifi-control package with verbose output
 WiFiControl.init({
@@ -17,7 +17,7 @@ export default (req, res) => {
         password: req.body.password
       }
     });
-    exec(`sudo ${__dirname}/../../retry-client.sh && sudo ${__dirname}/../../hard-reboot.sh`, () => {
+    fork(`sudo ${__dirname}/../../retry-client.sh && sudo ${__dirname}/../../hard-reboot.sh`, () => {
       process.exit(0);
     });
     /*WiFiControl.connectToAP(req.body, function(err, response) {
