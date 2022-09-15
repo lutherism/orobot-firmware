@@ -71,7 +71,7 @@ interface=wlan0
 #If this fails, try rt1871xdrv a
 driver=nl80211
 # Name of the new network: best use the hostname
-ssid="OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}"
+ssid=OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}
 # Pick a channel not already in use
 channel=6
 # Change to b for older devices?
