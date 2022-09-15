@@ -17,7 +17,7 @@ export default (req, res) => {
         password: req.body.password
       }
     });
-    exec(`sudo ${__dirname}/../../retry-client.sh`, () => {
+    exec(`sudo ${__dirname}/../../retry-client.sh && sudo ${__dirname}/../../reboot.sh`, () => {
       process.exit(0);
     });
     /*WiFiControl.connectToAP(req.body, function(err, response) {
