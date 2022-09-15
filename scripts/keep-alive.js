@@ -7,7 +7,7 @@ var pty = require('node-pty');
 var COMMANDS = require('./commands.js');
 const { Duplex } = require('stream');
 var {syncLogsIfAfterGap} = require('./upload-logs');
-const {exec} = require('child_process');
+const {exec, fork} = require('child_process');
 var {authRequest} = require('./api.js');
 
 const {singleton,
@@ -117,7 +117,7 @@ function recursiveConnect() {
   }
   if (singleton.DeviceData.networkMode === 'ap') {
     return console.log('should switch to AP');
-    exec(apCmd, () => {
+    fork(apCmd, {silent: false}, () => {
       return process.exit(0);
     });
   }
