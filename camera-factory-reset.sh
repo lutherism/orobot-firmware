@@ -13,7 +13,6 @@ echo $(date) Run >> $BASEDIR/tmp/reboot.log
 export DISPLAY=:0 #needed if you are running a simple gui app.
 
 process="v8.17.0/bin/node"
-makecron="crontab $BASEDIR/reboot.cron"
 wificlient="sudo $BASEDIR/switch-to-wifi-client.sh"
 makerun="sudo $NODE_BIN $BASEDIR/scripts/camera-factory-reset.js >> tmp/$LOGNAME"
 initDCP="cp $BASEDIR/autostart/* /etc/xdg/autostart/"
@@ -27,7 +26,6 @@ while [ "$(hostname -I)" = "" ]; do
   sleep 1
 done
 
-echo $makecron | bash
 echo $makerun | bash
 echo $initDCP | bash
 

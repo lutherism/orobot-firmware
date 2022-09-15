@@ -16,6 +16,8 @@ const newDriverUuid = uuid.v4();
 initDataFile();
 upsertDeviceData({
   ...JSON.parse(data),
+  hardware: childProcess.execSync('uname -a').indexOf('raspberrypi') > -1 ?
+    'raspi' : 'banana'
   deviceUuid: newDriverUuid
 });
 console.log('sending POST /device')

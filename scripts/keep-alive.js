@@ -115,7 +115,9 @@ function recursiveConnect() {
   }
   if (singleton.DeviceData.networkMode === 'ap') {
     return console.log('should switch to AP');
-    return exec('sudo ' + __dirname + '/../retry-ap.sh');
+    exec('sudo ' + __dirname + '/../retry-ap.sh', () => {
+      return process.exit(0);
+    });
   }
   return keepOpenGatewayConnection()
   .catch((err) => {
