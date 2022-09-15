@@ -24,9 +24,9 @@ console.log = function(...args) {
 }
 require('log-timestamp')
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
-const wifiCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh & sleep 2 && sudo ' +
+const wifiCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh && sleep 2 && sudo ' +
   __dirname + '/../retry-client.sh >> ' + __dirname + '/../tmp/run.log\'';
-const apCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh & sleep 2 && sudo ' +
+const apCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh && sleep 2 && sudo ' +
   __dirname + '/../retry-ap.sh >> ' + __dirname + '/../tmp/run.log\'';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
