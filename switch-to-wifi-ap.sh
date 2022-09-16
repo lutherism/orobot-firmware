@@ -1,9 +1,3 @@
-if [ "$(iw wlan0 info | grep 'type AP')" != "" ];
-then
-  echo 'Already an AP';
-  exit 0;
-fi
-
 sudo /root/.nvm/versions/node/v8.17.0/bin/node -e "require('./scripts/switch-to-wifi-ap.js').upWifiAP()"
 sleep 2;
 sudo ip addr flush dev wlan0
