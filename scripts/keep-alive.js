@@ -108,19 +108,26 @@ const MAX_DELAY = 6000;
 const MAX_AP_DELAY = 24000;
 let failsTillAPMode = 100;
 
+if (singleton.DeviceData.networkMode === 'ap') {
+  console.log('should switch to AP', apCmd);
+  return exec(apCmd, (...args1) => {
+    console.log(args1);
+  });
+}
+if (singleton.DeviceData.networkMode === 'client') {
+  console.log('should switch to client', apCmd);
+  return exec(wifiCmd, (...args1) => {
+    console.log(args1);
+    return process.exit(0);
+  });
+}
+
 function recursiveConnect() {
   console.log('attempting to connect');
   if (!singleton.DeviceData.wifiSettings ||
   !singleton.DeviceData.wifiSettings.ssid) {
     upsertDeviceData({
       networkMode: 'ap'
-    });
-  }
-  if (singleton.DeviceData.networkMode === 'ap') {
-    console.log('should switch to AP', apCmd);
-    return exec(apCmd, (...args1) => {
-      console.log(args1);
-      return process.exit(0);
     });
   }
   return keepOpenGatewayConnection()
