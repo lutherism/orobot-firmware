@@ -1,6 +1,12 @@
 BASEDIR="/home/pi/orobot-firmware"
 NODE_BIN="/root/.nvm/versions/node/v8.17.0/bin/node"
 
+if ps ax | grep -v grep | grep "retry-ap.sh" > /dev/null
+then
+  echo "Duplicate process"
+  exit 0;
+fi
+
 echo "sudo $BASEDIR/switch-to-wifi-ap.sh &" | bash >> $BASEDIR/tmp/run.log &
 sleep 15s
 while [ "$(iw wlan0 info | grep 'type AP')" = "" ]; do
