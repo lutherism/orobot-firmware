@@ -19,6 +19,7 @@ while [ "$(iw wlan0 info | grep 'type AP')" = "" ]; do
   fi
   sleep 45s
 done
+echo "sudo $BASEDIR/kill-switch-network.sh" | bash
 echo "sudo $BASEDIR/kill-web-ap.sh" | bash
 echo "sudo $NODE_BIN $BASEDIR/ap-server.js" | bash
 echo "Updated to Access Provider mode"

@@ -19,4 +19,6 @@ while [ "$(curl google.com | grep 301)" = "" ]; do
   fi
   sleep 45s
 done
+echo "sudo $BASEDIR/kill-switch-network.sh" | bash
+echo "sudo $BASEDIR/reboot.sh" | bash
 echo "Update to Wifi Client mode"
