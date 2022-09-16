@@ -137,11 +137,14 @@ function recursiveConnect() {
       });
       backoffTime = 100;
     } else {
-      console.log('should retry client', wifiCmd);
-      exec(wifiCmd, () => {
-        return process.exit(0);
+      console.log('switch to wifi setup', apCmd);
+      return exec(apCmd, (...args1) => {
+        console.log(args1);
+        exec(apCmd, (...args2) => {
+          console.log(args2);
+          return process.exit(0);
+        });
       });
-      return;
     }
     console.log(err);
     return delay(backoffTime).then(() => {
