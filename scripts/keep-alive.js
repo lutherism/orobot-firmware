@@ -25,9 +25,9 @@ console.log = function(...args) {
 require('log-timestamp')
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 const wifiCmd = 'sudo ' +
-  __dirname + '/../switch-to-wifi-client.sh >> ' + __dirname + '/../tmp/run.log\'';
+  __dirname + '/../switch-to-wifi-client.sh >> ' + __dirname + '/../tmp/run.log';
 const apCmd = 'sudo ' +
-  __dirname + '/../switch-to-wifi-ap.sh >> ' + __dirname + '/../tmp/run.log\'';
+  __dirname + '/../switch-to-wifi-ap.sh >> ' + __dirname + '/../tmp/run.log';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
   'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
