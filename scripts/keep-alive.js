@@ -105,6 +105,7 @@ function end () { //optional
 const delay = ms => new Promise(res => setTimeout(res, ms))
 let backoffTime = 100;
 const MAX_DELAY = 6000;
+const MAX_AP_DELAY = 24000;
 let failsTillAPMode = 100;
 
 function recursiveConnect() {
@@ -133,6 +134,12 @@ function recursiveConnect() {
         networkMode: 'client'
       });
       backoffTime = 100;
+    } else if (backoffTime < MAX_AP_DELAY) {
+      console.log('retry client', wifiCmd);
+      exec(wifiCmd, (...args1) => {
+        console.log(args1);
+      });
+      backoffTime *= 2;
     } else {
       console.log('switch to wifi setup', apCmd);
       upsertDeviceData({
