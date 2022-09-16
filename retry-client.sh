@@ -1,7 +1,7 @@
 BASEDIR="/home/pi/orobot-firmware"
 script_name=$(basename -- "$0")
 
-if pidof -x "$script_name" -o $$ >/dev/null;then
+if pidof -x "$script_name" -o $$ >/dev/null;
 then
   echo "Duplicate process"
   exit 0;
