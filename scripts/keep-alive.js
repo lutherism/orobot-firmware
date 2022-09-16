@@ -118,7 +118,6 @@ if (singleton.DeviceData.networkMode === 'client') {
   console.log('should switch to client', apCmd);
   return exec(wifiCmd, (...args1) => {
     console.log(args1);
-    return process.exit(0);
   });
 }
 
