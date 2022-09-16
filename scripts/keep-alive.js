@@ -24,10 +24,10 @@ console.log = function(...args) {
 }
 require('log-timestamp')
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
-const wifiCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh; sleep 2 && sudo ' +
-  __dirname + '/../retry-client.sh >> ' + __dirname + '/../tmp/run.log\'';
-const apCmd = 'sudo bash -c \'sudo ' + __dirname + '/../kill-switch-network.sh; sleep 2 && sudo ' +
-  __dirname + '/../retry-ap.sh >> ' + __dirname + '/../tmp/run.log\'';
+const wifiCmd = 'sudo ' +
+  __dirname + '/../switch-to-wifi-client.sh >> ' + __dirname + '/../tmp/run.log\'';
+const apCmd = 'sudo ' +
+  __dirname + '/../switch-to-wifi-ap.sh >> ' + __dirname + '/../tmp/run.log\'';
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
   'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
