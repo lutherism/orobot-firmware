@@ -145,7 +145,7 @@ function recursiveConnect() {
       upsertDeviceData({
         networkMode: 'ap'
       });
-      return exec(apCmd, (...args1) => {
+      exec(apCmd, (...args1) => {
         console.log(args1);
         process.exit(0);
       });

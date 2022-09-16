@@ -5,6 +5,7 @@ then
 fi
 
 sudo /root/.nvm/versions/node/v8.17.0/bin/node -e "require('./scripts/switch-to-wifi-ap.js').upWifiAP()"
+sleep 2;
 sudo ip addr flush dev wlan0
 sudo ip addr add 192.168.0.172 dev wlan0
 sudo rfkill unblock all
