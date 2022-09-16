@@ -3,5 +3,6 @@
     "ssid": "The Internet",
     "password": "alexjansen"
   },
-  "type": "wifi-motor"
+  "type": "wifi-motor",
+  "networkMode": "client"
 }

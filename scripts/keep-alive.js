@@ -110,13 +110,13 @@ let failsTillAPMode = 100;
 
 if (singleton.DeviceData.networkMode === 'ap') {
   console.log('should switch to AP', apCmd);
-  return exec(apCmd, (...args1) => {
+  exec(apCmd, (...args1) => {
     console.log(args1);
   });
 }
 if (singleton.DeviceData.networkMode === 'client') {
   console.log('should switch to client', apCmd);
-  return exec(wifiCmd, (...args1) => {
+  exec(wifiCmd, (...args1) => {
     console.log(args1);
   });
 }
