@@ -117,9 +117,9 @@ function recursiveConnect() {
   }
   if (singleton.DeviceData.networkMode === 'ap') {
     console.log('should switch to AP', apCmd);
-    return fork(apCmd, {silent: false}, (...args1) => {
+    return exec(apCmd, (...args1) => {
       console.log(args1);
-      fork(apCmd, {silent: false}, (...args2) => {
+      exec(apCmd, (...args2) => {
         console.log(args2);
         return process.exit(0);
       });
