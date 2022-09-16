@@ -103,9 +103,10 @@ function end () { //optional
 });
 
 const delay = ms => new Promise(res => setTimeout(res, ms))
-let backoffTime = 100;
-const MAX_DELAY = 6000;
-const MAX_AP_DELAY = 24000;
+let backoffTime = 2000;
+let iterations = 0;
+const RETRY_CLIENT = 10;
+const SWITCH_TO_AP = 20;
 let failsTillAPMode = 100;
 
 if (singleton.DeviceData.networkMode === 'ap') {
@@ -113,6 +114,7 @@ if (singleton.DeviceData.networkMode === 'ap') {
   exec(apCmd, (...args1) => {
     console.log(args1);
   });
+  process.exit(0);
 }
 if (singleton.DeviceData.networkMode === 'client') {
   console.log('should switch to client', apCmd);
@@ -131,30 +133,23 @@ function recursiveConnect() {
   }
   return keepOpenGatewayConnection()
   .catch((err) => {
+    iterations++;
     console.log(`err happened, backoff at ${backoffTime}ms`, err);
     // assumes that the error is "request made too soon"
-    if (backoffTime < MAX_DELAY) {
-      backoffTime *= 2;
-    } else if (singleton.DeviceData.networkMode === 'dev') {
-      upsertDeviceData({
-        networkMode: 'client'
-      });
-      backoffTime = 100;
-    } else if (backoffTime < MAX_AP_DELAY) {
+    if (iterations > RETRY_CLIENT) {
       console.log('retry client', wifiCmd);
       exec(wifiCmd, (...args1) => {
         console.log(args1);
       });
-      backoffTime *= 2;
-    } else {
+    } else if (iterations > SWITCH_TO_AP) {
       console.log('switch to wifi setup', apCmd);
       upsertDeviceData({
         networkMode: 'ap'
       });
       exec(apCmd, (...args1) => {
         console.log(args1);
-        process.exit(0);
       });
+      process.exit(0);
     }
     console.log(err);
     return delay(backoffTime).then(() => {

@@ -7,6 +7,7 @@ fi
 sudo /root/.nvm/versions/node/v8.17.0/bin/node -e "require('/home/pi/orobot-firmware/scripts/switch-to-wifi-client.js').writeWPAConf()"
 sudo systemctl stop hostapd.service
 sudo systemctl stop dnsmasq.service
+sudo systemctl stop wpa_supplicant
 sudo rfkill unblock all
 sudo killall dhcpd
 sudo killall wpa_supplicant
