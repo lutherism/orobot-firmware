@@ -1,7 +1,8 @@
 BASEDIR="/home/pi/orobot-firmware"
 NODE_BIN="/root/.nvm/versions/node/v8.17.0/bin/node"
+script_name=$(basename -- "$0")
 
-if ps ax | grep -v grep | grep "retry-ap.sh" > /dev/null
+if pidof -x "$script_name" -o $$ >/dev/null;then
 then
   echo "Duplicate process"
   exit 0;

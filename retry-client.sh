@@ -1,6 +1,7 @@
 BASEDIR="/home/pi/orobot-firmware"
+script_name=$(basename -- "$0")
 
-if ps ax | grep -v grep | grep "retry-client.sh" > /dev/null
+if pidof -x "$script_name" -o $$ >/dev/null;then
 then
   echo "Duplicate process"
   exit 0;
