@@ -119,10 +119,7 @@ function recursiveConnect() {
     console.log('should switch to AP', apCmd);
     return exec(apCmd, (...args1) => {
       console.log(args1);
-      exec(apCmd, (...args2) => {
-        console.log(args2);
-        return process.exit(0);
-      });
+      return process.exit(0);
     });
   }
   return keepOpenGatewayConnection()
@@ -138,12 +135,12 @@ function recursiveConnect() {
       backoffTime = 100;
     } else {
       console.log('switch to wifi setup', apCmd);
+      upsertDeviceData({
+        networkMode: 'ap'
+      });
       return exec(apCmd, (...args1) => {
         console.log(args1);
-        exec(apCmd, (...args2) => {
-          console.log(args2);
-          return process.exit(0);
-        });
+        process.exit(0);
       });
     }
     console.log(err);
