@@ -1,4 +1,4 @@
-if [ "$(curl google.com | grep 301)" = "" ];
+if [ "$(curl google.com | grep 301)" != "" ];
 then
   echo "Already a wifi client";
   exit 0;

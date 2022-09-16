@@ -1,4 +1,4 @@
-if [ "$(iw wlan0 info | grep 'type AP')" = "" ];
+if [ "$(iw wlan0 info | grep 'type AP')" != "" ];
 then
   echo 'Already an AP';
   exit 0;
