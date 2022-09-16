@@ -35,7 +35,7 @@ app.post('/api/wifi', (req, res) => {
     networkMode: 'client'
   });
   res.send('ok');
-  exec('sudo /home/pi/orobot-firmware/retry-client.sh', () => {
+  exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
     exec('sudo /home/pi/orobot-firmware/reboot.sh');
   });
 });
