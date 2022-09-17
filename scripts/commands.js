@@ -14,10 +14,10 @@ let COIL_PINS;
 
 if (singleton.DeviceData.hardware === 'banana') {
   COIL_PINS= [
-    0,
-    1,
-    3,
-    2
+    17,
+    18,
+    22,
+    27
   ];
 } else {
   COIL_PINS= [
