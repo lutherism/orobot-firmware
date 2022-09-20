@@ -109,20 +109,6 @@ const RETRY_CLIENT = 10;
 const SWITCH_TO_AP = 20;
 let failsTillAPMode = 100;
 
-if (singleton.DeviceData.networkMode === 'ap') {
-  console.log('should switch to AP', apCmd);
-  exec(apCmd, (...args1) => {
-    console.log(args1);
-  });
-  process.exit(0);
-}
-if (singleton.DeviceData.networkMode === 'client') {
-  console.log('should switch to client', apCmd);
-  exec(wifiCmd, (...args1) => {
-    console.log(args1);
-  });
-}
-
 function recursiveConnect() {
   console.log('attempting to connect');
   if (!singleton.DeviceData.wifiSettings ||
@@ -130,6 +116,10 @@ function recursiveConnect() {
     upsertDeviceData({
       networkMode: 'ap'
     });
+  }
+  if (singleton.DeviceData.networkMode === 'ap') {
+    console.log('exiting connect loop for ap mode');
+    return;
   }
   return keepOpenGatewayConnection()
   .catch((err) => {
@@ -161,7 +151,6 @@ function recursiveConnect() {
   });
 }
 
-recursiveConnect();
 
 let interval = null;
 
@@ -340,3 +329,21 @@ function keepOpenGatewayConnection() {
     }
   });
 }
+
+function run() {
+  if (singleton.DeviceData.networkMode === 'ap') {
+    console.log('should switch to AP', apCmd);
+    exec(apCmd, (...args1) => {
+      console.log(args1);
+    });
+  }
+  if (singleton.DeviceData.networkMode === 'client') {
+    console.log('should switch to client', apCmd);
+    exec(wifiCmd, (...args1) => {
+      console.log(args1);
+    });
+    recursiveConnect();
+  }
+}
+
+run();

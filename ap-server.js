@@ -14,7 +14,9 @@ app.use(bodyParser.json());
 app.post('/api/goto-client', (req, res) => {
   res.send('ok');
   exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
-    exec('sudo /home/pi/orobot-firmware/reboot.sh');
+    exec('sudo /home/pi/orobot-firmware/kill-keep-alive.sh', () => {
+      exec('sudo /home/pi/orobot-firmware/reboot.sh');
+    });
   });
 });
 
