@@ -136,11 +136,13 @@ function recursiveConnect() {
     iterations++;
     console.log(`err happened, backoff at ${backoffTime}ms`, err);
     // assumes that the error is "request made too soon"
-    if (iterations > RETRY_CLIENT) {
+    if (iterations > RETRY_CLIENT &&
+      iterations < SWITCH_TO_AP) {
       console.log('retry client', wifiCmd);
       exec(wifiCmd, (...args1) => {
         console.log(args1);
       });
+      backoffTime = 5000;
     } else if (iterations > SWITCH_TO_AP) {
       console.log('switch to wifi setup', apCmd);
       upsertDeviceData({

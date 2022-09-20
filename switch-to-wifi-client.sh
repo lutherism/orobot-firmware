@@ -11,5 +11,5 @@ sudo ifconfig wlan0 down
 sudo ifconfig wlan0 up
 sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf &
 sleep 3
-sudo dhclient &
+sudo dhclient wlan0 &
 sudo systemctl restart dnsmasq

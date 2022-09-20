@@ -19,6 +19,7 @@ update_config=1
 network={
  ssid="${singleton.DeviceData.wifiSettings.ssid}"
  psk="${singleton.DeviceData.wifiSettings.password}"
+ priority=100
 }
 `;
 }
