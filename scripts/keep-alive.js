@@ -170,15 +170,16 @@ function intervalHeartbeat(msDelay = 8000) {
       method: 'post',
       json: true,
       body: hb
-    }).then(b => {
+    })
+    .catch(e => console.log('hb err'))
+    .then(b => {
       if (heartbeatLogging) {
         process.stdout.write(".");
       } else {
-        process.stdout.write(`[${(new Date().toISOString())}] heartbeat .`);
+        process.stdout.write(`[${(new Date().toISOString())}] heartbeat `);
         heartbeatLogging = true;
       }
-    })
-    .catch(e => console.log('hb err'));
+    });
     syncLogsIfAfterGap();
   };
   heartPump();
@@ -339,10 +340,17 @@ function run() {
   }
   if (singleton.DeviceData.networkMode === 'client') {
     console.log('should switch to client', apCmd);
-    exec(wifiCmd, (...args1) => {
-      console.log(args1);
+    authRequest({
+      url: '/test'
+    }).catch((err) => {
+      console.log('failed to connect to server.', err)
+      exec(wifiCmd, (...args1) => {
+        console.log('client reconfiged, retrying run');
+        run();
+      });
+    }).then(() => {
+      recursiveConnect();
     });
-    recursiveConnect();
   }
 }
 

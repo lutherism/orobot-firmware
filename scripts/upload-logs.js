@@ -5,7 +5,7 @@ const {singleton,
   upsertDeviceData,
   refreshDeviceData} = require('./device-data.js');
 
-const filesToUpload = ['run.log', 'run-err.log', 'reboot.log', 'web.log'];
+const filesToUpload = ['run.log', 'run-err.log', 'reboot.log'];
 const logsRootDir = 'tmp';
 const deleteLogsOnUpload = true;
 const gapBetweenUploads = 1000 * 60 * 60 * 24;
