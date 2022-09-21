@@ -11,4 +11,3 @@ sudo systemctl enable hostapd
 sudo systemctl restart hostapd.service
 sudo systemctl restart nginx
 sudo /root/.nvm/versions/node/v8.17.0/bin/node ap-server.js >> /home/pi/orobot-firmware/tmp/run.log &
-sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf &
