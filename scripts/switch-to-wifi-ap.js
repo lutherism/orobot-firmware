@@ -86,12 +86,13 @@ wpa_passphrase=wifisetup
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP
-DAEMON_OPTS="-dd -t -f /home/pi/hostapd.log"`;
+`;
 }
 
 const defaultHostAPDConf = () => {
   return `
   DAEMON_CONF="/etc/hostapd/hostapd.conf"
+  DAEMON_OPTS="-dd -t -f /home/pi/hostapd.log"
 `;
 };
 
