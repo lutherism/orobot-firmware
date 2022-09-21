@@ -8,11 +8,12 @@ sudo systemctl stop networking
 sudo rfkill unblock all
 sudo killall dhcpd
 sudo killall dhclient
-sudo killall wpa_suppplicant
+sudo killall wpa_supplicant
 sudo killall dnsmasq
+sudo iwconfig wlan0 power off
 sudo ifconfig wlan0 down
 sudo ifconfig wlan0 up
-sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf
+sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf &
 sleep 3
 sudo dhclient wlan0 &
 sudo systemctl restart dnsmasq
