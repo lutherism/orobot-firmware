@@ -252,7 +252,10 @@ function handleWebSocketMessage(e) {
           networkMode: messageObj.data
         });
       }
-      delay(1000).then(() => client.close());
+      delay(1000).then(() => {
+        client.close();
+        run();
+      });
     } else if (messageObj.type === 'getDeviceData') {
       client.send(JSON.stringify({
         type: 'device-data-read',
