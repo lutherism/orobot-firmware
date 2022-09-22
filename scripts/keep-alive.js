@@ -105,8 +105,8 @@ function end () { //optional
 const delay = ms => new Promise(res => setTimeout(res, ms))
 let backoffTime = 2000;
 let iterations = 0;
-const RETRY_CLIENT = 10;
-const SWITCH_TO_AP = 20;
+const RETRY_CLIENT = 40;
+const SWITCH_TO_AP = 100;
 let failsTillAPMode = 100;
 
 function recursiveConnect() {
