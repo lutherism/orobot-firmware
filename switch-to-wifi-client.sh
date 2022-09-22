@@ -13,5 +13,6 @@ sudo killall dnsmasq
 sudo iwconfig wlan0 power off
 sudo ifconfig wlan0 down
 sudo ifconfig wlan0 up
-sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf | sudo awk '/Associated with/ {system("sudo dhclient &")} 1'
+sudo wpa_supplicant -i wlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf | \
+  sudo awk '/Associated with/{system("sudo dhclient &")} {print}'
 sudo systemctl restart dnsmasq

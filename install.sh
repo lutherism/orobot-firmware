@@ -16,5 +16,6 @@ cd /home/pi/orobot-firmware
 git pull
 npm i
 sudo crontab /home/pi/reboot.cron
+sudo echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
 sudo service cron reload
 ./factory-reset.sh
