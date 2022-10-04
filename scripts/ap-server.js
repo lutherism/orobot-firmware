@@ -3,6 +3,8 @@ const app = express()
 const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const bodyParser = require('body-parser');
+const process = require('process');
+
 const {
   singleton,
   upsertDeviceData
@@ -11,7 +13,6 @@ const logger = require('koa-logger');
 const EventEmitter = require('events');
 const apServerEvents = new EventEmitter();
 var morgan = require('morgan');
-console.log(__dirname + '../public');
 app.use(morgan('combined'));
 app.use(express.static(__dirname + '/../public'));
 app.use(bodyParser.json());
@@ -27,11 +28,19 @@ app.post('/api/goto-client', (req, res) => {
 });
 
 app.get('/api/wifi', (req, res) => {
-  const results = exec("sudo iwlist wlan0 scan", (e, o, err) => {
-    res.send({
-      wifi: o.split('      Cell')
+  console.log('what');
+  console.log(process.platform);
+  if (process.platform === 'darwin') {
+    exec('/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport --scan', (e, o, err) => {
+      res.send({macWifi: o.split('\n')});
     });
-  });
+  } else {
+    const results = exec("sudo iwlist wlan0 scan", (e, o, err) => {
+      res.send({
+        wifi: o.split('      Cell')
+      });
+    });
+  }
 });
 
 app.post('/api/wifi', (req, res) => {
