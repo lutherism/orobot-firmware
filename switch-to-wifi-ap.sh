@@ -10,4 +10,5 @@ sudo systemctl unmask hostapd
 sudo systemctl enable hostapd
 sudo systemctl restart hostapd.service
 sudo systemctl restart nginx
+sudo systemctl restart isc-dhcp-server
 sudo /root/.nvm/versions/node/v8.17.0/bin/node ap-server.js >> /home/pi/orobot-firmware/tmp/run.log &
