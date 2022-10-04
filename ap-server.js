@@ -7,9 +7,13 @@ const {
   singleton,
   upsertDeviceData
 } = require('./scripts/device-data.js');
+const logger = require('koa-logger');
+const EventEmitter = require('events');
+const apServerEvents = new EventEmitter();
 
 app.use(express.static('public'));
 app.use(bodyParser.json());
+app.use(logger());
 
 app.post('/api/goto-client', (req, res) => {
   res.send('ok');
@@ -38,8 +42,13 @@ app.post('/api/wifi', (req, res) => {
   });
   res.send('ok');
   exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
-    exec('sudo /home/pi/orobot-firmware/reboot.sh');
+    apServerEvents.emit('switch-to-client');
   });
 });
 
-app.listen(3006);
+module.exports = {
+  apServerEvents,
+  apServerListen: () => {
+    app.listen(3006);
+  }
+}

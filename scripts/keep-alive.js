@@ -9,6 +9,9 @@ const { Duplex } = require('stream');
 var {syncLogsIfAfterGap} = require('./upload-logs');
 const {exec, fork} = require('child_process');
 var {authRequest} = require('./api.js');
+const {
+  apServerEvents, apServerListen
+} = require('../ap-server.js');
 
 const {singleton,
   upsertDeviceData,
@@ -140,8 +143,8 @@ function recursiveConnect() {
       });
       exec(apCmd, (...args1) => {
         console.log(args1);
+        apServerListen();
       });
-      process.exit(0);
     }
     console.log(err);
     return delay(backoffTime).then(() => {
@@ -339,6 +342,7 @@ function run() {
     console.log('should switch to AP', apCmd);
     exec(apCmd, (...args1) => {
       console.log(args1);
+      apServerListen();
     });
   }
   if (singleton.DeviceData.networkMode === 'client') {
@@ -356,5 +360,12 @@ function run() {
     });
   }
 }
+
+apServerEvents.on('switch-to-client', () => {
+  upsertDeviceData({
+    networkMode: 'client'
+  });
+  run();
+});
 
 run();
