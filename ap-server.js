@@ -10,10 +10,11 @@ const {
 const logger = require('koa-logger');
 const EventEmitter = require('events');
 const apServerEvents = new EventEmitter();
+var morgan = require('morgan');
 
 app.use(express.static('public'));
 app.use(bodyParser.json());
-app.use(logger());
+app.use(morgan('combined'));
 
 app.post('/api/goto-client', (req, res) => {
   res.send('ok');
