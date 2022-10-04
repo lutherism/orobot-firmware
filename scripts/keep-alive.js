@@ -11,7 +11,7 @@ const {exec, fork} = require('child_process');
 var {authRequest} = require('./api.js');
 const {
   apServerEvents, apServerListen
-} = require('../ap-server.js');
+} = require('./ap-server.js');
 
 const {singleton,
   upsertDeviceData,

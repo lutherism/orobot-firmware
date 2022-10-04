@@ -6,15 +6,16 @@ const bodyParser = require('body-parser');
 const {
   singleton,
   upsertDeviceData
-} = require('./scripts/device-data.js');
+} = require('./device-data.js');
 const logger = require('koa-logger');
 const EventEmitter = require('events');
 const apServerEvents = new EventEmitter();
 var morgan = require('morgan');
-
-app.use(express.static('public'));
-app.use(bodyParser.json());
+console.log(__dirname + '../public');
 app.use(morgan('combined'));
+app.use(express.static(__dirname + '/../public'));
+app.use(bodyParser.json());
+
 
 app.post('/api/goto-client', (req, res) => {
   res.send('ok');
