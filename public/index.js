@@ -45765,7 +45765,7 @@ class Home extends Component {
               body: JSON.stringify({
                 ssid: n.ssid,
                 mac: n.mac,
-                password: n.psk
+                password: n.password
               })
             }).then(r => r.json()).then(r => {
               this.setState({

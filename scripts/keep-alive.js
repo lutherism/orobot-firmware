@@ -350,10 +350,32 @@ function run() {
     authRequest({
       url: '/test'
     }).catch((err) => {
-      console.log('failed to connect to server.', err)
-      exec(wifiCmd, (...args1) => {
-        console.log('client reconfiged, retrying run');
-        run();
+      const results = exec("sudo iwlist wlan0 scan", (e, o, err) => {
+        const networks = o.split('      Cell');
+        const matchingNetworks = networks
+          .map(networkString => {
+            return networkString.split('\n                    ')
+              .find(row => {
+                return row.indexOf('ESSID') > -1 &&
+                  row.indexOf(singleton.DeviceData.wifiSettings.ssid) > -1;
+              });
+          }).filter(x => x);
+          if (matchingNetworks.length === 0) {
+            console.log(`Wifi Setting ${singleton.DeviceData.wifiSettings.ssid} not found. Switching to AP`);
+            upsertDeviceData({
+              networkMode: 'ap'
+            });
+            exec(apCmd, (...args1) => {
+              console.log(args1);
+              apServerListen();
+            });
+          } else {
+            console.log('failed to connect to server.', err)
+            exec(wifiCmd, (...args1) => {
+              console.log('client reconfiged, retrying run');
+              run();
+            });
+          }
       });
     }).then(() => {
       recursiveConnect();
@@ -362,9 +384,7 @@ function run() {
 }
 
 apServerEvents.on('switch-to-client', () => {
-  upsertDeviceData({
-    networkMode: 'client'
-  });
+  console.log(`Switching to Wifi ${singleton.wifiSettings.ssid}`);
   run();
 });
 
