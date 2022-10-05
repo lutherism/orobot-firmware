@@ -39,7 +39,7 @@ app.get('/api/wifi', (req, res) => {
       res.send({macWifi: o.split('\n')});
     });
   } else {
-    const results = exec("sudo iwlist wlan0 scan", (e, o, err) => {
+    const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
       res.send({
         wifi: o.split('      Cell')
       });
