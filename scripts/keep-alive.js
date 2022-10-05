@@ -296,6 +296,9 @@ function keepOpenGatewayConnection() {
       });
       client.onopen = function() {
         console.log(`WebSocket Client Connected to ${getConfigedWSURL()} ${client.readyState}`);
+        if (client.readyState === 0) {
+          reject();
+        }
         client.send(JSON.stringify({
           type: 'identify-connection',
           deviceUuid: singleton.DeviceData.deviceUuid}));
