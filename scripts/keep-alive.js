@@ -352,7 +352,11 @@ function run() {
     console.log('should switch to client', apCmd);
     authRequest({
       url: '/test'
-    }).catch((err) => {
+    })
+    .then(() => {
+      recursiveConnect();
+    })
+    .catch((err) => {
       const results = exec("sudo iwlist wlan0 scan", (e, o, err) => {
         const networks = o.split('      Cell');
         const matchingNetworks = networks
@@ -380,8 +384,6 @@ function run() {
             });
           }
       });
-    }).then(() => {
-      recursiveConnect();
     });
   }
 }
