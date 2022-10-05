@@ -384,7 +384,7 @@ function run() {
 }
 
 apServerEvents.on('switch-to-client', () => {
-  console.log(`Switching to Wifi ${singleton.wifiSettings.ssid}`);
+  console.log(`Switching to Wifi ${singleton.DeviceData.wifiSettings.ssid}`);
   run();
 });
 
