@@ -55,7 +55,7 @@ app.post('/api/wifi', (req, res) => {
       password: req.body.password
     },
     knownNetworks: [
-      ...singleton.DeviceData.knownNetworks,
+      ...(singleton.DeviceData.knownNetworks || []),
       {
         ssid: req.body.ssid,
         mac: req.body.mac,

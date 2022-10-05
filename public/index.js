@@ -45432,7 +45432,7 @@ const Component = React.Component;
 const { Input } = require('baseui/input');
 const { Button, KIND } = require('baseui/button');
 const { Spinner } = require("baseui/spinner");
-const API_BASE = false ? 'http://192.168.4.1' : '';
+const API_BASE = true ? 'http://192.168.4.1' : '';
 
 function ListWifi({
   uniqueNetworks,
@@ -45546,7 +45546,7 @@ function parseWifiScanOutput(output) {
         if (line.indexOf('Address:') > -1) {
           a['mac'] = line.slice(15);
         }
-        if (line.indexOf('Encryption key') === 0) {
+        if (line.indexOf('IE: IEEE') === 0) {
           a['security'] = line.slice(15);
         }
         return a;
@@ -45572,7 +45572,7 @@ class ConnectionForm extends Component {
   componentDidMount() {}
   render() {
     if (!this.props.connection) {
-      return null;
+      return React.createElement('span', null);
     }
     if (this.props.connection && this.props.connection.security.indexOf('802.1x') > -1) {
       return React.createElement(
@@ -45629,7 +45629,7 @@ class ConnectionForm extends Component {
         )
       );
     }
-    if (this.props.connection && this.props.connection.security.indexOf('802.1x') > -1) {
+    if (this.props.connection && this.props.connection.security.indexOf('WPA2') > -1) {
       return React.createElement(
         'form',
         { onSubmit: e => {
@@ -45773,7 +45773,26 @@ class Home extends Component {
               });
             });
           },
-          onSelect: network => this.setState({ connection: network }) }) : null
+          onSelect: network => {
+            if (network.security.indexOf('NONE') > -1) {
+              fetch(API_BASE + '/api/wifi', {
+                method: 'post',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  ssid: network.ssid,
+                  mac: network.mac,
+                  password: network.psk
+                })
+              }).then(r => r.json()).then(r => {
+                this.setState({
+                  result: r.msg
+                });
+              });
+            }
+            this.setState({ connection: network });
+          } }) : null
       )
     );
   }
