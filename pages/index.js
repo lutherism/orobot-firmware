@@ -3,7 +3,7 @@ const Component = React.Component;
 const {Input} = require('baseui/input');
 const {Button, KIND} = require('baseui/button');
 const { Spinner } = require("baseui/spinner");
-const API_BASE = true ? 'http://192.168.4.1' : '';
+const API_BASE = false ? 'http://192.168.4.1' : '';
 
 function ListWifi({
   uniqueNetworks,
