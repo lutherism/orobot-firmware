@@ -27,9 +27,13 @@ app.post('/api/goto-client', (req, res) => {
   });
 });
 
+app.get('/api/known-wifi', (req, res) => {
+  res.send({
+    knownNetworks: singleton.DeviceData.knownNetworks || []
+  });
+});
+
 app.get('/api/wifi', (req, res) => {
-  console.log('what');
-  console.log(process.platform);
   if (process.platform === 'darwin') {
     exec('/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport --scan', (e, o, err) => {
       res.send({macWifi: o.split('\n')});
@@ -44,11 +48,26 @@ app.get('/api/wifi', (req, res) => {
 });
 
 app.post('/api/wifi', (req, res) => {
+  const uniqueKnownMacs = {};
   upsertDeviceData({
     wifiSettings: {
       ssid: req.body.ssid,
       password: req.body.password
     },
+    knownNetworks: [
+      ...singleton.DeviceData.knownNetworks,
+      {
+        ssid: req.body.ssid,
+        mac: req.body.mac,
+        password: req.body.password
+      }
+    ].filter(n => {
+      if (!uniqueKnownMacs[n.mac]) {
+        uniqueKnownMacs[n.mac] = true;
+        return true;
+      }
+      return false;
+    }),
     networkMode: 'client'
   });
   res.send('ok');

@@ -4,7 +4,7 @@ BASEDIR="/home/pi/orobot-firmware"
 nvm use 8
 NODE_BIN="/root/.nvm/versions/node/v8.17.0/bin/node"
 
-$LOGNAME="reset.log"
+LOGNAME="run.log"
 
 #!/bin/bash
 mkdir tmp
