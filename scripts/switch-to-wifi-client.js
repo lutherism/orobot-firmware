@@ -12,6 +12,28 @@ const hostAPDPath = "/etc/hostapd/hostapd.conf";
 const dhcpPath = "/etc/dhcpcd.conf";
 
 const createWPAConf = () => {
+  if (singleton.DeviceData.wifiSettings.username) {
+    return `country=US
+  ctrl_interface=/run/wpa_supplicant
+  update_config=1
+  freq_list=2412 2417 2422 2427 2432 2437 2442 2447 2452 2457 2462 2467 2472
+
+  network={
+    proto=RSN
+	key_mgmt=WPA-EAP
+	pairwise=CCMP
+	auth_alg=OPEN
+	eap=PEAP
+	phase2="auth=MSCHAPV2"
+	identity="$USERNAME"
+	password=hash:$PASSWORD
+   ssid="${singleton.DeviceData.wifiSettings.ssid}"
+   password="${singleton.DeviceData.wifiSettings.password}"
+   identity="${singleton.DeviceData.wifiSettings.username}"
+   priority=100
+  }
+  `;
+  }
   return `country=US
 ctrl_interface=/run/wpa_supplicant
 update_config=1

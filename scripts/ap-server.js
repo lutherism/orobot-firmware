@@ -52,6 +52,7 @@ app.post('/api/wifi', (req, res) => {
   upsertDeviceData({
     wifiSettings: {
       ssid: req.body.ssid,
+      username: req.body.username,
       password: req.body.password
     },
     knownNetworks: [
@@ -62,7 +63,7 @@ app.post('/api/wifi', (req, res) => {
         password: req.body.password
       }
     ].filter(n => {
-      if (!uniqueKnownSSIDs[n.ssid]) {
+      if (!uniqueKnownSSIDs[n.ssid] && !n.username) {
         uniqueKnownSSIDs[n.ssid] = true;
         return true;
       }
