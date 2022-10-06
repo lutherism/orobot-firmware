@@ -14,7 +14,8 @@ nvm install 8.17.0
 nvm use 8.17.0
 cd /home/pi/orobot-firmware
 git pull
-npm i
+sudo npm i
+sudo npm rebuild
 sudo crontab /home/pi/reboot.cron
 sudo echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
 sudo service cron reload

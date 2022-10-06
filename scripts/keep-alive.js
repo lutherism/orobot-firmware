@@ -357,7 +357,7 @@ function run() {
       recursiveConnect();
     })
     .catch((err) => {
-      const results = exec("sudo iwlist wlan0 scan", (e, o, err) => {
+      const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
         const networks = o.split('      Cell');
         const matchingNetworks = networks
           .map(networkString => {
