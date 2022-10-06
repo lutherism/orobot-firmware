@@ -9,7 +9,6 @@ $LOGNAME="reset.log"
 #!/bin/bash
 mkdir tmp
 touch tmp/$LOGNAME
-echo $(date) Run >> $BASEDIR/tmp/reboot.log
 export DISPLAY=:0 #needed if you are running a simple gui app.
 
 process="v8.17.0/bin/node"
