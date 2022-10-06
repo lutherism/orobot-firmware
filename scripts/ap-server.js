@@ -62,8 +62,8 @@ app.post('/api/wifi', (req, res) => {
         password: req.body.password
       }
     ].filter(n => {
-      if (!uniqueKnownMacs[n.ssid]) {
-        uniqueKnownMacs[n.ssid] = true;
+      if (!uniqueKnownSSIDs[n.ssid]) {
+        uniqueKnownSSIDs[n.ssid] = true;
         return true;
       }
       return false;
