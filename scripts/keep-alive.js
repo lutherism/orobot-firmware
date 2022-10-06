@@ -391,7 +391,7 @@ function run() {
             setTimeout(() => {
               console.log('client reconfiged, retrying run');
               run();
-            }, 1500);
+            }, 2500);
           }
       });
     });
