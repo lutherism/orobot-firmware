@@ -48,7 +48,7 @@ app.get('/api/wifi', (req, res) => {
 });
 
 app.post('/api/wifi', (req, res) => {
-  const uniqueKnownMacs = {};
+  const uniqueKnownSSIDs = {};
   upsertDeviceData({
     wifiSettings: {
       ssid: req.body.ssid,
@@ -62,8 +62,8 @@ app.post('/api/wifi', (req, res) => {
         password: req.body.password
       }
     ].filter(n => {
-      if (!uniqueKnownMacs[n.mac]) {
-        uniqueKnownMacs[n.mac] = true;
+      if (!uniqueKnownMacs[n.ssid]) {
+        uniqueKnownMacs[n.ssid] = true;
         return true;
       }
       return false;

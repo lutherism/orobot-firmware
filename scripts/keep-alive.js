@@ -370,15 +370,16 @@ function run() {
               });
           }).filter(x => x);
           if (matchingNetworks.length === 0) {
-            console.log(`Wifi Setting ${singleton.DeviceData.wifiSettings.ssid} not found. Switching to AP`);
+            console.log(`Wifi Setting ${singleton.DeviceData.wifiSettings.ssid} not found.`);
             rescanCount--;
             if (rescanCount === 0) {
+              console.log('Switching to AP');
               upsertDeviceData({
                 networkMode: 'ap'
               });
+              apServerListen();
               exec(apCmd, (...args1) => {
                 console.log(args1);
-                apServerListen();
               });
               rescanCount = 5;
             }
