@@ -80,6 +80,11 @@ app.post('/api/wifi', (req, res) => {
 module.exports = {
   apServerEvents,
   apServerListen: () => {
-    app.listen(3006);
+    try {
+      app.listen(3006);
+      console.log('listening to 3006');
+    } catch (e) {
+
+    }
   }
 }

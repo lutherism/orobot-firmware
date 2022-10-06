@@ -3,6 +3,16 @@
     "ssid": "The Internet",
     "password": "alexjansen"
   },
+  "knownNetworks": [
+    {
+      "ssid": "Lynn Jansen\xE2\x80\x99s iPhone",
+      "password": "x154t2xp4wxhu"
+    },
+    {
+      "ssid": "The Internet",
+      "password": "alexjansen"
+    }
+  ]
   "type": "wifi-motor",
   "networkMode": "client"
 }

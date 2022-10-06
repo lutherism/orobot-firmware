@@ -340,6 +340,8 @@ function keepOpenGatewayConnection() {
   });
 }
 
+let rescanCount = 5;
+
 function run() {
   if (singleton.DeviceData.networkMode === 'ap') {
     console.log('should switch to AP', apCmd);
@@ -369,13 +371,17 @@ function run() {
           }).filter(x => x);
           if (matchingNetworks.length === 0) {
             console.log(`Wifi Setting ${singleton.DeviceData.wifiSettings.ssid} not found. Switching to AP`);
-            upsertDeviceData({
-              networkMode: 'ap'
-            });
-            exec(apCmd, (...args1) => {
-              console.log(args1);
-              apServerListen();
-            });
+            rescanCount--;
+            if (rescanCount === 0) {
+              upsertDeviceData({
+                networkMode: 'ap'
+              });
+              exec(apCmd, (...args1) => {
+                console.log(args1);
+                apServerListen();
+              });
+              rescanCount = 5;
+            }
           } else {
             console.log('failed to connect to server.', err)
             exec(wifiCmd);
