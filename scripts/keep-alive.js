@@ -382,6 +382,8 @@ function run() {
                 console.log(args1);
               });
               rescanCount = 5;
+            } else {
+              run();
             }
           } else {
             console.log('failed to connect to server.', err)
