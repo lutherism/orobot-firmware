@@ -56,6 +56,8 @@ source-directory /etc/network/interfaces.d
 auto wlan0
 iface wlan0 inet manual
 wpa_conf /etc/wpa_supplicant/wpa_supplicant.conf
+wpa_cli log_level debug
+pre-up wpa_supplicant -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf -B -f /var/log/wpa_supplicant.log
 `
 }
 
