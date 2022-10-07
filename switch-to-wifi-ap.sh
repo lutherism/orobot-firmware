@@ -5,7 +5,6 @@ sudo ip addr add 192.168.0.172 dev wlan0
 sudo rfkill unblock all
 sudo killall wpa_supplicant
 sudo systemctl restart dnsmasq.service
-sudo systemctl stop wpa_supplicant
 sudo systemctl unmask hostapd
 sudo systemctl enable hostapd
 sudo systemctl restart hostapd.service

@@ -17,7 +17,7 @@ ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
 
 network={
-    ssid=OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}
+    ssid="OROBOT-Setup-${singleton.DeviceData.deviceUuid.slice(0, 5)}"
     mode=2
     proto=wpa
     key_mgmt=WPA-PSK
@@ -109,7 +109,7 @@ ff02::2		ip6-allrouters
 }
 
 const upWifiAP = () => {
-  fs.writeFileSync(wpaConfPath, createWPAConf());
+  //fs.writeFileSync(wpaConfPath, createWPAConf());
   fs.writeFileSync(dnsConfPath, createDNSConf());
   fs.writeFileSync(hostsPath, createHosts());
   fs.writeFileSync(hostAPDPath, hostAPDConf());
