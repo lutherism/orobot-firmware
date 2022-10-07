@@ -409,4 +409,6 @@ apServerEvents.on('switch-to-client', () => {
   run();
 });
 
-run();
+setTimeout(() => {
+  run();
+}, 5000);
