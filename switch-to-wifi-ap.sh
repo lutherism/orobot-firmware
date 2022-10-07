@@ -12,3 +12,4 @@ sudo systemctl enable hostapd
 sudo systemctl restart hostapd.service
 sudo systemctl restart nginx
 sudo systemctl restart isc-dhcp-server
+sudo systemctl restart dhcpcd
