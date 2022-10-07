@@ -82,7 +82,7 @@ const writeWPAConf = () => {
   fs.writeFileSync(hostsPath, createHosts());
   fs.writeFileSync(hostAPDPath, hostAPDConf());
   fs.writeFileSync(dhcpPath, createDHCPConf());
-  fs.writeFileSync(networkingPath, createNetworkingConf)
+  fs.writeFileSync(networkingPath, createNetworkingConf())
 }
 
 module.exports = {
