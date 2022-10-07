@@ -10,6 +10,7 @@ const dnsConfPath = "/etc/dnsmasq.conf";
 const hostsPath = "/etc/hosts";
 const hostAPDPath = "/etc/hostapd/hostapd.conf";
 const dhcpPath = "/etc/dhcpcd.conf";
+const networkingPath = "/etc/network/interfaces";
 
 const createWPAConf = () => {
   if (singleton.DeviceData.wifiSettings.username) {
@@ -49,6 +50,15 @@ const createDHCPConf = () => {
   return ``
 }
 
+const createNetworkingConf = () => {
+  return `
+source-directory /etc/network/interfaces.d
+auto wlan0
+iface wlan0 inet manual
+wpa_conf /etc/wpa_supplicant/wpa_supplicant.conf
+`
+}
+
 const createDNSConf = () => {
   return '#empty';
 }
@@ -72,6 +82,7 @@ const writeWPAConf = () => {
   fs.writeFileSync(hostsPath, createHosts());
   fs.writeFileSync(hostAPDPath, hostAPDConf());
   fs.writeFileSync(dhcpPath, createDHCPConf());
+  fs.writeFileSync(networkingPath, createNetworkingConf)
 }
 
 module.exports = {
