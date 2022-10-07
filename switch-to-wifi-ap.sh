@@ -1,3 +1,4 @@
+sudo systemctl stop networking
 sudo /root/.nvm/versions/node/v8.17.0/bin/node -e "require('/home/pi/orobot-firmware/scripts/switch-to-wifi-ap.js').upWifiAP()"
 sleep 2;
 sudo ip addr flush dev wlan0
