@@ -383,7 +383,9 @@ function run() {
               });
               rescanCount = 5;
             } else {
-              run();
+              setTimeout(() => {
+                run();
+              }, 1000);
             }
           } else {
             console.log('failed to connect to server.', err);

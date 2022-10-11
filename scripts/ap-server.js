@@ -77,14 +77,18 @@ app.post('/api/wifi', (req, res) => {
   }, 1000);
 });
 
+let started = false;
 module.exports = {
   apServerEvents,
   apServerListen: () => {
-    try {
-      app.listen(3006);
-      console.log('listening to 3006');
-    } catch (e) {
+    if (!started) {
+      try {
+        app.listen(3006);
+        started = true;
+        console.log('listening to 3006');
+      } catch (e) {
 
+      }
     }
   }
 }
