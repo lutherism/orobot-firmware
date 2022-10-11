@@ -42,6 +42,7 @@ network={
  ssid="${singleton.DeviceData.wifiSettings.ssid}"
  psk="${singleton.DeviceData.wifiSettings.password}"
  priority=100
+ mode=1
 }
 `;
 }

@@ -386,7 +386,7 @@ function run() {
             } else {
               setTimeout(() => {
                 run();
-              }, 3000);
+              }, 6000);
             }
           } else {
             console.log('failed to connect to server.', err);
