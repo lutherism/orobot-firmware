@@ -386,7 +386,7 @@ function run() {
             } else {
               setTimeout(() => {
                 run();
-              }, 1000);
+              }, 3000);
             }
           } else {
             console.log('failed to connect to server.', err);
@@ -401,7 +401,7 @@ function run() {
               postReconfigTimeout = setTimeout(() => {
                 console.log('client reconfiged, retrying run');
                 run();
-              }, 5000);
+              }, 1000);
             });
           }
       });
