@@ -394,14 +394,14 @@ function run() {
               console.log('wifi command timedout.');
               clearTimeout(postReconfigTimeout);
               run();
-            }, 5000);
+            }, 10000);
             let postReconfigTimeout;
             exec(wifiCmd, () => {
               clearTimeout(timeout);
               postReconfigTimeout = setTimeout(() => {
                 console.log('client reconfiged, retrying run');
                 run();
-              }, 1000);
+              }, 5000);
             });
           }
       });
