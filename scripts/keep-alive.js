@@ -360,12 +360,13 @@ function run() {
     })
     .catch((err) => {
       const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
-        const networks = o.split('      Cell');
+        const networks = o.split(singleton.DeviceData.hardware === 'raspi' ?
+          '      Cell' : '\nBSS');
         const matchingNetworks = networks
           .map(networkString => {
-            return networkString.split('\n                    ')
+            return networkString.split('\n')
               .find(row => {
-                return row.indexOf('ESSID') > -1 &&
+                return row.indexOf('SSID') > -1 &&
                   row.indexOf(singleton.DeviceData.wifiSettings.ssid) > -1;
               });
           }).filter(x => x);
