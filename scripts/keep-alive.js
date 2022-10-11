@@ -383,27 +383,23 @@ function run() {
                 console.log(args1);
               });
               rescanCount = 5;
-            } else {
-              setTimeout(() => {
-                run();
-              }, 6000);
+              return;
             }
-          } else {
-            console.log('failed to connect to server.', err);
-            let timeout = setTimeout(() => {
-              console.log('wifi command timedout.');
-              clearTimeout(postReconfigTimeout);
-              run();
-            }, 10000);
-            let postReconfigTimeout;
-            exec(wifiCmd, () => {
-              clearTimeout(timeout);
-              postReconfigTimeout = setTimeout(() => {
-                console.log('client reconfiged, retrying run');
-                run();
-              }, 1000);
-            });
           }
+          console.log('failed to connect to server.', err);
+          let timeout = setTimeout(() => {
+            console.log('wifi command timedout.');
+            clearTimeout(postReconfigTimeout);
+            run();
+          }, 10000);
+          let postReconfigTimeout;
+          exec(wifiCmd, () => {
+            clearTimeout(timeout);
+            postReconfigTimeout = setTimeout(() => {
+              console.log('client reconfiged, retrying run');
+              run();
+            }, 1000);
+          });
       });
     });
   }
