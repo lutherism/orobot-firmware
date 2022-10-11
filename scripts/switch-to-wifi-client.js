@@ -34,7 +34,7 @@ network={
   `;
   }
   return `country=US
-ctrl_interface=/run/wpa_supplicant
+ctrl_interface=/var/run/wpa_supplicant
 update_config=1
 freq_list=2412 2417 2422 2427 2432 2437 2442 2447 2452 2457 2462 2467 2472
 
@@ -57,7 +57,7 @@ auto wlan0
 iface wlan0 inet manual
 wpa_conf /etc/wpa_supplicant/wpa_supplicant.conf
 wpa_cli log_level debug
-pre-up wpa_supplicant -B -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf -Dnl80211,wext -f /var/log/wpa_supplicant.log
+pre-up wpa_supplicant -B -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf -f /var/log/wpa_supplicant.log
 post-down wpa_cli -i wlan0 terminate
 `
 }
