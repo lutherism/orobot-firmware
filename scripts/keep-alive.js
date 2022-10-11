@@ -392,11 +392,13 @@ function run() {
             console.log('failed to connect to server.', err);
             let timeout = setTimeout(() => {
               console.log('wifi command timedout.');
+              clearTimeout(postReconfigTimeout);
               run();
             }, 5000);
+            let postReconfigTimeout;
             exec(wifiCmd, () => {
               clearTimeout(timeout);
-              setTimeout(() => {
+              postReconfigTimeout = setTimeout(() => {
                 console.log('client reconfiged, retrying run');
                 run();
               }, 1000);
