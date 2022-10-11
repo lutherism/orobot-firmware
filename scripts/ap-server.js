@@ -71,7 +71,6 @@ app.post('/api/wifi', (req, res) => {
     }),
     networkMode: 'client'
   });
-  res.send('ok');
   exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh');
   setTimeout(() => {
     apServerEvents.emit('switch-to-client');

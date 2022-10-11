@@ -351,7 +351,7 @@ function run() {
     });
   }
   if (singleton.DeviceData.networkMode === 'client') {
-    console.log('should switch to client', apCmd);
+    console.log('should switch to client', wifiCmd);
     authRequest({
       url: '/test'
     })
