@@ -406,7 +406,7 @@ function run() {
         console.log('client reconfiged, retrying run');
         setTimeout(() => {
           run();
-        }, 3000);
+        }, 8000);
       });
     });
   }
