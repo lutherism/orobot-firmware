@@ -60,6 +60,7 @@ wpa_conf /etc/wpa_supplicant/wpa_supplicant.conf
 wpa_cli log_level debug
 pre-up wpa_supplicant -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf -f /var/log/wpa_supplicant.log &
 post-up dhclient &
+post-down wpa_cli -i wlan0 terminate
 `
 }
 
