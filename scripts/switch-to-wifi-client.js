@@ -36,6 +36,8 @@ network={
   return `country=US
 update_config=1
 freq_list=2412 2417 2422 2427 2432 2437 2442 2447 2452 2457 2462 2467 2472
+ap_scan=1
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 
 network={
  ssid="${singleton.DeviceData.wifiSettings.ssid}"
