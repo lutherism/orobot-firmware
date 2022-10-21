@@ -3,6 +3,7 @@ sleep 2
 sudo killall dhclient
 sudo killall wpa_supplicant
 sudo ip link set dev wlan0 down
+sudo rm -rf /var/run/wpa_supplicant
 sudo systemctl stop hostapd.service
 sudo systemctl restart networking
 sudo dhclient &
