@@ -341,6 +341,7 @@ function keepOpenGatewayConnection() {
 }
 
 let rescanCount = 5;
+let connecting = false;
 
 function run() {
   if (connecting) {
