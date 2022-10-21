@@ -90,6 +90,12 @@ const writeWPAConf = () => {
   fs.writeFileSync(networkingPath, createNetworkingConf())
 }
 
+const writeDeviceState = () => {
+  upsertDeviceData({
+    networkingMode: 'client'
+  });
+}
+
 module.exports = {
-  writeWPAConf, createWPAConf
+  writeWPAConf, createWPAConf, writeDeviceState
 }
