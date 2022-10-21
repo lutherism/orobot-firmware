@@ -401,19 +401,10 @@ function run() {
             }, 1000);
           });
       });*/
-      let timeout = setTimeout(() => {
-        console.log('wifi command timedout.');
-        clearTimeout(postReconfigTimeout);
-        run();
-      }, 10000);
-      let postReconfigTimeout;
       exec(wifiCmd, (...args) => {
-        clearTimeout(timeout);
         console.log('wifiCmd result', args);
-        postReconfigTimeout = setTimeout(() => {
-          console.log('client reconfiged, retrying run');
-          run();
-        }, 5000);
+        console.log('client reconfiged, retrying run');
+        run();
       });
     });
   }
