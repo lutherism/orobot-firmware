@@ -407,8 +407,9 @@ function run() {
         run();
       }, 10000);
       let postReconfigTimeout;
-      exec(wifiCmd, () => {
+      exec(wifiCmd, (...args) => {
         clearTimeout(timeout);
+        console.log('wifiCmd result', args);
         postReconfigTimeout = setTimeout(() => {
           console.log('client reconfiged, retrying run');
           run();
