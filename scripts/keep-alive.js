@@ -341,13 +341,8 @@ function keepOpenGatewayConnection() {
 }
 
 let rescanCount = 5;
-let connecting = false;
 
 function run() {
-  if (connecting) {
-    return;
-  }
-  connecting = true;
   if (singleton.DeviceData.networkMode === 'ap') {
     console.log('should switch to AP', apCmd);
     exec(apCmd, (...args1) => {
@@ -356,13 +351,11 @@ function run() {
     });
   }
   if (singleton.DeviceData.networkMode === 'client') {
-    connecting = true;
     console.log('should switch to client', wifiCmd);
     authRequest({
       url: '/test'
     })
     .then(() => {
-      connecting = false;
       recursiveConnect();
     })
     .catch((err) => {
