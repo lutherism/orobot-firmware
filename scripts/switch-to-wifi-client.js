@@ -15,10 +15,10 @@ const networkingPath = "/etc/network/interfaces";
 const createWPAConf = () => {
   if (singleton.DeviceData.wifiSettings.username) {
     return `country=US
-ctrl_interface=/run/wpa_supplicant
-update_config=1
-ap_scan=1
-freq_list=2412 2417 2422 2427 2432 2437 2442 2447 2452 2457 2462 2467 2472
+ ctrl_interface=/run/wpa_supplicant
+ update_config=1
+ ap_scan=1
+ freq_list=2412 2417 2422 2427 2432 2437 2442 2447 2452 2457 2462 2467 2472
 
 network={
   proto=RSN
@@ -35,9 +35,8 @@ network={
   `;
   }
   return `country=US
-ctrl_interface=/var/run/wpa_supplicant
+ctrl_interface=/run/wpa_supplicant
 update_config=1
-ap_scan=1
 freq_list=2412 2417 2422 2427 2432 2437 2442 2447 2452 2457 2462 2467 2472
 
 network={
