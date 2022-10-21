@@ -404,7 +404,9 @@ function run() {
       exec(wifiCmd, (...args) => {
         console.log('wifiCmd result', args);
         console.log('client reconfiged, retrying run');
-        run();
+        setTimeout(() => {
+          run();
+        }, 3000);
       });
     });
   }
