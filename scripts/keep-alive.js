@@ -359,7 +359,7 @@ function run() {
       recursiveConnect();
     })
     .catch((err) => {
-      const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
+      /*const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
         const networks = o.split(singleton.DeviceData.hardware === 'raspi' ?
           '      Cell' : '\nBSS');
         const matchingNetworks = networks
@@ -400,6 +400,19 @@ function run() {
               run();
             }, 1000);
           });
+      });*/
+      let timeout = setTimeout(() => {
+        console.log('wifi command timedout.');
+        clearTimeout(postReconfigTimeout);
+        run();
+      }, 10000);
+      let postReconfigTimeout;
+      exec(wifiCmd, () => {
+        clearTimeout(timeout);
+        postReconfigTimeout = setTimeout(() => {
+          console.log('client reconfiged, retrying run');
+          run();
+        }, 1000);
       });
     });
   }
