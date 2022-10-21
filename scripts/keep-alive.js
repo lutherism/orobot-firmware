@@ -276,10 +276,10 @@ function handleWebSocketMessage(e) {
   }
 };
 
-function rebootConnection() {
+function cleanupHeartbeat() {
     console.log('ssh-protocol Client Closed. Rebooting...');
     clearInterval(interval);
-    delay(200).then(() => recursiveConnect());
+    //delay(200).then(() => recursiveConnect());
 };
 
 function keepOpenGatewayConnection() {
@@ -327,7 +327,7 @@ function keepOpenGatewayConnection() {
             ownerUuid: JSON.parse(body).owner.uuid
           });
         });
-        client.addEventListener('close', rebootConnection);
+        client.addEventListener('close', cleanupHeartbeat);
         resolve();
       };
 
