@@ -9,5 +9,5 @@ sudo rm -rf /var/run/wpa_supplicant
 sudo ip link set dev wlan0 down
 sudo ip link set dev wlan0 up
 # sudo systemctl restart networking
-sudo wpa_supplicant -Bw -Dwext -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf -f /var/log/wpa_supplicant.log
+sudo wpa_supplicant -B -Dwext -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf -f /var/log/wpa_supplicant.log
 sudo dhclient &
