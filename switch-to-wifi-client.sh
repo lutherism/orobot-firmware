@@ -2,8 +2,12 @@ sudo /root/.nvm/versions/node/v8.17.0/bin/node -e "require('/home/pi/orobot-firm
 sleep 2
 sudo systemctl stop hostapd.service
 sudo systemctl stop dnsmasq
+sudo systemctl stop dhcpcd
 sudo killall dhclient
 sudo killall wpa_supplicant
-sudo rm -rf /var/run/wpa_supplicant/
+sudo rm -rf /var/run/wpa_supplicant
 sudo ip link set dev wlan0 down
-sudo systemctl restart networking
+sudo ip link set dev wlan0 up
+# sudo systemctl restart networking
+sudo wpa_supplicant -Bw -Dwext -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant.conf -f /var/log/wpa_supplicant.log
+sudo dhclient &
