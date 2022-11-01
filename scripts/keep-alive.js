@@ -279,7 +279,7 @@ function handleWebSocketMessage(e) {
 function cleanupHeartbeat() {
     console.log('ssh-protocol Client Closed. Rebooting...');
     clearInterval(interval);
-    //delay(200).then(() => recursiveConnect());
+    delay(200).then(() => run());
 };
 
 function keepOpenGatewayConnection() {
