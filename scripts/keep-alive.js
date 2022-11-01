@@ -141,9 +141,9 @@ function recursiveConnect() {
       upsertDeviceData({
         networkMode: 'ap'
       });
+      apServerListen();
       exec(apCmd, (...args1) => {
         console.log(args1);
-        apServerListen();
       });
     }
     console.log(err);
