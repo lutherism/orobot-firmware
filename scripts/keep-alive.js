@@ -165,7 +165,8 @@ function intervalHeartbeat(msDelay = 8000) {
       deviceUuid: singleton.DeviceData.deviceUuid,
       payloadJSON: JSON.stringify({
         version: version,
-        type: singleton.DeviceData.type
+        type: singleton.DeviceData.type,
+        pingTime: singletone.DeviceData.pingTime
       })
     };
     authRequest({
@@ -279,8 +280,10 @@ function handleWebSocketMessage(e) {
 function cleanupHeartbeat() {
     console.log('ssh-protocol Client Closed. Rebooting...');
     clearInterval(interval);
+    clearInterval(pingInterval);
     delay(200).then(() => run());
 };
+let pingInterval;
 
 function keepOpenGatewayConnection() {
   return new Promise((resolve, reject) => {
@@ -317,6 +320,17 @@ function keepOpenGatewayConnection() {
           });
         }
         intervalHeartbeat();
+        pingInterval = setInterval(() => {
+          const pingTestTime = Date.now();
+          authRequest({
+            url: '/test'
+          })
+          .then(() => {
+            upsertDeviceData({
+              pingTime: Date.now() - pingTestTime
+            });
+          });
+        });
         const deviceUrl = `/device/${singleton.DeviceData.deviceUuid}`;
         console.log('getting owner info', deviceUrl);
         authRequest({
