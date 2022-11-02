@@ -166,7 +166,7 @@ function intervalHeartbeat(msDelay = 8000) {
       payloadJSON: JSON.stringify({
         version: version,
         type: singleton.DeviceData.type,
-        pingTime: singletone.DeviceData.pingTime
+        pingTime: singleton.DeviceData.pingTime
       })
     };
     authRequest({
