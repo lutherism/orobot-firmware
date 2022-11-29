@@ -320,7 +320,7 @@ function keepOpenGatewayConnection() {
           });
         }
         intervalHeartbeat();
-        pingInterval = setInterval(() => {
+        const pingTest = () => {
           const pingTestTime = Date.now();
           authRequest({
             url: '/test'
@@ -333,7 +333,9 @@ function keepOpenGatewayConnection() {
           .catch(err => {
             console.log('ping err', err);
           });
-        });
+        };
+        pingInterval = setInterval(pingTest, 20000);
+        pingTest();
         const deviceUrl = `/device/${singleton.DeviceData.deviceUuid}`;
         console.log('getting owner info', deviceUrl);
         authRequest({
