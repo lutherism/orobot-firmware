@@ -24,7 +24,7 @@ try {
   refreshDeviceData();
 } catch (err) {
   console.log(err);
-  console.log(fs.readFileSync(__dirname + '/openroboticsdata/data.json'))
+  //console.log(fs.readFileSync(__dirname + '/openroboticsdata/data.json'))
   initDataFile();
 }
 
