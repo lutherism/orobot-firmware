@@ -361,7 +361,7 @@ function keepOpenGatewayConnection() {
   });
 }
 
-let rescanCount = 5;
+let rescanCount = 3;
 
 function run() {
   if (singleton.DeviceData.networkMode === 'ap') {
@@ -422,13 +422,21 @@ function run() {
             }, 1000);
           });
       });*/
-      exec(wifiCmd, (...args) => {
-        console.log('wifiCmd result', args);
-        console.log('client reconfiged, retrying run');
-        setTimeout(() => {
-          run();
-        }, 8000);
-      });
+      rescanCount--;
+      if (rescanCount === 0) {
+        upsertDeviceData({
+          networkMode: 'ap'
+        });
+        run();
+      } else {
+        exec(wifiCmd, (...args) => {
+          console.log('wifiCmd result', args);
+          console.log('client reconfiged, retrying run');
+          setTimeout(() => {
+            run();
+          }, 8000);
+        });
+      }
     });
   }
 }
