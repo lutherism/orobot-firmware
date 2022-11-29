@@ -329,6 +329,9 @@ function keepOpenGatewayConnection() {
             upsertDeviceData({
               pingTime: Date.now() - pingTestTime
             });
+          })
+          .catch(err => {
+            console.log('ping err', err);
           });
         });
         const deviceUrl = `/device/${singleton.DeviceData.deviceUuid}`;
@@ -340,6 +343,8 @@ function keepOpenGatewayConnection() {
           upsertDeviceData({
             ownerUuid: JSON.parse(body).owner.uuid
           });
+        }).catch(err => {
+          console.log('owner info err', err);
         });
         client.addEventListener('close', cleanupHeartbeat);
         resolve();
