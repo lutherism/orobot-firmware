@@ -419,6 +419,7 @@ function run() {
             postReconfigTimeout = setTimeout(() => {
               console.log('client reconfiged, retrying run');
               run();
+              //hm
             }, 1000);
           });
       });*/
