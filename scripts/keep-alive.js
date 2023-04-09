@@ -26,7 +26,8 @@ console.log = function(...args) {
   }
   _log.apply(this, args);
 }
-require('log-timestamp')
+require('log-timestamp');
+
 var shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
 const wifiCmd = 'sudo ' +
   __dirname + '/../switch-to-wifi-client.sh >> ' + __dirname + '/../tmp/run.log';
@@ -271,6 +272,10 @@ function handleWebSocketMessage(e) {
       COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
     } else if (messageObj.type === 'command-in' &&
       messageObj.data === 'wifiList') {
+      //  Initialize wifi-control package with verbose output
+      WiFiControl.init({
+        debug: true
+      });
       WiFiControl.scanForWiFi(function(err, response) {
         if (err) console.log(err);
         client.send(JSON.stringify({
