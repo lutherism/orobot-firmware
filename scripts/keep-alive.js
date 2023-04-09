@@ -277,7 +277,8 @@ function handleWebSocketMessage(e) {
           type: 'wifiList',
           deviceUuid: singleton.DeviceData.deviceUuid,
           userUuid: singleton.DeviceData.ownerUuid,
-          data: o.split('      Cell')}));
+          data: JSON.stringify(o.split('      Cell'))
+        }));
       });
     }
     console.log('acking');
