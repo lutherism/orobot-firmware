@@ -272,16 +272,11 @@ function handleWebSocketMessage(e) {
       COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
     } else if (messageObj.type === 'command-in' &&
       messageObj.data === 'wifiList') {
-      //  Initialize wifi-control package with verbose output
-      WiFiControl.init({
-        debug: true
-      });
-      WiFiControl.scanForWiFi(function(err, response) {
-        if (err) console.log(err);
+      const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
         client.send(JSON.stringify({
           type: 'wifiList',
           deviceUuid: singleton.DeviceData.deviceUuid,
-          data: response}));
+          data: o.split('      Cell')}));
       });
     }
     console.log('acking');
