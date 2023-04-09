@@ -12,6 +12,7 @@ var {authRequest} = require('./api.js');
 const {
   apServerEvents, apServerListen
 } = require('./ap-server.js');
+var WiFiControl = require('wifi-control');
 
 const {singleton,
   upsertDeviceData,
