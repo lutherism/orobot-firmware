@@ -2,6 +2,7 @@ var gpio = require("gpio");
 var repl = require('repl');
 const { exec } = require('child_process');
 const FIFOActions = require('./fifo-actions.js');
+var WiFiControl = require('wifi-control');
 
 const {singleton,
   upsertDeviceData,

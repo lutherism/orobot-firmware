@@ -268,6 +268,15 @@ function handleWebSocketMessage(e) {
       }));
     } else if (messageObj.data.indexOf('gotoangle') === 0){
       COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
+    } else if (messageObj.type === 'command-in' &&
+      messageObj.data === 'wifiList') {
+      WiFiControl.scanForWiFi(function(err, response) {
+        if (err) console.log(err);
+        client.send(JSON.stringify({
+          type: 'wifiList',
+          deviceUuid: singleton.DeviceData.deviceUuid,
+          data: response}));
+      });
     }
     console.log('acking');
     client.send(JSON.stringify({
