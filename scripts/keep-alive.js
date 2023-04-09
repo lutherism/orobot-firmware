@@ -275,6 +275,7 @@ function handleWebSocketMessage(e) {
       const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
         client.send(JSON.stringify({
           type: 'wifiList',
+          deviceUuid: singleton.DeviceData.deviceUuid,
           userUuid: singleton.DeviceData.ownerUuid,
           data: o.split('      Cell')}));
       });
