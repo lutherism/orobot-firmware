@@ -273,6 +273,7 @@ function handleWebSocketMessage(e) {
     } else if (messageObj.type === 'command-in' &&
       messageObj.data === 'wifiList') {
       const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
+        console.log('scan res', o, e);
         let rawNetworks, uniqueNetworks;
         const lineDelineator = '\n                    ';
         const uniqueTable = {};
