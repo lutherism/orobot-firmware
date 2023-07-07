@@ -272,12 +272,14 @@ function handleWebSocketMessage(e) {
       COMMANDS.gotoangle(Number(messageObj.data.split(':')[1]));
     } else if (messageObj.type === 'command-in' &&
       messageObj.data === 'wifiList') {
-      WiFiControl.scanForWiFi(function(err, response) {
+      exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
         try {
           const {
             uniqueNetworks,
             rawNetworks
-          } = parseWifiScanOutput(response)
+          } = parseWifiScanOutput({
+            wifi: o.split('      Cell')
+          })
             console.log(JSON.stringify({
               type: 'wifiList',
               deviceUuid: singleton.DeviceData.deviceUuid,
