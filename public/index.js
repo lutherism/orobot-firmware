@@ -45560,7 +45560,7 @@ function parseWifiScanOutput(output) {
       return x.ssid.length > 0;
     });
   }
-  return { rawNetworks, uniqueNetworks };;
+  return { rawNetworks, uniqueNetworks };
 }
 
 class ConnectionForm extends Component {

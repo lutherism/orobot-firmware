@@ -273,11 +273,40 @@ function handleWebSocketMessage(e) {
     } else if (messageObj.type === 'command-in' &&
       messageObj.data === 'wifiList') {
       const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
+        let rawNetworks, uniqueNetworks;
+        const uniqueTable = {};
+        rawNetworks = o.split('      Cell')
+          .slice(1)
+          .map(node => {
+            return node.split(lineDelineator).reduce((a, line) => {
+              if (line.indexOf('ESSID') === 0) {
+                a['ssid'] = line.slice(7, -1);
+              }
+              if (line.indexOf('Address:') > -1) {
+                a['mac'] = line.slice(15);
+              }
+              if (line.indexOf('IE: IEEE') === 0) {
+                a['security'] = line.slice(15);
+              }
+              return a;
+            }, {});
+          });
+        uniqueNetworks = rawNetworks
+          .filter(x => {
+            if (uniqueTable[x.ssid]) {
+              return false;
+            }
+            uniqueTable[x.ssid] = true;
+            return x.ssid.length > 0
+          });
         client.send(JSON.stringify({
           type: 'wifiList',
           deviceUuid: singleton.DeviceData.deviceUuid,
           userUuid: singleton.DeviceData.ownerUuid,
-          data: JSON.stringify(o.split('      Cell'))
+          data: JSON.stringify({
+            scanResults: uniqueNetworks,
+            knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
+          })
         }));
       });
     }
