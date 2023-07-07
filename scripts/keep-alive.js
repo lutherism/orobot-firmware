@@ -273,43 +273,46 @@ function handleWebSocketMessage(e) {
     } else if (messageObj.type === 'command-in' &&
       messageObj.data === 'wifiList') {
       const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
-        console.log('scan res', o, e);
-        let rawNetworks, uniqueNetworks;
-        const lineDelineator = '\n                    ';
-        const uniqueTable = {};
-        rawNetworks = o.split('      Cell')
-          .slice(1)
-          .map(node => {
-            return node.split(lineDelineator).reduce((a, line) => {
-              if (line.indexOf('ESSID') === 0) {
-                a['ssid'] = line.slice(7, -1);
+        try {
+          let rawNetworks, uniqueNetworks;
+          const lineDelineator = '\n                    ';
+          const uniqueTable = {};
+          rawNetworks = o.split('      Cell')
+            .slice(1)
+            .map(node => {
+              return node.split(lineDelineator).reduce((a, line) => {
+                if (line.indexOf('ESSID') === 0) {
+                  a['ssid'] = line.slice(7, -1);
+                }
+                if (line.indexOf('Address:') > -1) {
+                  a['mac'] = line.slice(15);
+                }
+                if (line.indexOf('IE: IEEE') === 0) {
+                  a['security'] = line.slice(15);
+                }
+                return a;
+              }, {});
+            });
+          uniqueNetworks = rawNetworks
+            .filter(x => {
+              if (uniqueTable[x.ssid]) {
+                return false;
               }
-              if (line.indexOf('Address:') > -1) {
-                a['mac'] = line.slice(15);
-              }
-              if (line.indexOf('IE: IEEE') === 0) {
-                a['security'] = line.slice(15);
-              }
-              return a;
-            }, {});
-          });
-        uniqueNetworks = rawNetworks
-          .filter(x => {
-            if (uniqueTable[x.ssid]) {
-              return false;
+              uniqueTable[x.ssid] = true;
+              return x.ssid.length > 0
+            });
+          client.send(JSON.stringify({
+            type: 'wifiList',
+            deviceUuid: singleton.DeviceData.deviceUuid,
+            userUuid: singleton.DeviceData.ownerUuid,
+            data: {
+              scanResults: uniqueNetworks,
+              knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
             }
-            uniqueTable[x.ssid] = true;
-            return x.ssid.length > 0
-          });
-        client.send(JSON.stringify({
-          type: 'wifiList',
-          deviceUuid: singleton.DeviceData.deviceUuid,
-          userUuid: singleton.DeviceData.ownerUuid,
-          data: {
-            scanResults: uniqueNetworks,
-            knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
-          }
         }));
+      } catch (err) {
+        console.log(err);
+      }
       });
     }
     console.log('acking');
