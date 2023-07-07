@@ -304,10 +304,10 @@ function handleWebSocketMessage(e) {
           type: 'wifiList',
           deviceUuid: singleton.DeviceData.deviceUuid,
           userUuid: singleton.DeviceData.ownerUuid,
-          data: JSON.stringify({
+          data: {
             scanResults: uniqueNetworks,
             knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
-          })
+          }
         }));
       });
     }
