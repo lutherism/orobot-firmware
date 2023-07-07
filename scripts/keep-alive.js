@@ -305,10 +305,10 @@ function handleWebSocketMessage(e) {
             type: 'wifiList',
             deviceUuid: singleton.DeviceData.deviceUuid,
             userUuid: singleton.DeviceData.ownerUuid,
-            data: {
+            data: JSON.stringify({
               scanResults: uniqueNetworks,
               knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
-            }
+            })
         }));
       } catch (err) {
         console.log(err);
