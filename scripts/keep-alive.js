@@ -281,16 +281,6 @@ function handleWebSocketMessage(e) {
           } = parseWifiScanOutput({
             wifi: o.split('      Cell')
           })
-            console.log(JSON.stringify({
-              type: 'wifiList',
-              deviceUuid: singleton.DeviceData.deviceUuid,
-              //userUuid: singleton.DeviceData.ownerUuid,
-              data: JSON.stringify({
-                uniqueNetworks,
-                rawNetworks,
-                knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
-              })
-          }));
           client.send(JSON.stringify({
             type: 'wifiList',
             deviceUuid: singleton.DeviceData.deviceUuid,
