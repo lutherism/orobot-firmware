@@ -304,7 +304,7 @@ function handleWebSocketMessage(e) {
             console.log(JSON.stringify({
               type: 'wifiList',
               deviceUuid: singleton.DeviceData.deviceUuid,
-              userUuid: singleton.DeviceData.ownerUuid,
+              //userUuid: singleton.DeviceData.ownerUuid,
               data: JSON.stringify({
                 scanResults: uniqueNetworks,
                 knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
@@ -313,7 +313,7 @@ function handleWebSocketMessage(e) {
           client.send(JSON.stringify({
             type: 'wifiList',
             deviceUuid: singleton.DeviceData.deviceUuid,
-            userUuid: singleton.DeviceData.ownerUuid,
+            //userUuid: singleton.DeviceData.ownerUuid,
             data: JSON.stringify({
               scanResults: uniqueNetworks,
               knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
