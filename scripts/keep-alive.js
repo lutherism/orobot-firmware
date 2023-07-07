@@ -286,7 +286,8 @@ function handleWebSocketMessage(e) {
               deviceUuid: singleton.DeviceData.deviceUuid,
               //userUuid: singleton.DeviceData.ownerUuid,
               data: JSON.stringify({
-                scanResults: rawNetworks,
+                uniqueNetworks,
+                rawNetworks,
                 knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
               })
           }));
@@ -295,7 +296,8 @@ function handleWebSocketMessage(e) {
             deviceUuid: singleton.DeviceData.deviceUuid,
             //userUuid: singleton.DeviceData.ownerUuid,
             data: JSON.stringify({
-              scanResults: rawNetworks,
+              uniqueNetworks,
+              rawNetworks,
               knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
             })
         }));
