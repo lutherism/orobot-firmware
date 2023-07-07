@@ -288,7 +288,10 @@ function handleWebSocketMessage(e) {
             data: JSON.stringify({
               uniqueNetworks,
               rawNetworks,
-              knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
+              knownNetworks: singleton.DeviceData.knownNetworks.map(n => ({
+                ssid: n.ssid,
+                mac: n.mac
+              }))
             })
         }));
       } catch (err) {
