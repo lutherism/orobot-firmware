@@ -274,6 +274,7 @@ function handleWebSocketMessage(e) {
       messageObj.data === 'wifiList') {
       const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
         let rawNetworks, uniqueNetworks;
+        const lineDelineator = '\n                    ';
         const uniqueTable = {};
         rawNetworks = o.split('      Cell')
           .slice(1)
