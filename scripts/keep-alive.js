@@ -301,6 +301,15 @@ function handleWebSocketMessage(e) {
               uniqueTable[x.ssid] = true;
               return x.ssid.length > 0
             });
+            console.log(JSON.stringify({
+              type: 'wifiList',
+              deviceUuid: singleton.DeviceData.deviceUuid,
+              userUuid: singleton.DeviceData.ownerUuid,
+              data: JSON.stringify({
+                scanResults: uniqueNetworks,
+                knownNetworks: singleton.DeviceData.knownNetworks.map(n => n.ssid)
+              })
+          }));
           client.send(JSON.stringify({
             type: 'wifiList',
             deviceUuid: singleton.DeviceData.deviceUuid,
