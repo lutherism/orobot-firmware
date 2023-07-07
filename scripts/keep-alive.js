@@ -13,6 +13,7 @@ const {
   apServerEvents, apServerListen
 } = require('./ap-server.js');
 var WiFiControl = require('wifi-control');
+const parseWifiScanOutput = require('./parseWifiScanOutput.js');
 
 const {singleton,
   upsertDeviceData,
