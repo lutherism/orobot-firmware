@@ -393,8 +393,10 @@ function keepOpenGatewayConnection() {
               } = parseWifiScanOutput({
                 wifi: o.split('      Cell')
               });
+              console.log('Scanned ' + uniqueNetworks.length + ' networks.');
               uniqueNetworks.find((x, i) => {
                 if (x.ssid.indexOf('OROBOT-Setup-') === 0) {
+                  console.log('found network', x);
                   client.send(JSON.stringify({
                     type: 'wifi-setup-found',
                     data: {
