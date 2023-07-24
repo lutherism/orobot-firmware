@@ -394,7 +394,7 @@ function keepOpenGatewayConnection() {
                 wifi: o.split('      Cell')
               });
               uniqueNetworks.find((x, i) => {
-                if (x.ssid.indexOf('ORobot-Setup-') === 0) {
+                if (x.ssid.indexOf('OROBOT-Setup-') === 0) {
                   client.send(JSON.stringify({
                     type: 'wifi-setup-found',
                     data: {
