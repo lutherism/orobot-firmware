@@ -19,4 +19,5 @@ sudo npm rebuild
 sudo crontab /home/pi/orobot-firmware/reboot.cron
 sudo echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
 sudo service cron reload
+sudo sysctl net.ipv4.ip_forward=1
 ./factory-reset.sh
