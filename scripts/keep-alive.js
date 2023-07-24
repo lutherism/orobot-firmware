@@ -405,7 +405,9 @@ function keepOpenGatewayConnection() {
                     deviceUuid: singleton.DeviceData.deviceUuid}));
                 }
               })
-            } catch (err) {}
+            } catch (err) {
+              console.log(err);
+            }
           });
         }, 10000);
         resolve();
