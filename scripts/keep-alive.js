@@ -383,6 +383,29 @@ function keepOpenGatewayConnection() {
           console.log('owner info err', err);
         });
         client.addEventListener('close', cleanupHeartbeat);
+        clearTimeout(wifiSetupMonitor);
+        wifiSetupMonitor = setTimeout(() => {
+          exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
+            try {
+              const {
+                uniqueNetworks,
+                rawNetworks
+              } = parseWifiScanOutput({
+                wifi: o.split('      Cell')
+              });
+              uniqueNetworks.find((x, i) => {
+                if (x.ssid.indexOf('ORobot-Setup-') === 0) {
+                  client.send(JSON.stringify({
+                    type: 'wifi-setup-found',
+                    data: {
+                      uuidTag: x.ssid.slice(13)
+                    },
+                    deviceUuid: singleton.DeviceData.deviceUuid}));
+                }
+              })
+            } catch (err) {}
+          });
+        }, 10000);
         resolve();
       };
 
@@ -398,6 +421,7 @@ function keepOpenGatewayConnection() {
 let rescanCount = 3;
 
 let monitorTimeout = null;
+let wifiSetupMonitor = null;
 function monitor() {
   clearTimeout(monitorTimeout);
   monitorTimeout = setTimeout(() => {
