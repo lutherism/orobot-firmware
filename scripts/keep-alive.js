@@ -125,7 +125,7 @@ function recursiveConnect() {
   }
   if (singleton.DeviceData.networkMode === 'ap') {
     console.log('exiting connect loop for ap mode');
-    return;
+    return Promise.resolve();
   }
   return keepOpenGatewayConnection()
   .catch((err) => {
@@ -180,6 +180,9 @@ function intervalHeartbeat(msDelay = 8000) {
     })
     .catch(e => console.log('hb err'))
     .then(b => {
+      upsertDeviceData({
+        lastHeartbeatResponse: Date.now()
+      });
       if (heartbeatLogging) {
         process.stdout.write(".");
       } else {
@@ -393,6 +396,17 @@ function keepOpenGatewayConnection() {
 
 let rescanCount = 3;
 
+let monitorTimeout = null;
+function monitor() {
+  clearTimeout(monitorTimeout);
+  monitorTimeout = setTimeout(() => {
+    if (singleton.DeviceData.networkMode === 'client' &&
+      singleton.DeviceData.lastHeartbeatResponse - Date.now() > HEARTBEAT_TEMPO * 2) {
+        run();
+      }
+  }, 200);
+}
+
 function run() {
   if (singleton.DeviceData.networkMode === 'ap') {
     console.log('should switch to AP', apCmd);
@@ -402,12 +416,14 @@ function run() {
     });
   }
   if (singleton.DeviceData.networkMode === 'client') {
+    setTimeout(monitor)
     console.log('should switch to client', wifiCmd);
     authRequest({
       url: '/test'
     })
     .then(() => {
-      recursiveConnect();
+      recursiveConnect()
+        .then(() => monitor());
     })
     .catch((err) => {
       /*const results = exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
