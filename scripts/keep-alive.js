@@ -159,10 +159,11 @@ function recursiveConnect() {
 
 
 let interval = null;
+const HEARTBEAT_TEMPO = 8000;
 
 let version = fs.readFileSync(__dirname + '/../.git/refs/heads/master').toString();
 
-function intervalHeartbeat(msDelay = 8000) {
+function intervalHeartbeat(msDelay = HEARTBEAT_TEMPO) {
   const heartPump = () => {
     const hb = {
       deviceUuid: singleton.DeviceData.deviceUuid,
