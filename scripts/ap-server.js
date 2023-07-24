@@ -83,6 +83,13 @@ let started = false;
 module.exports = {
   apServerEvents,
   apServerListen: () => {
+    exec('sudo iptables -t nat -F')
+
+    // Redirect HTTP traffic to the local web server (port 80)
+    exec('sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.4.1:80')
+
+    // Allow traffic from the local web server (port 80)
+    exec('sudo iptables -A FORWARD -p tcp --dport 80 -j ACCEPT')
     if (!started) {
       try {
         app.listen(3006);
