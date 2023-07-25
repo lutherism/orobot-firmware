@@ -399,9 +399,9 @@ function keepOpenGatewayConnection() {
                   console.log('found network', x);
                   client.send(JSON.stringify({
                     type: 'wifi-setup-found',
-                    data: {
+                    data: JSON.stringify({
                       uuidTag: x.ssid.slice(13)
-                    },
+                    }),
                     deviceUuid: singleton.DeviceData.deviceUuid}));
                 }
               })
