@@ -302,6 +302,30 @@ function handleWebSocketMessage(e) {
         console.log(err);
       }
       });
+    } else if (messageObj.type === 'share-wifi') {
+      const oldData = singleton.DeviceData.wifiSettings;
+      upsertDeviceData({
+        wifiSettings: {
+          ssid: 'OROBOT-Setup-' + JSON.parse(messageObj.data).tagUuid,
+          password: 'wifisetup'
+        }
+      });
+      exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
+        console.log('switched to device wifi');
+        request.post({
+          url: `192.168.0.172/api/wifi`,
+          data: {
+            ssid: oldData.ssid,
+            username: oldData.username,
+            password: oldData.password
+          }
+        }, (err, response) => {
+          upsertDeviceData({
+            wifiSettings: oldData
+          });
+          exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {});
+        });
+      });
     }
     console.log('acking');
     client.send(JSON.stringify({
