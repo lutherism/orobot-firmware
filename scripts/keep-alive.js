@@ -311,8 +311,8 @@ function handleWebSocketMessage(e) {
         }
       });
       clearInterval(interval);
-      exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
-        console.log('switched to device wifi');
+      exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', (...args) => {
+        console.log('switched to device wifi', ...args);
         request.post({
           url: `192.168.0.172/api/wifi`,
           data: {
@@ -321,6 +321,9 @@ function handleWebSocketMessage(e) {
             password: oldData.password
           }
         }, (err, response) => {
+          if (err) {
+            console.log('err on post req', err);
+          }
           upsertDeviceData({
             wifiSettings: oldData
           });
