@@ -49,6 +49,10 @@ app.get('/api/wifi', (req, res) => {
 
 app.post('/api/wifi', (req, res) => {
   const uniqueKnownSSIDs = {};
+  console.log('logging into wifi');
+  console.log('SSID: ' + req.body.ssid);
+  console.log('password: ' + req.body.password[0] + Array(req.body.password.length - 1)
+    .fill(0).reduce((a) => a + "*", ""));
   upsertDeviceData({
     wifiSettings: {
       ssid: req.body.ssid,

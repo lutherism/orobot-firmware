@@ -346,6 +346,8 @@ function cleanupHeartbeat() {
     console.log('ssh-protocol Client Closed. Rebooting...');
     clearInterval(interval);
     clearInterval(pingInterval);
+    clearInterval(monitorInterval);
+    clearInterval(wifiSetupMonitor);
     delay(200).then(() => run());
 };
 let pingInterval;
@@ -427,7 +429,7 @@ function keepOpenGatewayConnection() {
               console.log('Scanned ' + uniqueNetworks.length + ' networks.');
               uniqueNetworks.find((x, i) => {
                 if (x.ssid.indexOf('OROBOT-Setup-') === 0) {
-                  console.log('found network', x);
+                  //console.log('found network', x);
                   client.send(JSON.stringify({
                     type: 'wifi-setup-found',
                     data: JSON.stringify({
@@ -462,6 +464,8 @@ function monitor() {
   monitorInterval = setInterval(() => {
     if (singleton.DeviceData.networkMode === 'client' &&
       singleton.DeviceData.lastHeartbeatResponse - Date.now() > HEARTBEAT_TEMPO * 2) {
+        console.log('rerunning from monitor for no heartbeat.')
+        cleanupHeartbeat();
         run();
       }
   }, 200);
