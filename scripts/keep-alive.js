@@ -383,8 +383,8 @@ function keepOpenGatewayConnection() {
           console.log('owner info err', err);
         });
         client.addEventListener('close', cleanupHeartbeat);
-        clearTimeout(wifiSetupMonitor);
-        wifiSetupMonitor = setTimeout(() => {
+        clearInterval(wifiSetupMonitor);
+        wifiSetupMonitor = setInterval(() => {
           exec("sudo iwlist wlan0 scan", {encoding: "UTF-8"}, (e, o, err) => {
             try {
               const {
@@ -424,11 +424,11 @@ function keepOpenGatewayConnection() {
 
 let rescanCount = 3;
 
-let monitorTimeout = null;
+let monitorInterval = null;
 let wifiSetupMonitor = null;
 function monitor() {
-  clearTimeout(monitorTimeout);
-  monitorTimeout = setTimeout(() => {
+  clearInterval(monitorInterval);
+  monitorInterval = setInterval(() => {
     if (singleton.DeviceData.networkMode === 'client' &&
       singleton.DeviceData.lastHeartbeatResponse - Date.now() > HEARTBEAT_TEMPO * 2) {
         run();
