@@ -316,7 +316,7 @@ function handleWebSocketMessage(e) {
         request.post({
           url: `http://192.168.0.172/api/wifi`,
           json: true,
-          data: {
+          body: {
             ssid: oldData.ssid,
             username: oldData.username,
             password: oldData.password
