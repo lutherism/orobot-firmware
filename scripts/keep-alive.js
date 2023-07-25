@@ -310,6 +310,7 @@ function handleWebSocketMessage(e) {
           password: 'wifisetup'
         }
       });
+      clearInterval(interval);
       exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
         console.log('switched to device wifi');
         request.post({
@@ -323,7 +324,9 @@ function handleWebSocketMessage(e) {
           upsertDeviceData({
             wifiSettings: oldData
           });
-          exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {});
+          exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', () => {
+            run();
+          });
         });
       });
     }
