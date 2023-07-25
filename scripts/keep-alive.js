@@ -314,7 +314,8 @@ function handleWebSocketMessage(e) {
       exec('sudo /home/pi/orobot-firmware/switch-to-wifi-client.sh', (...args) => {
         console.log('switched to device wifi', ...args);
         request.post({
-          url: `192.168.0.172/api/wifi`,
+          url: `http://192.168.0.172/api/wifi`,
+          json: true,
           data: {
             ssid: oldData.ssid,
             username: oldData.username,
