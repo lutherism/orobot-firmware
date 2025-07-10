@@ -1,0 +1,10 @@
+[Unit]
+Description=Orobot WiFi Manager
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /path/to/app.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
