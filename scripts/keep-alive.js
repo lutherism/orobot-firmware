@@ -49,6 +49,7 @@ const API_URL = 'https://robots-gateway.uc.r.appspot.com';
 let client;
 
 function getConfigedWSURL() {
+  if (process.env.NODE_ENV === 'sim') return process.env.GATEWAY_URL;
   return singleton.DeviceData.networkMode === 'dev' ? DEV_WS_URL() : WS_URL;
 }
 
@@ -386,7 +387,9 @@ function keepOpenGatewayConnection() {
             }
           });
         }
-        intervalHeartbeat();
+        if (process.env.NODE_ENV !== 'sim') {
+          intervalHeartbeat();
+        }
         const pingTest = () => {
           const pingTestTime = Date.now();
           authRequest({
@@ -472,6 +475,13 @@ function monitor() {
 }
 
 function run() {
+  if (process.env.NODE_ENV === 'sim') {
+    // Skip all network management. Connect directly to GATEWAY_URL.
+    return keepOpenGatewayConnection().catch(err => {
+      console.log('[sim] connection error, retrying in 5s:', err);
+      setTimeout(run, 5000);
+    });
+  }
   if (singleton.DeviceData.networkMode === 'ap') {
     console.log('should switch to AP', apCmd);
     exec(apCmd, (...args1) => {

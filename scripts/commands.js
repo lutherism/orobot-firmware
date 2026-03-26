@@ -42,6 +42,9 @@ let goToAngleRunnning = false;
 
 const addToCurrentPos = (angle) => {
   currentPos = ((currentPos + angle) + 360) % 360;
+  if (process.send) {
+    process.send({ type: 'motor-state', deviceUuid: process.env.DEVICE_UUID, angle: currentPos });
+  }
 }
 
 const COMMANDS = {
@@ -264,6 +267,9 @@ const COMMANDS = {
         setTimeout(() => {
           clearInterval(job);
           currentPos = angle;
+          if (process.send) {
+            process.send({ type: 'motor-state', deviceUuid: process.env.DEVICE_UUID, angle: currentPos });
+          }
           resolve();
           //COMMANDS.stop();
         }, timeToRotate);
