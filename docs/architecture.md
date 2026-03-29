@@ -67,6 +67,7 @@ The mode can be changed at runtime via a WebSocket message from the gateway (`ne
 | `scripts/parseWifiScanOutput.js` | Parses raw `iwlist wlan0 scan` output into structured `{ssid, mac, security}` objects |
 | `scripts/sim-firmware.js` | Mocks `gpio`, `node-pty`, `wifi-control` so `keep-alive.js` runs on non-Pi machines |
 | `scripts/sim-test.js` | Integration test harness: forks `sim-firmware.js`, runs a mock gateway, asserts motor-state IPC messages |
+| `scripts/actions.js` | **Legacy.** PWM-based motor control from an earlier hardware revision. Not used by the current codebase. |
 
 ---
 
@@ -79,6 +80,10 @@ cron / boot
   └─ reboot.sh
        └─ keep-alive.js (if not already running)
             └─ run()         (called after 5s startup delay)
+                 ├─ networkMode === 'sim'
+                 │    └─ keepOpenGatewayConnection() directly (no Wi-Fi management)
+                 │         └─ connects to GATEWAY_URL env var
+                 │
                  ├─ networkMode === 'ap'
                  │    └─ exec switch-to-wifi-ap.sh
                  │         └─ apServerListen()   (start captive portal)
@@ -185,6 +190,6 @@ Connection failures are tracked with an `iterations` counter:
 |-------------|-----------|
 | 0–40 | Retry with 2s backoff |
 | 40–100 | Re-run `switch-to-wifi-client.sh`, increase backoff to 5s |
-| >100 | Set `networkMode: 'ap'`, start captive portal, stop retrying |
+| >100 | Set `networkMode: 'ap'`, start captive portal; subsequent calls to `recursiveConnect()` exit early because `networkMode` is `'ap'` |
 
-A separate `monitor` interval checks `lastHeartbeatResponse` every 200ms and triggers a reconnect if the heartbeat goes stale (no response for >16s).
+A `monitor` interval runs every 200ms and is intended to trigger a reconnect when the heartbeat goes stale, but the stale-check condition contains a sign bug and does not fire in practice. The main reconnect mechanism is the recursive connect loop itself.
