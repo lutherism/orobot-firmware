@@ -6,7 +6,7 @@ This document explains how to add new functionality to the firmware. Read `docs/
 
 ## 1. Adding a new WebSocket message type
 
-All inbound WebSocket messages are dispatched in `handleWebSocketMessage()` in `scripts/keep-alive.js` (around line 202). Add a new `else if` branch:
+All inbound WebSocket messages are dispatched in `handleWebSocketMessage()` in `scripts/keep-alive.js` (around line 202). Add a new `else if` branch **before the `gotoangle` branch near the end of the function** — that branch is a legacy exception with no `messageObj.type` guard and new branches should go above it:
 
 ```js
 } else if (messageObj.type === 'your-new-type') {
@@ -70,7 +70,7 @@ COMMANDS.export()
   .then(() => COMMANDS.stop())
 ```
 
-So sending `{ type: 'command-in', data: 'spin-clockwise' }` from the gateway will call your command automatically.
+So sending `{ type: 'command-in', data: 'spin-clockwise' }` from the gateway will call your command automatically — **as long as the key exists in the `COMMANDS` object**. The dispatch branch has a guard: `COMMANDS[messageObj.data]` must be truthy. If the command isn't dispatching, verify the key name in `COMMANDS` exactly matches the `data` string being sent.
 
 For commands with parameters (e.g., `spin-clockwise:90`), add a dedicated branch in `handleWebSocketMessage`:
 
@@ -171,6 +171,7 @@ It then loads `keep-alive.js` normally with `NODE_ENV=sim`. In sim mode, `keep-a
 
 ```bash
 cd orobot-firmware
+npm install          # installs mock-require and other deps if not already installed
 node scripts/sim-test.js
 ```
 
