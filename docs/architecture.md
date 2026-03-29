@@ -34,7 +34,7 @@ When the gateway sends a `command-in: update` message, the firmware runs `update
 2. `kill-keep-alive.sh` — stop the running process
 3. `reboot.sh` — restart with the new code
 
-All stdout and stderr from `keep-alive.js` goes to `tmp/run.log` and `tmp/run-err.log`.
+All stdout and stderr from `keep-alive.js` goes to `tmp/run.log`.
 
 ---
 
