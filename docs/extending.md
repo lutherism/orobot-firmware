@@ -6,7 +6,7 @@ This document explains how to add new functionality to the firmware. Read `docs/
 
 ## 1. Adding a new WebSocket message type
 
-All inbound WebSocket messages are dispatched in `handleWebSocketMessage()` in `scripts/keep-alive.js` (around line 202). Add a new `else if` branch **before the `gotoangle` branch near the end of the function** — that branch is a legacy exception with no `messageObj.type` guard and new branches should go above it:
+All inbound WebSocket messages are dispatched in `handleWebSocketMessage()` in `scripts/keep-alive.js` (around line 202). Add a new `else if` branch **before the `gotoangle` branch** (around line 277 in `keep-alive.js`) — that branch is a legacy exception with no `messageObj.type` guard. Insert your branch anywhere above it, immediately after the last `else if` that uses `messageObj.type`:
 
 ```js
 } else if (messageObj.type === 'your-new-type') {
@@ -158,6 +158,8 @@ You don't need a physical Raspberry Pi to develop or test firmware logic.
 - `wifi-control` — returns empty network list
 
 It then loads `keep-alive.js` normally with `NODE_ENV=sim`. In sim mode, `keep-alive.js` skips all Wi-Fi management and connects directly to `process.env.GATEWAY_URL`.
+
+> **`NODE_ENV=sim` vs `networkMode`:** These are two separate things. `NODE_ENV=sim` is an environment variable that activates the sim code path in `keep-alive.js`, bypassing Wi-Fi entirely. `networkMode` is a field in `data.json` used by the normal (non-sim) code path. The test fixture sets `networkMode: 'client'` as a safe default, but when `NODE_ENV=sim` is set, `networkMode` is ignored.
 
 **`scripts/sim-test.js`** is the integration test harness. It:
 1. Writes a test `data.json` with `networkMode: 'client'` and `hardware: 'raspi'`
