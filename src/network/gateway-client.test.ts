@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { WebSocketServer, WebSocket } from 'ws';
 import { GatewayClient } from './gateway-client';
 import { EventBus } from '../core/event-bus';
@@ -68,14 +68,16 @@ describe('GatewayClient', () => {
       `ws://localhost:${port}`,
     );
 
-    client.start();
-    const msgs = await handshakePromise;
+    try {
+      client.start();
+      const msgs = await handshakePromise;
 
-    expect(msgs).toContainEqual({ type: 'identify-connection', deviceUuid: 'test-device-uuid' });
-    expect(msgs).toContainEqual({ type: 'connect-to-user',     deviceUuid: 'test-device-uuid' });
-
-    client.stop();
-    await closeServer(wss);
+      expect(msgs).toContainEqual({ type: 'identify-connection', deviceUuid: 'test-device-uuid' });
+      expect(msgs).toContainEqual({ type: 'connect-to-user',     deviceUuid: 'test-device-uuid' });
+    } finally {
+      client.stop();
+      await closeServer(wss);
+    }
   });
 
   it('emits network:connected on successful open', async () => {
@@ -91,15 +93,17 @@ describe('GatewayClient', () => {
       `ws://localhost:${port}`,
     );
 
-    const handshakePromise = waitForMessages(wss, 2);
-    client.start();
-    await handshakePromise;
+    try {
+      const handshakePromise = waitForMessages(wss, 2);
+      client.start();
+      await handshakePromise;
 
-    expect(connectedUrls).toHaveLength(1);
-    expect(connectedUrls[0]).toBe(`ws://localhost:${port}`);
-
-    client.stop();
-    await closeServer(wss);
+      expect(connectedUrls).toHaveLength(1);
+      expect(connectedUrls[0]).toBe(`ws://localhost:${port}`);
+    } finally {
+      client.stop();
+      await closeServer(wss);
+    }
   });
 
   it('dispatches inbound messages to the registry', async () => {
@@ -127,16 +131,18 @@ describe('GatewayClient', () => {
       });
     });
 
-    client.start();
-    await serverSentPromise;
-    // Give registry.dispatch() a tick to run
-    await new Promise((r) => setTimeout(r, 50));
+    try {
+      client.start();
+      await serverSentPromise;
+      // Give registry.dispatch() a tick to run
+      await new Promise((r) => setTimeout(r, 50));
 
-    expect(dispatched).toHaveLength(1);
-    expect(dispatched[0]).toMatchObject({ type: 'test-type', data: 'hello' });
-
-    client.stop();
-    await closeServer(wss);
+      expect(dispatched).toHaveLength(1);
+      expect(dispatched[0]).toMatchObject({ type: 'test-type', data: 'hello' });
+    } finally {
+      client.stop();
+      await closeServer(wss);
+    }
   });
 
   it('forwards network:send bus events to the gateway', async () => {
@@ -160,17 +166,19 @@ describe('GatewayClient', () => {
 
     // Wait for connection before emitting
     const connectedPromise = new Promise<void>((r) => bus.once('network:connected', () => r()));
-    client.start();
-    await connectedPromise;
+    try {
+      client.start();
+      await connectedPromise;
 
-    bus.emit('network:send', { payload: { type: 'custom-event', value: 42 } });
-    await new Promise((r) => setTimeout(r, 50));
+      bus.emit('network:send', { payload: { type: 'custom-event', value: 42 } });
+      await new Promise((r) => setTimeout(r, 50));
 
-    const custom = allMsgs.find((m) => (m as { type: string }).type === 'custom-event');
-    expect(custom).toMatchObject({ type: 'custom-event', value: 42 });
-
-    client.stop();
-    await closeServer(wss);
+      const custom = allMsgs.find((m) => (m as { type: string }).type === 'custom-event');
+      expect(custom).toMatchObject({ type: 'custom-event', value: 42 });
+    } finally {
+      client.stop();
+      await closeServer(wss);
+    }
   });
 
   it('forwards pty:output bus events as pty-out messages', async () => {
@@ -192,17 +200,19 @@ describe('GatewayClient', () => {
     );
 
     const connectedPromise = new Promise<void>((r) => bus.once('network:connected', () => r()));
-    client.start();
-    await connectedPromise;
+    try {
+      client.start();
+      await connectedPromise;
 
-    bus.emit('pty:output', { data: 'hello terminal' });
-    await new Promise((r) => setTimeout(r, 50));
+      bus.emit('pty:output', { data: 'hello terminal' });
+      await new Promise((r) => setTimeout(r, 50));
 
-    const ptyOut = allMsgs.find((m) => (m as { type: string }).type === 'pty-out');
-    expect(ptyOut).toMatchObject({ type: 'pty-out', data: 'hello terminal', deviceUuid: 'test-device-uuid' });
-
-    client.stop();
-    await closeServer(wss);
+      const ptyOut = allMsgs.find((m) => (m as { type: string }).type === 'pty-out');
+      expect(ptyOut).toMatchObject({ type: 'pty-out', data: 'hello terminal', deviceUuid: 'test-device-uuid' });
+    } finally {
+      client.stop();
+      await closeServer(wss);
+    }
   });
 
   it('reconnects after server closes the connection', async () => {
@@ -221,19 +231,21 @@ describe('GatewayClient', () => {
 
     // First connection
     const firstConnected = new Promise<void>((r) => bus.once('network:connected', () => r()));
-    client.start();
-    await firstConnected;
-    expect(connectCount).toBe(1);
+    try {
+      client.start();
+      await firstConnected;
+      expect(connectCount).toBe(1);
 
-    // Close all server-side connections to trigger reconnect
-    wss.clients.forEach((ws) => ws.close());
+      // Close all server-side connections to trigger reconnect
+      wss.clients.forEach((ws) => ws.close());
 
-    // Wait for reconnect
-    const secondConnected = new Promise<void>((r) => bus.once('network:connected', () => r()));
-    await secondConnected;
-    expect(connectCount).toBe(2);
-
-    client.stop();
-    await closeServer(wss);
+      // Wait for reconnect
+      const secondConnected = new Promise<void>((r) => bus.once('network:connected', () => r()));
+      await secondConnected;
+      expect(connectCount).toBe(2);
+    } finally {
+      client.stop();
+      await closeServer(wss);
+    }
   }, 5000);
 });

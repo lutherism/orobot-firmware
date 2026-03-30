@@ -9,48 +9,50 @@ export type WsFactory = (url: string, protocol: string) => WsWebSocket;
 const PROD_WS_URL  = 'wss://robots-gateway.uc.r.appspot.com/';
 const MIN_BACKOFF  = 2_000;
 const MAX_BACKOFF  = 30_000;
+const WS_OPEN      = 1; // WebSocket.OPEN — socket is ready to send
 
 export class GatewayClient {
   private stopped            = false;
   private ws: WsWebSocket | null = null;
   private backoffMs          = MIN_BACKOFF;
   private sleepAbort: (() => void) | null = null;
+  private readonly unsubscribers: Array<() => void> = [];
 
   constructor(
     private readonly bus:         EventBus,
     private readonly state:       DeviceStateService,
     private readonly registry:    MessageHandlerRegistry,
     private readonly wsFactory:   WsFactory,
-    private readonly urlOverride?: string,  // for testing
+    private readonly urlOverride?: string,  // injected URL; overrides dev/prod resolution when set
   ) {}
 
   start(): void {
-    this.bus.on('network:send', ({ payload }) => {
-      if (this.ws?.readyState === 1 /* OPEN */) {
-        this.ws.send(JSON.stringify(payload));
-      }
-    });
-
-    this.bus.on('pty:output', ({ data }) => {
-      if (this.ws?.readyState === 1) {
-        this.ws.send(JSON.stringify({
-          type:       'pty-out',
-          data,
-          deviceUuid: this.state.get().deviceUuid,
-        }));
-      }
-    });
-
-    this.bus.on('network:mode-changed', () => {
-      // Close current connection; connectLoop will reopen with the new URL
-      this.ws?.close();
-    });
-
+    this.unsubscribers.push(
+      this.bus.on('network:send', ({ payload }) => {
+        if (this.ws?.readyState === WS_OPEN) {
+          this.ws.send(JSON.stringify(payload));
+        }
+      }),
+      this.bus.on('pty:output', ({ data }) => {
+        if (this.ws?.readyState === WS_OPEN) {
+          this.ws.send(JSON.stringify({
+            type:       'pty-out',
+            data,
+            deviceUuid: this.state.get().deviceUuid,
+          }));
+        }
+      }),
+      this.bus.on('network:mode-changed', () => {
+        this.ws?.close();
+      }),
+    );
     void this.connectLoop();
   }
 
   stop(): void {
     this.stopped = true;
+    this.unsubscribers.forEach((fn) => fn());
+    this.unsubscribers.length = 0;
     this.sleepAbort?.();
     this.ws?.close();
   }
@@ -81,7 +83,6 @@ export class GatewayClient {
       this.ws   = ws;
 
       ws.on('open', () => {
-        this.backoffMs = MIN_BACKOFF;
         const { deviceUuid } = this.state.get();
         ws.send(JSON.stringify({ type: 'identify-connection', deviceUuid }));
         ws.send(JSON.stringify({ type: 'connect-to-user',     deviceUuid }));
