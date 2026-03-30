@@ -11,7 +11,7 @@ export function createGetDeviceDataHandler(
     bus.emit('network:send', {
       payload: {
         type: 'device-data-read',
-        deviceUuid: msg.deviceUuid,
+        deviceUuid: data.deviceUuid,
         userUuid: data.ownerUuid,
         data,
       },
