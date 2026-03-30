@@ -83,8 +83,8 @@ export function createApp(options: AppOptions = {}): App {
     // fire-and-forget; errors are silently ignored (reboot/update kills the process anyway)
     execFile(cmd, args, () => {});
   });
-  bus.on('system:reboot-requested',  () => exec('sudo', ['reboot']));
-  bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', []));
+  const unsubReboot = bus.on('system:reboot-requested',  () => exec('sudo', ['reboot']));
+  const unsubUpdate = bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', []));
 
   bus.on('network:connected',    () => heartbeat.start(hbIntervalMs));
   bus.on('network:disconnected', () => heartbeat.stop());
@@ -96,6 +96,8 @@ export function createApp(options: AppOptions = {}): App {
       gatewayClient.start();
     },
     async stop(): Promise<void> {
+      unsubReboot();
+      unsubUpdate();
       ptyManager.stop();
       gatewayClient.stop();
       heartbeat.stop();
