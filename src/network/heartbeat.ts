@@ -14,6 +14,7 @@ export class HeartbeatService {
   ) {}
 
   start(intervalMs = DEFAULT_INTERVAL): void {
+    this.stop(); // clear any existing timer before starting a new one
     void this.beat();
     this.timer = setInterval(() => void this.beat(), intervalMs);
   }

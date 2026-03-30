@@ -113,6 +113,26 @@ describe('HeartbeatService', () => {
     expect(calls).toHaveLength(1); // only the initial beat
   });
 
+  it('calling start() twice does not leak a second interval', async () => {
+    vi.useFakeTimers();
+    const calls: FetchCall[] = [];
+    const bus   = new EventBus();
+    const state = new DeviceStateService(makeTmpStateFile());
+    const svc   = new HeartbeatService(state, bus, mockFetch(calls) as typeof fetch);
+
+    svc.start(8_000);
+    await vi.advanceTimersByTimeAsync(0); // initial beat from first start
+    svc.start(8_000); // second start — should reset, not add a second interval
+    await vi.advanceTimersByTimeAsync(0); // initial beat from second start
+
+    expect(calls).toHaveLength(2); // one from each start(), not three
+
+    await vi.advanceTimersByTimeAsync(8_000); // one interval tick
+    expect(calls).toHaveLength(3); // only one interval firing, not two
+
+    svc.stop();
+  });
+
   it('uses dev API URL when networkMode is dev', async () => {
     const calls: FetchCall[] = [];
     const bus   = new EventBus();
