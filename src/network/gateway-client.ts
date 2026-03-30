@@ -3,6 +3,7 @@ import type { EventBus } from '../core/event-bus';
 import type { DeviceStateService } from '../core/device-state';
 import type { MessageHandlerRegistry } from '../handlers/registry';
 import type { InboundMessage } from '../core/types';
+import { createLogger } from '../core/logger';
 
 export type WsFactory = (url: string, protocol: string) => WsWebSocket;
 
@@ -10,6 +11,7 @@ const PROD_WS_URL  = 'wss://robots-gateway.uc.r.appspot.com/';
 const MIN_BACKOFF  = 2_000;
 const MAX_BACKOFF  = 30_000;
 const WS_OPEN      = 1; // WebSocket.OPEN — socket is ready to send
+const log = createLogger('gateway-client');
 
 export class GatewayClient {
   private stopped            = false;
@@ -83,6 +85,7 @@ export class GatewayClient {
       this.ws   = ws;
 
       ws.on('open', () => {
+        log.info({ event: 'ws:connected', url }, 'Gateway connection established');
         const { deviceUuid } = this.state.get();
         ws.send(JSON.stringify({ type: 'identify-connection', deviceUuid }));
         ws.send(JSON.stringify({ type: 'connect-to-user',     deviceUuid }));
@@ -97,12 +100,14 @@ export class GatewayClient {
       });
 
       ws.on('close', () => {
+        log.info({ event: 'ws:closed' }, 'Gateway connection closed');
         this.ws = null;
         this.bus.emit('network:disconnected', { reason: 'closed' });
         resolve();
       });
 
       ws.on('error', (err: Error) => {
+        log.warn({ event: 'ws:error', err: err.message }, 'Gateway connection error');
         this.ws = null;
         this.bus.emit('network:disconnected', { reason: err.message });
         reject(err);

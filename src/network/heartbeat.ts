@@ -1,8 +1,10 @@
 import type { DeviceStateService } from '../core/device-state';
 import type { EventBus } from '../core/event-bus';
+import { createLogger } from '../core/logger';
 
 const PROD_API_URL     = 'https://robots-gateway.uc.r.appspot.com/api';
 const DEFAULT_INTERVAL = 8_000;
+const log = createLogger('heartbeat');
 
 export class HeartbeatService {
   private timer: ReturnType<typeof setInterval> | null = null;
@@ -41,8 +43,10 @@ export class HeartbeatService {
           payloadJSON: JSON.stringify({ type: s.type, pingTime: s.pingTime }),
         }),
       });
+      log.debug({ event: 'heartbeat', pingTime: s.pingTime }, 'Heartbeat sent');
       this.bus.emit('system:heartbeat-sent', { pingTime: s.pingTime });
-    } catch {
+    } catch (err) {
+      log.warn({ event: 'heartbeat:fail', err: String(err) }, 'Heartbeat failed');
       // Swallow errors — network may be temporarily unavailable
     }
   }
