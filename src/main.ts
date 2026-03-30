@@ -1,4 +1,5 @@
 import path from 'path';
+import { WebSocket } from 'ws';
 import { DeviceStateService } from './core/device-state';
 import { EventBus } from './core/event-bus';
 import { MessageHandlerRegistry } from './handlers/registry';
@@ -68,8 +69,6 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('update',        createUpdateHandler(bus));
   registry.register('gotoangle',     true, createMotorHandler(motor));
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { WebSocket } = require('ws') as typeof import('ws');
   const wsFactory: WsFactory = (url, proto) => new WebSocket(url, proto);
 
   const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl);
@@ -78,6 +77,9 @@ export function createApp(options: AppOptions = {}): App {
 
   bus.on('network:connected',    () => heartbeat.start(hbIntervalMs));
   bus.on('network:disconnected', () => heartbeat.stop());
+
+  // TODO(Phase 4): subscribe to system:reboot-requested and system:update-requested
+  // to invoke the actual shell commands (sudo reboot, ./update-reboot.sh)
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _networkSM = new NetworkStateMachine(state, bus);
@@ -89,6 +91,8 @@ export function createApp(options: AppOptions = {}): App {
       gatewayClient.start();
     },
     stop(): void {
+      // TODO(Phase 4): await motor.stop() to deenergize coils on shutdown
+      // (requires App.stop() to become async, which requires SIGTERM handler to await it)
       gatewayClient.stop();
       heartbeat.stop();
     },
