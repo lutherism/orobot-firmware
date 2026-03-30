@@ -107,7 +107,7 @@ export class GatewayClient {
       });
 
       ws.on('error', (err: Error) => {
-        log.warn({ event: 'ws:error', err: err.message }, 'Gateway connection error');
+        log.warn({ event: 'ws:error', err }, 'Gateway connection error');
         this.ws = null;
         this.bus.emit('network:disconnected', { reason: err.message });
         reject(err);
