@@ -1,4 +1,5 @@
 import path from 'path';
+import { execFile } from 'child_process';
 import { WebSocket } from 'ws';
 import { DeviceStateService } from './core/device-state';
 import { EventBus } from './core/event-bus';
@@ -36,6 +37,8 @@ export interface AppOptions {
   dataFilePath?: string;
   /** Heartbeat interval in ms — defaults to 8000. */
   heartbeatIntervalMs?: number;
+  /** Override command executor for testing; defaults to child_process.execFile (fire-and-forget). */
+  execCommand?: (cmd: string, args: string[]) => void;
 }
 
 export interface App {
@@ -76,12 +79,15 @@ export function createApp(options: AppOptions = {}): App {
   const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl);
   const heartbeat     = new HeartbeatService(state, bus);
   const hbIntervalMs  = options.heartbeatIntervalMs ?? 8_000;
+  const exec = options.execCommand ?? ((cmd: string, args: string[]) => {
+    // fire-and-forget; errors are silently ignored (reboot/update kills the process anyway)
+    execFile(cmd, args, () => {});
+  });
+  bus.on('system:reboot-requested',  () => exec('sudo', ['reboot']));
+  bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', []));
 
   bus.on('network:connected',    () => heartbeat.start(hbIntervalMs));
   bus.on('network:disconnected', () => heartbeat.stop());
-
-  // TODO(Phase 4): subscribe to system:reboot-requested and system:update-requested
-  // to invoke the actual shell commands (sudo reboot, ./update-reboot.sh)
 
   return {
     async start(): Promise<void> {

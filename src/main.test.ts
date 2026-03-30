@@ -140,4 +140,40 @@ describe('createApp()', () => {
     }
     await closeServer(wss);
   }, 5000);
+
+  it('system:reboot-requested causes execCommand("sudo", ["reboot"])', async () => {
+    const { wss, port } = await startServer();
+    const execCommand   = vi.fn();
+    const app = createApp({
+      driver:              new MockGPIODriver(),
+      ptySpawner:          makeNullPtySpawner(),
+      gatewayUrl:          `ws://localhost:${port}`,
+      dataFilePath:        makeTmpDataFile(),
+      heartbeatIntervalMs: 60_000,
+      execCommand,
+    });
+    await app.start();
+    app.bus.emit('system:reboot-requested', {});
+    expect(execCommand).toHaveBeenCalledWith('sudo', ['reboot']);
+    await app.stop();
+    await closeServer(wss);
+  }, 5000);
+
+  it('system:update-requested causes execCommand with update-reboot.sh', async () => {
+    const { wss, port } = await startServer();
+    const execCommand   = vi.fn();
+    const app = createApp({
+      driver:              new MockGPIODriver(),
+      ptySpawner:          makeNullPtySpawner(),
+      gatewayUrl:          `ws://localhost:${port}`,
+      dataFilePath:        makeTmpDataFile(),
+      heartbeatIntervalMs: 60_000,
+      execCommand,
+    });
+    await app.start();
+    app.bus.emit('system:update-requested', {});
+    expect(execCommand).toHaveBeenCalledWith('/home/pi/orobot-firmware/update-reboot.sh', []);
+    await app.stop();
+    await closeServer(wss);
+  }, 5000);
 });
