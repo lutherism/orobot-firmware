@@ -41,8 +41,9 @@ export class StepperMotor {
    * `intervalMs` per step. Does NOT update `currentAngle`.
    */
   async step(direction: Direction, intervalMs: number, durationMs: number): Promise<void> {
-    this.queue = this.queue.then(() => this._step(direction, intervalMs, durationMs));
-    return this.queue;
+    const result = this.queue.then(() => this._step(direction, intervalMs, durationMs));
+    this.queue = result.catch(() => {}); // keep queue alive even if this operation fails
+    return result;
   }
 
   /**
@@ -50,14 +51,16 @@ export class StepperMotor {
    * Updates `currentAngle` and emits `hardware:motor-moved` when done.
    */
   async gotoAngle(degrees: number): Promise<void> {
-    this.queue = this.queue.then(() => this._gotoAngle(degrees));
-    return this.queue;
+    const result = this.queue.then(() => this._gotoAngle(degrees));
+    this.queue = result.catch(() => {}); // keep queue alive even if this operation fails
+    return result;
   }
 
   /** De-energizes all coils. Queued after any in-progress operation. */
   async stop(): Promise<void> {
-    this.queue = this.queue.then(() => this._stop());
-    return this.queue;
+    const result = this.queue.then(() => this._stop());
+    this.queue = result.catch(() => {}); // keep queue alive even if this operation fails
+    return result;
   }
 
   private async _step(
