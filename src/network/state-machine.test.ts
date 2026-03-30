@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { NetworkStateMachine } from './state-machine';
 import { EventBus } from '../core/event-bus';
 import { DeviceStateService } from '../core/device-state';
@@ -64,6 +64,17 @@ describe('NetworkStateMachine', () => {
     const sm    = new NetworkStateMachine(state, bus);
 
     await expect(sm.transition('client')).rejects.toThrow('Invalid transition: sim → client');
+  });
+
+  it('dev → ap transition is valid', async () => {
+    const state = new DeviceStateService(makeTmpStateFile({ networkMode: 'dev' }));
+    const bus   = new EventBus();
+    const sm    = new NetworkStateMachine(state, bus);
+
+    await sm.transition('ap');
+
+    expect(sm.current).toBe('ap');
+    expect(state.get().networkMode).toBe('ap');
   });
 
   it('dev transition stores devIP in state', async () => {

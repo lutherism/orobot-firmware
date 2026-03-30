@@ -3,6 +3,7 @@ import type { EventBus } from '../core/event-bus';
 import type { NetworkMode } from '../core/types';
 
 const VALID_TRANSITIONS: Record<NetworkMode, NetworkMode[]> = {
+  // sim is boot-time only (set via NODE_ENV or data.json); not a runtime transition
   client: ['ap', 'dev'],
   ap:     ['client'],
   dev:    ['client', 'ap'],
