@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EventBus } from '../core/event-bus';
-import type { InboundMessage, NetworkMode } from '../core/types';
+import { DeviceStateService } from '../core/device-state';
+import { NetworkStateMachine } from '../network/state-machine';
+import type { InboundMessage } from '../core/types';
 import type { StepperMotor } from '../hardware/stepper-motor';
 import type { PTYManager } from '../pty/pty-manager';
-import type { DeviceStateService } from '../core/device-state';
 import { createMotorHandler } from './motor';
 import { createPtyHandler } from './pty';
 import {
@@ -14,15 +15,22 @@ import {
 } from './system';
 import { createWifiListHandler, createShareWifiHandler } from './wifi';
 import { createCameraHandler } from './camera';
+import os from 'os';
+import path from 'path';
+import fs from 'fs';
 
 function makeMsg(overrides: Partial<InboundMessage> = {}): InboundMessage {
-  return {
-    type: 'command-in',
-    data: '',
-    ackId: 'ack-1',
-    deviceUuid: 'dev-123',
-    ...overrides,
-  };
+  return { type: 'command-in', data: '', ackId: 'ack-1', deviceUuid: 'dev-123', ...overrides };
+}
+
+function makeTmpState(networkMode: string): DeviceStateService {
+  const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-sys-handler-'));
+  const file = path.join(dir, 'data.json');
+  fs.writeFileSync(file, JSON.stringify({
+    deviceUuid: 'dev-123', networkMode, wifiSettings: null, knownNetworks: [],
+    ownerUuid: null, type: 'wifi-motor', hardware: 'raspi', pingTime: 0, devIP: null,
+  }));
+  return new DeviceStateService(file);
 }
 
 // ── Motor handler ────────────────────────────────────────────────
@@ -90,27 +98,22 @@ describe('System handlers', () => {
   });
 
   it('networkmode handler patches state.networkMode to client', async () => {
-    const bus = new EventBus();
-    const patch = vi.fn().mockResolvedValue(undefined);
-    const state = {
-      get: vi.fn().mockReturnValue({ networkMode: 'ap' as NetworkMode }),
-      patch,
-    } as unknown as DeviceStateService;
-    const handler = createNetworkModeHandler(state, bus);
+    const bus   = new EventBus();
+    const state = makeTmpState('ap');
+    const sm    = new NetworkStateMachine(state, bus);
+    const handler = createNetworkModeHandler(sm);
     await handler(makeMsg({ type: 'networkmode', data: 'client' }));
-    expect(patch).toHaveBeenCalledWith({ networkMode: 'client' });
+    expect(state.get().networkMode).toBe('client');
   });
 
   it('networkmode handler parses dev:192.168.1.1 and patches devIP', async () => {
-    const bus = new EventBus();
-    const patch = vi.fn().mockResolvedValue(undefined);
-    const state = {
-      get: vi.fn().mockReturnValue({ networkMode: 'client' as NetworkMode }),
-      patch,
-    } as unknown as DeviceStateService;
-    const handler = createNetworkModeHandler(state, bus);
+    const bus   = new EventBus();
+    const state = makeTmpState('client');
+    const sm    = new NetworkStateMachine(state, bus);
+    const handler = createNetworkModeHandler(sm);
     await handler(makeMsg({ type: 'networkmode', data: 'dev:192.168.1.1' }));
-    expect(patch).toHaveBeenCalledWith({ networkMode: 'dev', devIP: '192.168.1.1' });
+    expect(state.get().networkMode).toBe('dev');
+    expect(state.get().devIP).toBe('192.168.1.1');
   });
 });
 

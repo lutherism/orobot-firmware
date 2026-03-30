@@ -1,5 +1,6 @@
 import type { DeviceStateService } from '../core/device-state';
 import type { EventBus } from '../core/event-bus';
+import type { NetworkStateMachine } from '../network/state-machine';
 import type { MessageHandler } from './registry';
 
 export function createGetDeviceDataHandler(
@@ -31,25 +32,14 @@ export function createUpdateHandler(bus: EventBus): MessageHandler {
   };
 }
 
-export function createNetworkModeHandler(
-  state: DeviceStateService,
-  bus: EventBus,
-): MessageHandler {
+export function createNetworkModeHandler(sm: NetworkStateMachine): MessageHandler {
   return async (msg) => {
-    const from = state.get().networkMode;
-    const raw  = msg.data; // e.g. 'client', 'ap', 'dev:192.168.1.1'
-
-    let to: 'client' | 'ap' | 'dev' | 'sim';
-
+    const raw = msg.data; // e.g. 'client', 'ap', 'dev:192.168.1.1'
     if (raw.startsWith('dev:')) {
-      const ip = raw.slice(4); // slice 'dev:' prefix; handles IPv6 colons safely
-      await state.patch({ networkMode: 'dev', devIP: ip });
-      to = 'dev';
+      const devIP = raw.slice(4);
+      await sm.transition('dev', { devIP });
     } else {
-      to = raw as 'client' | 'ap' | 'sim';
-      await state.patch({ networkMode: to });
+      await sm.transition(raw as import('../core/types').NetworkMode);
     }
-
-    bus.emit('network:mode-changed', { from, to });
   };
 }

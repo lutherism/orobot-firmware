@@ -97,4 +97,13 @@ describe('PTYManager', () => {
     await vi.advanceTimersByTimeAsync(5100);
     expect(spawner.processes[0].killed).toBe(true);
   });
+
+  it('stop() prevents restart when the process exits', async () => {
+    manager.stop();
+    // Simulate the process exiting after stop() was called
+    spawner.processes[0].simulateExit();
+    await vi.advanceTimersByTimeAsync(1100);
+    // Should still be 1 — no restart was scheduled
+    expect(spawner.processes).toHaveLength(1);
+  });
 });

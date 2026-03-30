@@ -21,7 +21,9 @@ const RESTART_DELAY_MS = 1000;
 export class PTYManager {
   private process: PtyProcess | null = null;
   private watchdogTimer: ReturnType<typeof setTimeout> | null = null;
+  private restartTimer: ReturnType<typeof setTimeout> | null = null;
   private waitingForResponse = false;
+  private stopped = false;
   private readonly shell: string;
 
   constructor(
@@ -38,6 +40,23 @@ export class PTYManager {
     this.spawn();
   }
 
+  /** Kills the shell process and prevents any further auto-restart. */
+  stop(): void {
+    this.stopped = true;
+    if (this.watchdogTimer !== null) {
+      clearTimeout(this.watchdogTimer);
+      this.watchdogTimer = null;
+    }
+    if (this.restartTimer !== null) {
+      clearTimeout(this.restartTimer);
+      this.restartTimer = null;
+    }
+    if (this.process !== null) {
+      this.process.kill(9);
+      this.process = null;
+    }
+  }
+
   /**
    * Forwards data to the shell process and resets the watchdog timer.
    * If no output arrives within 5s the process is killed (and auto-restarts via exit handler).
@@ -49,7 +68,6 @@ export class PTYManager {
     this.watchdogTimer = setTimeout(() => {
       if (this.waitingForResponse) {
         this.process?.kill(9);
-        // Restart is handled by the exit listener
       }
     }, WATCHDOG_MS);
     this.process.write(data);
@@ -82,7 +100,11 @@ export class PTYManager {
         this.watchdogTimer = null;
       }
       this.process = null;
-      setTimeout(() => this.spawn(), RESTART_DELAY_MS);
+      if (this.stopped) return; // do not restart after stop()
+      this.restartTimer = setTimeout(() => {
+        this.restartTimer = null;
+        this.spawn();
+      }, RESTART_DELAY_MS);
     });
   }
 }

@@ -57,12 +57,14 @@ export function createApp(options: AppOptions = {}): App {
   const ptySpawner = options.ptySpawner ?? createNodePtySpawner();
   const ptyManager = new PTYManager(ptySpawner, bus);
 
+  const networkSM = new NetworkStateMachine(state, bus);
+
   const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
 
   registry.register('pty-in',        createPtyHandler(ptyManager));
   registry.register('getframe',      createCameraHandler(bus));
   registry.register('getDeviceData', createGetDeviceDataHandler(state, bus));
-  registry.register('networkmode',   createNetworkModeHandler(state, bus));
+  registry.register('networkmode',   createNetworkModeHandler(networkSM));
   registry.register('share-wifi',    createShareWifiHandler(bus));
   registry.register('wifiList',      createWifiListHandler(bus));
   registry.register('reboot',        createRebootHandler(bus));
@@ -81,9 +83,6 @@ export function createApp(options: AppOptions = {}): App {
   // TODO(Phase 4): subscribe to system:reboot-requested and system:update-requested
   // to invoke the actual shell commands (sudo reboot, ./update-reboot.sh)
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _networkSM = new NetworkStateMachine(state, bus);
-
   return {
     async start(): Promise<void> {
       await motor.initialize();
@@ -93,6 +92,7 @@ export function createApp(options: AppOptions = {}): App {
     stop(): void {
       // TODO(Phase 4): await motor.stop() to deenergize coils on shutdown
       // (requires App.stop() to become async, which requires SIGTERM handler to await it)
+      ptyManager.stop();
       gatewayClient.stop();
       heartbeat.stop();
     },
