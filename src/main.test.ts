@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createApp } from './main';
 import { MockGPIODriver } from './hardware/mock-driver';
@@ -77,7 +77,7 @@ describe('createApp()', () => {
       expect(received).toContainEqual(expect.objectContaining({ type: 'identify-connection', deviceUuid: 'main-test-uuid' }));
       expect(received).toContainEqual(expect.objectContaining({ type: 'connect-to-user',     deviceUuid: 'main-test-uuid' }));
     } finally {
-      app.stop();
+      await app.stop();
       await closeServer(wss);
     }
   }, 5000);
@@ -114,8 +114,30 @@ describe('createApp()', () => {
       const ack = received.find((m) => (m as { type: string }).type === 'message-ack');
       expect(ack).toMatchObject({ type: 'message-ack', ackId: 'ack-42' });
     } finally {
-      app.stop();
+      await app.stop();
       await closeServer(wss);
     }
+  }, 5000);
+
+  it('stop() returns a Promise that resolves and deenergizes motor coils', async () => {
+    const driver = new MockGPIODriver();
+    const { wss, port } = await startServer();
+    const app = createApp({
+      driver,
+      ptySpawner:          makeNullPtySpawner(),
+      gatewayUrl:          `ws://localhost:${port}`,
+      dataFilePath:        makeTmpDataFile(),
+      heartbeatIntervalMs: 60_000,
+    });
+    await app.start();
+    const stopResult = app.stop();
+    // stop() must return a Promise (not undefined)
+    expect(stopResult).toBeInstanceOf(Promise);
+    await stopResult;
+    // After stop(), all motor pins must be 0 (de-energized)
+    for (const pin of [17, 18, 22, 27]) {
+      expect(driver.pins.get(pin)?.value).toBe(0);
+    }
+    await closeServer(wss);
   }, 5000);
 });

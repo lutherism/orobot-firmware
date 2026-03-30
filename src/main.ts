@@ -40,7 +40,7 @@ export interface AppOptions {
 
 export interface App {
   start(): Promise<void>;
-  stop(): void;
+  stop(): Promise<void>;
   readonly bus: EventBus;
 }
 
@@ -89,12 +89,11 @@ export function createApp(options: AppOptions = {}): App {
       ptyManager.start();
       gatewayClient.start();
     },
-    stop(): void {
-      // TODO(Phase 4): await motor.stop() to deenergize coils on shutdown
-      // (requires App.stop() to become async, which requires SIGTERM handler to await it)
+    async stop(): Promise<void> {
       ptyManager.stop();
       gatewayClient.stop();
       heartbeat.stop();
+      await motor.stop(); // de-energize coils before process exits
     },
     get bus() { return bus; },
   };
