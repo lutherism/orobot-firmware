@@ -65,6 +65,7 @@ export class StepperMotor {
     intervalMs: number,
     durationMs: number,
   ): Promise<void> {
+    if (durationMs <= 0) return;
     const order = COIL_ORDERS[direction];
     return new Promise<void>((resolve) => {
       const job = setInterval(() => {
