@@ -71,4 +71,9 @@ describe('DeviceStateService', () => {
       (state as { networkMode: string }).networkMode = 'dev';
     }).toThrow();
   });
+
+  it('throws when the state file exists but contains malformed JSON', () => {
+    fs.writeFileSync(filePath, '{ broken json');
+    expect(() => new DeviceStateService(filePath)).toThrow(SyntaxError);
+  });
 });

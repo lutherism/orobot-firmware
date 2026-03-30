@@ -19,7 +19,7 @@ export interface DeviceState {
   devIP:         string | null;
 }
 
-const DEFAULT_STATE: DeviceState = {
+const DEFAULT_STATE: Readonly<DeviceState> = Object.freeze({
   deviceUuid:    '',
   networkMode:   'ap',
   wifiSettings:  null,
@@ -29,16 +29,20 @@ const DEFAULT_STATE: DeviceState = {
   hardware:      'raspi',
   pingTime:      0,
   devIP:         null,
-};
+});
 
 export class DeviceStateService {
   private state: DeviceState;
+  private writeQueue: Promise<void> = Promise.resolve();
 
   constructor(private readonly filePath: string) {
     try {
       const raw = fs.readFileSync(filePath, 'utf8');
       this.state = { ...DEFAULT_STATE, ...JSON.parse(raw) };
-    } catch {
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw err;
+      }
       this.state = { ...DEFAULT_STATE };
       this.writeSync();
     }
@@ -50,6 +54,11 @@ export class DeviceStateService {
 
   async patch(update: Partial<DeviceState>): Promise<void> {
     this.state = { ...this.state, ...update };
+    this.writeQueue = this.writeQueue.then(() => this.writeToDisk());
+    return this.writeQueue;
+  }
+
+  private async writeToDisk(): Promise<void> {
     const tmpPath = this.filePath + '.tmp';
     await fs.promises.writeFile(tmpPath, JSON.stringify(this.state, null, 2));
     await fs.promises.rename(tmpPath, this.filePath);
