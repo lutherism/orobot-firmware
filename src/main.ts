@@ -85,9 +85,8 @@ export function createApp(options: AppOptions = {}): App {
   });
   const unsubReboot = bus.on('system:reboot-requested',  () => exec('sudo', ['reboot']));
   const unsubUpdate = bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', []));
-
-  bus.on('network:connected',    () => heartbeat.start(hbIntervalMs));
-  bus.on('network:disconnected', () => heartbeat.stop());
+  const unsubConnected    = bus.on('network:connected',    () => heartbeat.start(hbIntervalMs));
+  const unsubDisconnected = bus.on('network:disconnected', () => heartbeat.stop());
 
   return {
     async start(): Promise<void> {
@@ -98,6 +97,8 @@ export function createApp(options: AppOptions = {}): App {
     async stop(): Promise<void> {
       unsubReboot();
       unsubUpdate();
+      unsubConnected();
+      unsubDisconnected();
       ptyManager.stop();
       gatewayClient.stop();
       heartbeat.stop();
