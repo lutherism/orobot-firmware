@@ -69,6 +69,10 @@ export class PTYManager {
 
     proc.on('data', (data) => {
       this.waitingForResponse = false;
+      if (this.watchdogTimer) {
+        clearTimeout(this.watchdogTimer);
+        this.watchdogTimer = null;
+      }
       this.bus.emit('pty:output', { data });
     });
 
