@@ -11,7 +11,7 @@ export type EventMap = {
   'network:connected':        { url: string };
   'network:disconnected':     { reason: string };
   'network:message':          { type: string; data: string; ackId: string };
-  'network:send':             { payload: object };
+  'network:send':             { payload: Record<string, unknown> };
   'hardware:motor-moved':     { angle: number };
   'hardware:motor-error':     { error: Error };
   'pty:output':               { data: string };
@@ -30,6 +30,11 @@ export type EventMap = {
 export class EventBus {
   private readonly emitter = new EventEmitter();
 
+  constructor() {
+    this.emitter.setMaxListeners(50);
+    this.emitter.on('error', () => {});
+  }
+
   emit<K extends keyof EventMap>(event: K, payload: EventMap[K]): void {
     this.emitter.emit(event as string, payload);
   }
@@ -39,6 +44,14 @@ export class EventBus {
     handler: (payload: EventMap[K]) => void,
   ): () => void {
     this.emitter.on(event as string, handler);
+    return () => this.emitter.off(event as string, handler);
+  }
+
+  once<K extends keyof EventMap>(
+    event: K,
+    handler: (payload: EventMap[K]) => void,
+  ): () => void {
+    this.emitter.once(event as string, handler);
     return () => this.emitter.off(event as string, handler);
   }
 }

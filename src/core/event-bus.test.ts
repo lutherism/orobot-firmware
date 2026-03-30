@@ -49,4 +49,23 @@ describe('EventBus', () => {
     expect(h1).not.toHaveBeenCalled();
     expect(h2).toHaveBeenCalledWith({ angle: 45 });
   });
+
+  it('once() delivers the event exactly one time', () => {
+    const bus = new EventBus();
+    const handler = vi.fn();
+    bus.once('hardware:motor-moved', handler);
+    bus.emit('hardware:motor-moved', { angle: 90 });
+    bus.emit('hardware:motor-moved', { angle: 45 });
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith({ angle: 90 });
+  });
+
+  it('once() returns an unsubscribe function that cancels before first fire', () => {
+    const bus = new EventBus();
+    const handler = vi.fn();
+    const unsub = bus.once('system:heartbeat-sent', handler);
+    unsub();
+    bus.emit('system:heartbeat-sent', { pingTime: 42 });
+    expect(handler).not.toHaveBeenCalled();
+  });
 });
