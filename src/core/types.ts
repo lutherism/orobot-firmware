@@ -27,3 +27,10 @@ export interface WifiCredentials {
   ssid:     string;
   password: string;
 }
+
+export interface InboundMessage {
+  type:       string;
+  data:       string;
+  ackId:      string;
+  deviceUuid: string;
+}
