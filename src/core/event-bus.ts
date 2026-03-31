@@ -19,7 +19,9 @@ export type EventMap = {
   'wifi:scan-complete':       { networks: ScanResult[] };
   'wifi:provision-progress':  { step: string; percent: number };
   'wifi:connected':           { ssid: string; quality: ConnectionQuality };
-  'wifi:disconnected':        { reason: string };
+  'wifi:disconnected':         { reason: string };
+  'wifi:credentials-shared':   { targetSsid: string };
+  'wifi:goto-client-requested': Record<string, never>;
   'system:heartbeat-sent':    { pingTime: number };
   'system:reboot-requested':  Record<string, never>;
   'system:update-requested':  Record<string, never>;
