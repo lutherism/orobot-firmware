@@ -1,8 +1,6 @@
 const React = require('react');
 const Component = React.Component;
-const {Input} = require('baseui/input');
-const {Button, KIND} = require('baseui/button');
-const { Spinner } = require("baseui/spinner");
+const {CircularProgress, Input, Button} = require('@mui/material');
 const API_BASE = false ? 'http://192.168.4.1' : '';
 const parseWifiScanOutput = require('../scripts/parseWifiScanOutput.js');
 function ListWifi({
@@ -14,7 +12,7 @@ function ListWifi({
   onSelect
 }) {
   if (loading) {
-    return <Spinner />;
+    return <CircularProgress  />;
   }
   if (!uniqueNetworks) {
     return (
@@ -38,7 +36,7 @@ function ListWifi({
                 display: 'inline-block'
               }}>
                 <Button
-                  kind={KIND.secondary}
+                  variant="outlined"
                   onClick={() => onKnownSelect(n)}>
                   {n.ssid}
                 </Button>
@@ -54,7 +52,7 @@ function ListWifi({
             display: 'inline-block'
           }}>
             <Button
-              kind={KIND.secondary}
+              variant="outlined"
               onClick={() => onSelect(n)}>
               {n.ssid}
             </Button>
