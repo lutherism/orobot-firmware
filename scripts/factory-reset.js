@@ -21,7 +21,7 @@ upsertDeviceData({
   deviceUuid: newDriverUuid
 });
 console.log('sending POST /device')
-request.post('https://robots-gateway.uc.r.appspot.com/api/device', {
+request.post('https://robots-gateway-v2.wl.r.appspot.com/api/device', {
   json: true,
   body: {
     uuid: newDriverUuid,
