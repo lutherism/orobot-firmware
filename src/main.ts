@@ -21,10 +21,17 @@ import { NetworkStateMachine } from './network/state-machine';
 import { GatewayClient, type WsFactory } from './network/gateway-client';
 import { HeartbeatService } from './network/heartbeat';
 import type { GPIODriver } from './hardware/types';
+import { WifiStateMachine } from './wifi/wifi-state-machine';
+import { WifiManager } from './wifi/wifi-manager';
+import { CaptivePortalServer } from './wifi/captive-portal';
+import { WifiScanMonitor } from './wifi/wifi-scan-monitor';
+import { RpiWifiShellAdapter } from './wifi/rpi-shell-adapter';
+import type { WifiShellAdapter } from './wifi/types';
 
-const DEFAULT_DATA_FILE = path.join(__dirname, '../scripts/openroboticsdata/data.json');
-const RASPI_PINS        = [17, 18, 22, 27];
-const BANANA_PINS       = [0, 1, 3, 2];
+const DEFAULT_DATA_FILE     = path.join(__dirname, '../scripts/openroboticsdata/data.json');
+const RASPI_PINS            = [17, 18, 22, 27];
+const BANANA_PINS           = [0, 1, 3, 2];
+const DEFAULT_SCAN_INTERVAL = 10_000;
 
 export interface AppOptions {
   /** GPIO driver — defaults to RPiGPIODriver (real hardware). */
@@ -39,6 +46,14 @@ export interface AppOptions {
   heartbeatIntervalMs?: number;
   /** Override command executor for testing; defaults to child_process.execFile (fire-and-forget). */
   execCommand?: (cmd: string, args: string[]) => void;
+  /** WiFi shell adapter — defaults to RpiWifiShellAdapter. */
+  wifiShellAdapter?: WifiShellAdapter;
+  /** Peer scan interval in ms — defaults to 10_000. */
+  scanIntervalMs?: number;
+  /** Connection failures before falling back to AP mode — defaults to 10. */
+  maxConnectFailures?: number;
+  /** Reconnect retries before falling back to AP mode — defaults to 10. */
+  maxReconnectRetries?: number;
 }
 
 export interface App {
@@ -61,47 +76,73 @@ export function createApp(options: AppOptions = {}): App {
   const ptyManager = new PTYManager(ptySpawner, bus);
 
   const networkSM = new NetworkStateMachine(state, bus);
+  const wifiSM    = new WifiStateMachine(bus);
+
+  const wifiAdapter    = options.wifiShellAdapter ?? new RpiWifiShellAdapter();
+  const wifiManager    = new WifiManager(
+    wifiAdapter, state, bus, wifiSM,
+    options.maxConnectFailures,
+    options.maxReconnectRetries,
+  );
+  const captivePortal   = new CaptivePortalServer(wifiManager, state, bus);
+  const wifiScanMonitor = new WifiScanMonitor(wifiAdapter, state, bus);
+  const scanIntervalMs  = options.scanIntervalMs ?? DEFAULT_SCAN_INTERVAL;
 
   const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
-
   registry.register('pty-in',        createPtyHandler(ptyManager));
   registry.register('getframe',      createCameraHandler(bus));
   registry.register('getDeviceData', createGetDeviceDataHandler(state, bus));
   registry.register('networkmode',   createNetworkModeHandler(networkSM));
-  registry.register('share-wifi',    createShareWifiHandler(bus));
-  registry.register('wifiList',      createWifiListHandler(bus));
+  registry.register('share-wifi',    createShareWifiHandler(wifiManager));
+  registry.register('wifiList',      createWifiListHandler(wifiManager, state, bus));
   registry.register('reboot',        createRebootHandler(bus));
   registry.register('update',        createUpdateHandler(bus));
   registry.register('gotoangle',     true, createMotorHandler(motor));
 
   const wsFactory: WsFactory = (url, proto) => new WebSocket(url, proto);
-
   const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl);
   const heartbeat     = new HeartbeatService(state, bus);
   const hbIntervalMs  = options.heartbeatIntervalMs ?? 8_000;
+
   const exec = options.execCommand ?? ((cmd: string, args: string[]) => {
     // fire-and-forget; errors are silently ignored (reboot/update kills the process anyway)
     execFile(cmd, args, () => {});
   });
-  const unsubReboot = bus.on('system:reboot-requested',  () => exec('sudo', ['reboot']));
-  const unsubUpdate = bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', []));
-  const unsubConnected    = bus.on('network:connected',    () => heartbeat.start(hbIntervalMs));
-  const unsubDisconnected = bus.on('network:disconnected', () => heartbeat.stop());
+
+  const unsubscribers: Array<() => void> = [
+    bus.on('system:reboot-requested',  () => exec('sudo', ['reboot'])),
+    bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', [])),
+    bus.on('network:connected',        () => heartbeat.start(hbIntervalMs)),
+    bus.on('network:disconnected',     () => heartbeat.stop()),
+    bus.on('wifi:goto-client-requested', () => void wifiManager.gotoClient()),
+    bus.on('wifi:state-changed', ({ to }) => {
+      if (to === 'CONNECTING') {
+        gatewayClient.start();
+      } else if (to === 'SETUP_MODE') {
+        gatewayClient.stop();
+        captivePortal.start();
+        wifiScanMonitor.stop();
+      } else if (to === 'CONNECTED') {
+        captivePortal.stop();
+        wifiScanMonitor.start(scanIntervalMs);
+      }
+    }),
+  ];
 
   return {
     async start(): Promise<void> {
       await motor.initialize();
+      await wifiManager.initialize();
       ptyManager.start();
-      gatewayClient.start();
     },
     async stop(): Promise<void> {
-      unsubReboot();
-      unsubUpdate();
-      unsubConnected();
-      unsubDisconnected();
+      unsubscribers.forEach((fn) => fn());
+      wifiManager.stop();
       ptyManager.stop();
       gatewayClient.stop();
       heartbeat.stop();
+      captivePortal.stop();
+      wifiScanMonitor.stop();
       await motor.stop(); // de-energize coils before process exits
     },
     get bus() { return bus; },

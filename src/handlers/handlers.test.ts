@@ -15,6 +15,9 @@ import {
 } from './system';
 import { createWifiListHandler, createShareWifiHandler } from './wifi';
 import { createCameraHandler } from './camera';
+import { MockWifiShellAdapter } from '../wifi/mock-shell-adapter';
+import { WifiStateMachine } from '../wifi/wifi-state-machine';
+import { WifiManager } from '../wifi/wifi-manager';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
@@ -120,16 +123,25 @@ describe('System handlers', () => {
 // ── WiFi + Camera stubs ──────────────────────────────────────────
 
 describe('WiFi handlers', () => {
+  function makeWifiManager(): { wifiManager: WifiManager; state: DeviceStateService; bus: EventBus } {
+    const bus     = new EventBus();
+    const state   = makeTmpState('client');
+    const adapter = new MockWifiShellAdapter();
+    const wifiSM  = new WifiStateMachine(bus);
+    const wifiManager = new WifiManager(adapter, state, bus, wifiSM);
+    return { wifiManager, state, bus };
+  }
+
   it('wifiList handler resolves without throwing', async () => {
-    const bus = new EventBus();
-    const handler = createWifiListHandler(bus);
+    const { wifiManager, state, bus } = makeWifiManager();
+    const handler = createWifiListHandler(wifiManager, state, bus);
     await expect(handler(makeMsg({ data: 'wifiList' }))).resolves.toBeUndefined();
   });
 
   it('share-wifi handler resolves without throwing', async () => {
-    const bus = new EventBus();
-    const handler = createShareWifiHandler(bus);
-    await expect(handler(makeMsg({ type: 'share-wifi' }))).resolves.toBeUndefined();
+    const { wifiManager } = makeWifiManager();
+    const handler = createShareWifiHandler(wifiManager);
+    await expect(handler(makeMsg({ type: 'share-wifi', data: JSON.stringify({ tagUuid: 'test' }) }))).resolves.toBeUndefined();
   });
 });
 

@@ -29,6 +29,7 @@ export class GatewayClient {
   ) {}
 
   start(): void {
+    this.stopped = false;  // allow restart after stop()
     this.unsubscribers.push(
       this.bus.on('network:send', ({ payload }) => {
         if (this.ws?.readyState === WS_OPEN) {

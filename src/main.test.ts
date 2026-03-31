@@ -1,19 +1,25 @@
 import { describe, it, expect, vi } from 'vitest';
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer } from 'ws';
 import { createApp } from './main';
 import { MockGPIODriver } from './hardware/mock-driver';
+import { MockWifiShellAdapter } from './wifi/mock-shell-adapter';
 import type { PtySpawner } from './pty/pty-manager';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
 
+/**
+ * Creates a temp data.json with wifiSettings set so wifiManager.initialize()
+ * transitions to CONNECTING (not SETUP_MODE), allowing gatewayClient.start()
+ * to fire via the wifi:state-changed bus listener.
+ */
 function makeTmpDataFile(): string {
   const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-main-'));
   const file = path.join(dir, 'data.json');
   fs.writeFileSync(file, JSON.stringify({
     deviceUuid:    'main-test-uuid',
     networkMode:   'client',
-    wifiSettings:  null,
+    wifiSettings:  { ssid: 'TestNet', password: 'testpass' },
     knownNetworks: [],
     ownerUuid:     null,
     type:          'wifi-motor',
@@ -48,12 +54,25 @@ function closeServer(wss: WebSocketServer): Promise<void> {
   return new Promise((resolve) => wss.close(() => resolve()));
 }
 
+/** Options shared by all createApp() calls in these tests. */
+function baseOptions(port: number) {
+  return {
+    driver:              new MockGPIODriver(),
+    ptySpawner:          makeNullPtySpawner(),
+    gatewayUrl:          `ws://localhost:${port}`,
+    dataFilePath:        makeTmpDataFile(),
+    heartbeatIntervalMs: 60_000,
+    wifiShellAdapter:    new MockWifiShellAdapter(),
+    scanIntervalMs:      60_000, // prevent scans during tests
+  };
+}
+
 describe('createApp()', () => {
   it('connects to gateway and sends identify-connection + connect-to-user', async () => {
     const { wss, port } = await startServer();
 
     const received: object[] = [];
-    const handshakePromise = new Promise<void>((resolve) => {
+    const handshakePromise   = new Promise<void>((resolve) => {
       wss.once('connection', (ws) => {
         ws.on('message', (data) => {
           received.push(JSON.parse(data.toString()));
@@ -62,14 +81,7 @@ describe('createApp()', () => {
       });
     });
 
-    const app = createApp({
-      driver:              new MockGPIODriver(),
-      ptySpawner:          makeNullPtySpawner(),
-      gatewayUrl:          `ws://localhost:${port}`,
-      dataFilePath:        makeTmpDataFile(),
-      heartbeatIntervalMs: 60_000,
-    });
-
+    const app = createApp(baseOptions(port));
     try {
       await app.start();
       await handshakePromise;
@@ -99,14 +111,7 @@ describe('createApp()', () => {
       });
     });
 
-    const app = createApp({
-      driver:              new MockGPIODriver(),
-      ptySpawner:          makeNullPtySpawner(),
-      gatewayUrl:          `ws://localhost:${port}`,
-      dataFilePath:        makeTmpDataFile(),
-      heartbeatIntervalMs: 60_000,
-    });
-
+    const app = createApp(baseOptions(port));
     try {
       await app.start();
       await ackPromise;
@@ -120,15 +125,9 @@ describe('createApp()', () => {
   }, 5000);
 
   it('stop() returns a Promise that resolves and deenergizes motor coils', async () => {
-    const driver = new MockGPIODriver();
+    const driver        = new MockGPIODriver();
     const { wss, port } = await startServer();
-    const app = createApp({
-      driver,
-      ptySpawner:          makeNullPtySpawner(),
-      gatewayUrl:          `ws://localhost:${port}`,
-      dataFilePath:        makeTmpDataFile(),
-      heartbeatIntervalMs: 60_000,
-    });
+    const app = createApp({ ...baseOptions(port), driver });
     await app.start();
     const stopResult = app.stop();
     // stop() must return a Promise (not undefined)
@@ -144,14 +143,7 @@ describe('createApp()', () => {
   it('system:reboot-requested causes execCommand("sudo", ["reboot"])', async () => {
     const { wss, port } = await startServer();
     const execCommand   = vi.fn();
-    const app = createApp({
-      driver:              new MockGPIODriver(),
-      ptySpawner:          makeNullPtySpawner(),
-      gatewayUrl:          `ws://localhost:${port}`,
-      dataFilePath:        makeTmpDataFile(),
-      heartbeatIntervalMs: 60_000,
-      execCommand,
-    });
+    const app = createApp({ ...baseOptions(port), execCommand });
     await app.start();
     app.bus.emit('system:reboot-requested', {});
     expect(execCommand).toHaveBeenCalledWith('sudo', ['reboot']);
@@ -162,14 +154,7 @@ describe('createApp()', () => {
   it('system:update-requested causes execCommand with update-reboot.sh', async () => {
     const { wss, port } = await startServer();
     const execCommand   = vi.fn();
-    const app = createApp({
-      driver:              new MockGPIODriver(),
-      ptySpawner:          makeNullPtySpawner(),
-      gatewayUrl:          `ws://localhost:${port}`,
-      dataFilePath:        makeTmpDataFile(),
-      heartbeatIntervalMs: 60_000,
-      execCommand,
-    });
+    const app = createApp({ ...baseOptions(port), execCommand });
     await app.start();
     app.bus.emit('system:update-requested', {});
     expect(execCommand).toHaveBeenCalledWith('/home/pi/orobot-firmware/update-reboot.sh', []);
