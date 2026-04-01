@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "web": "node ap-server.js",
-    "test": "node scripts/sim-test.js",
-    "test:unit": "vitest run",
-    "test:unit:watch": "vitest",
-    "build:portal": "node node_modules/browserify/bin/cmd.js -t [ babelify --presets [ react ] ] ./portal/index.js -o ./public/index.js",
-    "build:firmware": "tsc",
-    "build": "npm run build:portal && npm run build:firmware"
+    "dev":              "tsx src/dev.ts",
+    "dev:local":        "tsx src/dev.ts --local",
+    "test":             "vitest run",
+    "test:unit":        "vitest run",
+    "test:unit:watch":  "vitest",
+    "build:portal":     "node node_modules/browserify/bin/cmd.js -t [ babelify --presets [ react ] ] ./portal/index.js -o ./public/index.js",
+    "build:firmware":   "tsc",
+    "build":            "npm run build:portal && npm run build:firmware"
   },
   "parserOptions": {
     "sourceType": "module"
@@ -48,6 +49,7 @@
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
     "supertest": "^7.2.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
   }
