@@ -85,6 +85,14 @@ export class GatewayClient {
       const ws  = this.wsFactory(url, 'ssh-protocol');
       this.ws   = ws;
 
+      let disconnectEmitted = false;
+      const emitDisconnect = (reason: string) => {
+        if (!disconnectEmitted) {
+          disconnectEmitted = true;
+          this.bus.emit('network:disconnected', { reason });
+        }
+      };
+
       ws.on('open', () => {
         log.info({ event: 'ws:connected', url }, 'Gateway connection established');
         const { deviceUuid } = this.state.get();
@@ -103,14 +111,14 @@ export class GatewayClient {
       ws.on('close', () => {
         log.info({ event: 'ws:closed' }, 'Gateway connection closed');
         this.ws = null;
-        this.bus.emit('network:disconnected', { reason: 'closed' });
+        emitDisconnect('closed');
         resolve();
       });
 
       ws.on('error', (err: Error) => {
         log.warn({ event: 'ws:error', err }, 'Gateway connection error');
         this.ws = null;
-        this.bus.emit('network:disconnected', { reason: err.message });
+        emitDisconnect(err.message);
         reject(err);
       });
     });

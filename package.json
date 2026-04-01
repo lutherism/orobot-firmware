@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev":              "tsx src/dev.ts",
-    "dev:local":        "tsx src/dev.ts --local",
-    "test":             "vitest run",
-    "test:unit":        "vitest run",
-    "test:unit:watch":  "vitest",
-    "build:portal":     "node node_modules/browserify/bin/cmd.js -t [ babelify --presets [ react ] ] ./portal/index.js -o ./public/index.js",
-    "build:firmware":   "tsc",
-    "build":            "npm run build:portal && npm run build:firmware"
+    "dev": "cross-env LOG_LEVEL=silent tsx src/dev.ts",
+    "dev:local": "cross-env LOG_LEVEL=silent tsx src/dev.ts --local",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "build:portal": "node node_modules/browserify/bin/cmd.js -t [ babelify --presets [ react ] ] ./portal/index.js -o ./public/index.js",
+    "build:firmware": "tsc",
+    "build": "npm run build:portal && npm run build:firmware"
   },
   "parserOptions": {
     "sourceType": "module"
@@ -48,6 +48,7 @@
     "@types/supertest": "^7.2.0",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
+    "cross-env": "^10.1.0",
     "supertest": "^7.2.2",
     "tsx": "^4.21.0",
     "typescript": "^5.4.0",
