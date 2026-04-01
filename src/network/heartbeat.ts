@@ -2,7 +2,7 @@ import type { DeviceStateService } from '../core/device-state';
 import type { EventBus } from '../core/event-bus';
 import { createLogger } from '../core/logger';
 
-const PROD_API_URL     = 'https://robots-gateway.uc.r.appspot.com/api';
+const PROD_API_URL     = 'https://robots-gateway-v2.wl.r.appspot.com/api';
 const DEFAULT_INTERVAL = 8_000;
 const log = createLogger('heartbeat');
 

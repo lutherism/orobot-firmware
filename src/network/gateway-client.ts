@@ -7,7 +7,7 @@ import { createLogger } from '../core/logger';
 
 export type WsFactory = (url: string, protocol: string) => WsWebSocket;
 
-const PROD_WS_URL  = 'wss://robots-gateway.uc.r.appspot.com/';
+const PROD_WS_URL  = 'wss://robots-gateway-v2.wl.r.appspot.com/';
 const MIN_BACKOFF  = 2_000;
 const MAX_BACKOFF  = 30_000;
 const WS_OPEN      = 1; // WebSocket.OPEN — socket is ready to send

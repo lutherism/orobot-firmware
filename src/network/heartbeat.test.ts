@@ -46,7 +46,7 @@ describe('HeartbeatService', () => {
     await Promise.resolve(); // let the async beat() run
 
     expect(calls).toHaveLength(1);
-    expect(calls[0].url).toBe('https://robots-gateway.uc.r.appspot.com/api/device/state');
+    expect(calls[0].url).toBe('https://robots-gateway-v2.wl.r.appspot.com/api/device/state');
     expect(calls[0].body).toMatchObject({ deviceUuid: 'hb-device-uuid' });
 
     svc.stop();
