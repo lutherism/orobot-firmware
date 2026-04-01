@@ -161,4 +161,33 @@ describe('createApp()', () => {
     await app.stop();
     await closeServer(wss);
   }, 5000);
+
+  it('inbound gotoangle:90 message causes hardware:motor-moved with angle 90', async () => {
+    const { wss, port } = await startServer();
+
+    const motorMovedPromise = new Promise<{ angle: number }>((resolve) => {
+      wss.once('connection', (ws) => {
+        ws.on('message', (data) => {
+          const msg = JSON.parse(data.toString()) as { type: string };
+          if (msg.type === 'connect-to-user') {
+            ws.send(JSON.stringify({ type: 'command-in', data: 'gotoangle:90', ackId: 'ack-motor', deviceUuid: 'main-test-uuid' }));
+          }
+        });
+      });
+    });
+
+    const app = createApp(baseOptions(port));
+    const motorMoved = new Promise<{ angle: number }>((resolve) => {
+      app.bus.on('hardware:motor-moved', resolve);
+    });
+
+    try {
+      await app.start();
+      const result = await motorMoved;
+      expect(result.angle).toBe(90);
+    } finally {
+      await app.stop();
+      await closeServer(wss);
+    }
+  }, 8000);
 });
