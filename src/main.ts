@@ -143,6 +143,7 @@ export function createApp(options: AppOptions = {}): App {
       heartbeat.stop();
       captivePortal.stop();
       wifiScanMonitor.stop();
+      wifiSM.reset(); // reset state machine so start() can run the full init sequence again
       await motor.stop(); // de-energize coils before process exits
     },
     get bus() { return bus; },
