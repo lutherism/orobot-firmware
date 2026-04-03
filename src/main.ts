@@ -109,34 +109,36 @@ export function createApp(options: AppOptions = {}): App {
     execFile(cmd, args, () => {});
   });
 
-  const unsubscribers: Array<() => void> = [
-    bus.on('system:reboot-requested',  () => exec('sudo', ['reboot'])),
-    bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', [])),
-    bus.on('network:connected',        () => heartbeat.start(hbIntervalMs)),
-    bus.on('network:disconnected',     () => heartbeat.stop()),
-    bus.on('wifi:goto-client-requested', () => void wifiManager.gotoClient()),
-    bus.on('wifi:state-changed', ({ to }) => {
-      if (to === 'CONNECTING') {
-        gatewayClient.start();
-      } else if (to === 'SETUP_MODE') {
-        gatewayClient.stop();
-        captivePortal.start();
-        wifiScanMonitor.stop();
-      } else if (to === 'CONNECTED') {
-        captivePortal.stop();
-        wifiScanMonitor.start(scanIntervalMs);
-      }
-    }),
-  ];
+  const unsubscribers: Array<() => void> = [];
 
   return {
     async start(): Promise<void> {
+      unsubscribers.push(
+        bus.on('system:reboot-requested',  () => exec('sudo', ['reboot'])),
+        bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', [])),
+        bus.on('network:connected',        () => heartbeat.start(hbIntervalMs)),
+        bus.on('network:disconnected',     () => heartbeat.stop()),
+        bus.on('wifi:goto-client-requested', () => void wifiManager.gotoClient()),
+        bus.on('wifi:state-changed', ({ to }) => {
+          if (to === 'CONNECTING') {
+            gatewayClient.start();
+          } else if (to === 'SETUP_MODE') {
+            gatewayClient.stop();
+            captivePortal.start();
+            wifiScanMonitor.stop();
+          } else if (to === 'CONNECTED') {
+            captivePortal.stop();
+            wifiScanMonitor.start(scanIntervalMs);
+          }
+        }),
+      );
       await motor.initialize();
       await wifiManager.initialize();
       ptyManager.start();
     },
     async stop(): Promise<void> {
       unsubscribers.forEach((fn) => fn());
+      unsubscribers.length = 0;
       wifiManager.stop();
       ptyManager.stop();
       gatewayClient.stop();
