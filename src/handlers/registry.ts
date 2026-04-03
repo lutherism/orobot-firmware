@@ -1,5 +1,6 @@
 import type { EventBus } from '../core/event-bus';
 import type { InboundMessage } from '../core/types';
+import { createLogger } from '../core/logger';
 
 export type MessageHandler = (msg: InboundMessage) => Promise<void>;
 
@@ -9,11 +10,15 @@ type HandlerEntry =
 
 export class MessageHandlerRegistry {
   private readonly handlers = new Map<string, HandlerEntry>();
+  private readonly log: ReturnType<typeof createLogger>;
 
   constructor(
     private readonly bus: EventBus,
     private readonly getDeviceUuid: () => string,
-  ) {}
+    device?: string,
+  ) {
+    this.log = createLogger('handler-registry', device);
+  }
 
   register(type: string, handler: MessageHandler): void;
   register(type: string, isPrefix: true, handler: MessageHandler): void;
@@ -62,6 +67,7 @@ export class MessageHandlerRegistry {
     // 3. Prefix data match (for gotoangle:90, varyspeed:3, etc.)
     for (const [key, entry] of this.handlers) {
       if (entry.kind === 'prefix' && msg.data?.startsWith(key)) {
+        this.log.info({data: msg.data}, 'registry findHandler');
         return entry.handler;
       }
     }

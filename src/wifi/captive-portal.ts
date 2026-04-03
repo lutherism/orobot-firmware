@@ -9,17 +9,18 @@ import { createLogger } from '../core/logger';
 
 const PORTAL_PORT = 3006;
 const PUBLIC_DIR  = path.join(__dirname, '../../public');
-const log         = createLogger('captive-portal');
-
 export class CaptivePortalServer {
   private server: Server | null = null;
   private readonly _app: Express;
+  private readonly log: ReturnType<typeof createLogger>;
 
   constructor(
     private readonly wifiManager: WifiManager,
     private readonly state:       DeviceStateService,
     private readonly bus:         EventBus,
+    device?: string,
   ) {
+    this.log = createLogger('captive-portal', device);
     this._app = this.buildRoutes(express());
   }
 
@@ -54,7 +55,7 @@ export class CaptivePortalServer {
         const networks = await this.wifiManager.scanNetworks();
         res.json({ wifi: networks });
       } catch (err) {
-        log.warn({ err: String(err) }, 'WiFi scan failed');
+        this.log.warn({ err: String(err) }, 'WiFi scan failed');
         res.status(500).json({ error: 'scan failed' });
       }
     });
@@ -64,7 +65,7 @@ export class CaptivePortalServer {
         await this.wifiManager.provisionNetwork(req.body as WifiCredentials);
         res.json({ ok: true });
       } catch (err) {
-        log.warn({ err: String(err) }, 'Provision failed');
+        this.log.warn({ err: String(err) }, 'Provision failed');
         res.status(500).json({ error: 'provision failed' });
       }
     });

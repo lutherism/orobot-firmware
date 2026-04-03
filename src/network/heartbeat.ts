@@ -4,16 +4,18 @@ import { createLogger } from '../core/logger';
 
 const PROD_API_URL     = 'https://robots-gateway-v2.wl.r.appspot.com/api';
 const DEFAULT_INTERVAL = 8_000;
-const log = createLogger('heartbeat');
-
 export class HeartbeatService {
   private timer: ReturnType<typeof setInterval> | null = null;
+  private readonly log: ReturnType<typeof createLogger>;
 
   constructor(
     private readonly state:    DeviceStateService,
     private readonly bus:      EventBus,
     private readonly fetchFn:  typeof fetch = fetch,
-  ) {}
+    device?: string,
+  ) {
+    this.log = createLogger('heartbeat', device);
+  }
 
   start(intervalMs = DEFAULT_INTERVAL): void {
     this.stop(); // clear any existing timer before starting a new one
@@ -43,10 +45,10 @@ export class HeartbeatService {
           payloadJSON: JSON.stringify({ type: s.type, pingTime: s.pingTime }),
         }),
       });
-      log.info({ event: 'heartbeat', pingTime: s.pingTime }, 'Heartbeat sent');
+      this.log.info({ event: 'heartbeat', pingTime: s.pingTime }, 'Heartbeat sent');
       this.bus.emit('system:heartbeat-sent', { pingTime: s.pingTime });
     } catch (err) {
-      log.warn({ event: 'heartbeat:fail', err: String(err) }, 'Heartbeat failed');
+      this.log.warn({ event: 'heartbeat:fail', err: String(err) }, 'Heartbeat failed');
       // Swallow errors — network may be temporarily unavailable
     }
   }

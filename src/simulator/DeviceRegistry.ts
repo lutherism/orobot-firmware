@@ -127,6 +127,7 @@ export class DeviceRegistry extends EventEmitter {
         execCommand:      () => {},
         scanIntervalMs:   3_600_000,
         gatewayUrl:       GATEWAY_WS,
+        devicePrefix:     saved.uuid.slice(0, 5),
       });
 
       const instance: DeviceInstance = {
@@ -205,6 +206,7 @@ export class DeviceRegistry extends EventEmitter {
       execCommand:      () => {},
       scanIntervalMs:   3_600_000,
       gatewayUrl:       GATEWAY_WS,
+      devicePrefix:     uuid.slice(0, 5),
     });
 
     const instance: DeviceInstance = {

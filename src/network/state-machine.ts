@@ -11,16 +11,17 @@ const VALID_TRANSITIONS: Record<NetworkMode, NetworkMode[]> = {
   sim:    [],
 };
 
-const log = createLogger('network-state-machine');
-
 export class NetworkStateMachine {
   private _current: NetworkMode;
+  private readonly log: ReturnType<typeof createLogger>;
 
   constructor(
     private readonly state: DeviceStateService,
     private readonly bus: EventBus,
+    device?: string,
   ) {
     this._current = state.get().networkMode;
+    this.log = createLogger('network-state-machine', device);
   }
 
   get current(): NetworkMode {
@@ -37,7 +38,7 @@ export class NetworkStateMachine {
     if (options?.devIP !== undefined) patch.devIP = options.devIP;
     await this.state.patch(patch);
     this._current = to;
-    log.info({ event: 'network:transition', from, to }, 'Network mode changed');
+    this.log.info({ event: 'network:transition', from, to }, 'Network mode changed');
     this.bus.emit('network:mode-changed', { from, to });
   }
 }

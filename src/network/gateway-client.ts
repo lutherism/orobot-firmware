@@ -11,14 +11,13 @@ const PROD_WS_URL  = 'wss://robots-gateway-v2.wl.r.appspot.com/';
 const MIN_BACKOFF  = 2_000;
 const MAX_BACKOFF  = 30_000;
 const WS_OPEN      = 1; // WebSocket.OPEN — socket is ready to send
-const log = createLogger('gateway-client');
-
 export class GatewayClient {
   private stopped            = false;
   private ws: WsWebSocket | null = null;
   private backoffMs          = MIN_BACKOFF;
   private sleepAbort: (() => void) | null = null;
   private readonly unsubscribers: Array<() => void> = [];
+  private readonly log: ReturnType<typeof createLogger>;
 
   constructor(
     private readonly bus:         EventBus,
@@ -26,7 +25,10 @@ export class GatewayClient {
     private readonly registry:    MessageHandlerRegistry,
     private readonly wsFactory:   WsFactory,
     private readonly urlOverride?: string,  // injected URL; overrides dev/prod resolution when set
-  ) {}
+    device?: string,
+  ) {
+    this.log = createLogger('gateway-client', device);
+  }
 
   start(): void {
     this.stopped = false;  // allow restart after stop()
@@ -94,7 +96,7 @@ export class GatewayClient {
       };
 
       ws.on('open', () => {
-        log.info({ event: 'ws:connected', url }, 'Gateway connection established');
+        this.log.info({ event: 'ws:connected', url }, 'Gateway connection established');
         const { deviceUuid } = this.state.get();
         ws.send(JSON.stringify({ type: 'identify-connection', deviceUuid }));
         ws.send(JSON.stringify({ type: 'connect-to-user',     deviceUuid }));
@@ -104,19 +106,20 @@ export class GatewayClient {
       ws.on('message', (data: Buffer | string) => {
         try {
           const msg = JSON.parse(data.toString()) as InboundMessage;
+          this.log.info({ type: msg.type }, 'Websocket Message Recieved');
           void this.registry.dispatch(msg);
         } catch { /* ignore malformed messages */ }
       });
 
       ws.on('close', () => {
-        log.info({ event: 'ws:closed' }, 'Gateway connection closed');
+        this.log.info({ event: 'ws:closed' }, 'Gateway connection closed');
         this.ws = null;
         emitDisconnect('closed');
         resolve();
       });
 
       ws.on('error', (err: Error) => {
-        log.warn({ event: 'ws:error', err }, 'Gateway connection error');
+        this.log.warn({ event: 'ws:error', err }, 'Gateway connection error');
         this.ws = null;
         emitDisconnect(err.message);
         reject(err);

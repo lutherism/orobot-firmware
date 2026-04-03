@@ -54,6 +54,8 @@ export interface AppOptions {
   maxConnectFailures?: number;
   /** Reconnect retries before falling back to AP mode — defaults to 10. */
   maxReconnectRetries?: number;
+  /** First N chars of device UUID to include in log output — used by the simulator. */
+  devicePrefix?: string;
 }
 
 export interface App {
@@ -75,20 +77,22 @@ export function createApp(options: AppOptions = {}): App {
   const ptySpawner = options.ptySpawner ?? createNodePtySpawner();
   const ptyManager = new PTYManager(ptySpawner, bus);
 
-  const networkSM = new NetworkStateMachine(state, bus);
-  const wifiSM    = new WifiStateMachine(bus);
+  const device    = options.devicePrefix;
+  const networkSM = new NetworkStateMachine(state, bus, device);
+  const wifiSM    = new WifiStateMachine(bus, device);
 
   const wifiAdapter    = options.wifiShellAdapter ?? new RpiWifiShellAdapter();
   const wifiManager    = new WifiManager(
     wifiAdapter, state, bus, wifiSM,
     options.maxConnectFailures,
     options.maxReconnectRetries,
+    device,
   );
-  const captivePortal   = new CaptivePortalServer(wifiManager, state, bus);
-  const wifiScanMonitor = new WifiScanMonitor(wifiAdapter, state, bus);
+  const captivePortal   = new CaptivePortalServer(wifiManager, state, bus, device);
+  const wifiScanMonitor = new WifiScanMonitor(wifiAdapter, state, bus, device);
   const scanIntervalMs  = options.scanIntervalMs ?? DEFAULT_SCAN_INTERVAL;
 
-  const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
+  const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid, device);
   registry.register('pty-in',        createPtyHandler(ptyManager));
   registry.register('getframe',      createCameraHandler(bus));
   registry.register('getDeviceData', createGetDeviceDataHandler(state, bus));
@@ -100,8 +104,8 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('gotoangle',     true, createMotorHandler(motor));
 
   const wsFactory: WsFactory = (url, proto) => new WebSocket(url, proto);
-  const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl);
-  const heartbeat     = new HeartbeatService(state, bus);
+  const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device);
+  const heartbeat     = new HeartbeatService(state, bus, fetch, device);
   const hbIntervalMs  = options.heartbeatIntervalMs ?? 8_000;
 
   const exec = options.execCommand ?? ((cmd: string, args: string[]) => {

@@ -4,16 +4,18 @@ import type { WifiShellAdapter } from './types';
 import { createLogger } from '../core/logger';
 
 const PEER_PREFIX = 'OROBOT-Setup-';
-const log         = createLogger('wifi-scan-monitor');
-
 export class WifiScanMonitor {
   private timer: ReturnType<typeof setInterval> | null = null;
+  private readonly log: ReturnType<typeof createLogger>;
 
   constructor(
     private readonly adapter: WifiShellAdapter,
     private readonly state:   DeviceStateService,
     private readonly bus:     EventBus,
-  ) {}
+    device?: string,
+  ) {
+    this.log = createLogger('wifi-scan-monitor', device);
+  }
 
   start(intervalMs = 10_000): void {
     this.stop();
@@ -34,7 +36,7 @@ export class WifiScanMonitor {
         if (!network.ssid.startsWith(PEER_PREFIX)) continue;
         const { wifiSettings, deviceUuid } = this.state.get();
         if (!wifiSettings) continue;
-        log.info({ event: 'peer:found', ssid: network.ssid }, 'Found peer device, pushing credentials');
+        this.log.info({ event: 'peer:found', ssid: network.ssid }, 'Found peer device, pushing credentials');
         await this.adapter.pushCredentials(network.ssid, wifiSettings);
         this.bus.emit('wifi:credentials-shared', { targetSsid: network.ssid });
         this.bus.emit('network:send', {

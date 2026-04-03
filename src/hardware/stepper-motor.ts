@@ -11,7 +11,6 @@ const COIL_ORDERS = {
 } as const;
 
 type Direction = keyof typeof COIL_ORDERS;
-
 export class StepperMotor {
   private coils: Pin[] = [];
   private _currentAngle = 0;
@@ -87,6 +86,7 @@ export class StepperMotor {
   }
 
   private async _gotoAngle(targetDegrees: number): Promise<void> {
+    
     // Always-positive modulo (JS % can return negative values)
     const mod = (a: number, n: number) => a - Math.floor(a / n) * n;
 

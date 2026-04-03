@@ -5,12 +5,11 @@ import type { WifiShellAdapter } from './types';
 import type { WifiStateMachine } from './wifi-state-machine';
 import { createLogger } from '../core/logger';
 
-const log = createLogger('wifi-manager');
-
 export class WifiManager {
   private connectFailures   = 0;
   private reconnectFailures = 0;
   private readonly unsubscribers: Array<() => void> = [];
+  private readonly log: ReturnType<typeof createLogger>;
 
   constructor(
     private readonly adapter:              WifiShellAdapter,
@@ -19,7 +18,10 @@ export class WifiManager {
     private readonly wifiSM:               WifiStateMachine,
     private readonly maxConnectFailures  = 10,
     private readonly maxReconnectRetries = 10,
-  ) {}
+    device?: string,
+  ) {
+    this.log = createLogger('wifi-manager', device);
+  }
 
   async initialize(): Promise<void> {
     this.unsubscribers.push(
@@ -69,7 +71,7 @@ export class WifiManager {
       { ssid: creds.ssid, mac: '', password: creds.password },
     ];
     await this.state.patch({ wifiSettings: creds, knownNetworks });
-    log.info({ event: 'wifi:provisioning', ssid: creds.ssid }, 'Provisioning WiFi network');
+    this.log.info({ event: 'wifi:provisioning', ssid: creds.ssid }, 'Provisioning WiFi network');
     this.wifiSM.transition('PROVISIONING');
     await this.adapter.connectToNetwork(creds);
     await this.adapter.stopAP();
@@ -85,7 +87,7 @@ export class WifiManager {
     const { wifiSettings } = this.state.get();
     if (!wifiSettings) return;
     const targetSsid = `OROBOT-Setup-${tagUuid}`;
-    log.info({ event: 'wifi:share', targetSsid }, 'Sharing credentials to peer');
+    this.log.info({ event: 'wifi:share', targetSsid }, 'Sharing credentials to peer');
     await this.adapter.pushCredentials(targetSsid, wifiSettings);
   }
 
