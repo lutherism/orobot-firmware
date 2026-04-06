@@ -17,6 +17,8 @@ import { createWifiListHandler, createShareWifiHandler } from './wifi';
 import { createCameraHandler } from './camera';
 import { ProgramConfigService } from '../core/program-config';
 import { createLoadConfigHandler } from './program-config';
+import { DeviceSandboxService } from '../core/device-sandbox';
+import { createLoadCodeHandler } from './load-code';
 import { MockWifiShellAdapter } from '../wifi/mock-shell-adapter';
 import { WifiStateMachine } from '../wifi/wifi-state-machine';
 import { WifiManager } from '../wifi/wifi-manager';
@@ -208,5 +210,42 @@ describe('load-config handler', () => {
     await expect(
       handler(makeMsg({ type: 'load-config', data: 'not json' }))
     ).resolves.toBeUndefined();
+  });
+});
+
+// ── load-code handler ────────────────────────────────────────────
+
+describe('load-code handler', () => {
+  function makeTmpConfig(): { motor: StepperMotor; state: DeviceStateService; sandbox: DeviceSandboxService } {
+    const dir   = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-load-code-'));
+    const file  = path.join(dir, 'data.json');
+    fs.writeFileSync(file, JSON.stringify({
+      deviceUuid: 'dev-1', networkMode: 'client', wifiSettings: null, knownNetworks: [],
+      ownerUuid: null, type: 'wifi-motor', hardware: 'raspi', pingTime: 0, devIP: null,
+    }));
+    const state   = new DeviceStateService(file);
+    const motor   = { gotoAngle: vi.fn() } as unknown as StepperMotor;
+    const sandbox = new DeviceSandboxService();
+    return { motor, state, sandbox };
+  }
+
+  it('loads device code into sandbox when data is valid', async () => {
+    const { motor, state, sandbox } = makeTmpConfig();
+    const handler = createLoadCodeHandler(sandbox, motor, state);
+    const code = `onMessage((type) => { motor.gotoAngle(50); });`;
+    await handler(makeMsg({
+      type: 'load-code',
+      data: JSON.stringify({ code, unitId: 'unit-1' }),
+    }));
+    sandbox.dispatch('go', {});
+    expect(vi.mocked(motor.gotoAngle)).toHaveBeenCalledWith(50);
+  });
+
+  it('does not throw when data is malformed JSON', async () => {
+    const { motor, state, sandbox } = makeTmpConfig();
+    const handler = createLoadCodeHandler(sandbox, motor, state);
+    await expect(
+      handler(makeMsg({ type: 'load-code', data: 'not-json' }))
+    ).resolves.not.toThrow();
   });
 });
