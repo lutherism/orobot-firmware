@@ -14,6 +14,8 @@ import {
   createNetworkModeHandler,
 } from './handlers/system';
 import { createWifiListHandler, createShareWifiHandler } from './handlers/wifi';
+import { ProgramConfigService } from './core/program-config';
+import { createLoadConfigHandler } from './handlers/program-config';
 import { StepperMotor } from './hardware/stepper-motor';
 import { RPiGPIODriver } from './hardware/gpio-driver';
 import { PTYManager, type PtySpawner } from './pty/pty-manager';
@@ -66,6 +68,8 @@ export interface App {
 
 export function createApp(options: AppOptions = {}): App {
   const dataFilePath = options.dataFilePath ?? DEFAULT_DATA_FILE;
+  const configFilePath = dataFilePath.replace(/data\.json$/, 'program-config.json');
+  const programConfig  = new ProgramConfigService(configFilePath);
   const state  = new DeviceStateService(dataFilePath);
   const bus    = new EventBus();
 
@@ -73,6 +77,12 @@ export function createApp(options: AppOptions = {}): App {
   const pins   = hw === 'banana' ? BANANA_PINS : RASPI_PINS;
   const driver = options.driver ?? new RPiGPIODriver();
   const motor  = new StepperMotor(driver, pins, bus);
+
+  // Apply any saved motor constraints from a previous deploy
+  const savedMotor = programConfig.get().motors?.[0];
+  if (savedMotor !== undefined) {
+    motor.setConstraints(savedMotor.minAngle, savedMotor.maxAngle);
+  }
 
   const ptySpawner = options.ptySpawner ?? createNodePtySpawner();
   const ptyManager = new PTYManager(ptySpawner, bus);
@@ -102,6 +112,7 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('reboot',        createRebootHandler(bus));
   registry.register('update',        createUpdateHandler(bus));
   registry.register('gotoangle',     true, createMotorHandler(motor));
+  registry.register('load-config', createLoadConfigHandler(programConfig, motor));
 
   const wsFactory: WsFactory = (url, proto) => new WebSocket(url, proto);
   const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device);
