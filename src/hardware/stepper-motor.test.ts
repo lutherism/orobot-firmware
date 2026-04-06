@@ -105,4 +105,37 @@ describe('StepperMotor', () => {
     expect(results).toEqual([90, 180]);
     expect(motor.currentAngle).toBe(180);
   });
+
+  // ── angle constraints ─────────────────────────────────────────
+
+  it('gotoAngle respects maxAngle constraint', async () => {
+    motor.setConstraints(-90, 90);
+    const p = motor.gotoAngle(200);
+    await vi.advanceTimersByTimeAsync(1300);
+    await p;
+    expect(motor.currentAngle).toBe(90);
+  });
+
+  it('gotoAngle respects minAngle constraint', async () => {
+    motor.setConstraints(-90, 90);
+    const p = motor.gotoAngle(-200);
+    await vi.advanceTimersByTimeAsync(1300);
+    await p;
+    expect(motor.currentAngle).toBe(-90);
+  });
+
+  it('gotoAngle passes through when within constraints', async () => {
+    motor.setConstraints(-90, 90);
+    const p = motor.gotoAngle(45);
+    await vi.advanceTimersByTimeAsync(1300);
+    await p;
+    expect(motor.currentAngle).toBe(45);
+  });
+
+  it('gotoAngle is unconstrained by default', async () => {
+    const p = motor.gotoAngle(300);
+    await vi.advanceTimersByTimeAsync(1300);
+    await p;
+    expect(motor.currentAngle).toBe(300);
+  });
 });

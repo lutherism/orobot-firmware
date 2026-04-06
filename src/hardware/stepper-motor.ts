@@ -16,6 +16,8 @@ export class StepperMotor {
   private _currentAngle = 0;
   private activeCoil = 0;
   private queue: Promise<void> = Promise.resolve();
+  private _minAngle = -Infinity;
+  private _maxAngle = Infinity;
 
   constructor(
     private readonly driver: GPIODriver,
@@ -62,6 +64,12 @@ export class StepperMotor {
     return result;
   }
 
+  /** Apply motor angle constraints from program config. */
+  setConstraints(minAngle: number, maxAngle: number): void {
+    this._minAngle = minAngle;
+    this._maxAngle = maxAngle;
+  }
+
   private async _step(
     direction: Direction,
     intervalMs: number,
@@ -86,7 +94,8 @@ export class StepperMotor {
   }
 
   private async _gotoAngle(targetDegrees: number): Promise<void> {
-    
+    targetDegrees = Math.max(this._minAngle, Math.min(this._maxAngle, targetDegrees));
+
     // Always-positive modulo (JS % can return negative values)
     const mod = (a: number, n: number) => a - Math.floor(a / n) * n;
 
