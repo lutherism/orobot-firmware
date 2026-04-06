@@ -29,7 +29,7 @@ const GATEWAY_API  = process.env.GATEWAY_API
 //const GATEWAY_WS   = process.env.GATEWAY_WS
 //  ?? 'wss://robots-gateway-v2.wl.r.appspot.com/';
 const GATEWAY_WS   = process.env.GATEWAY_WS
-  ?? 'wss://robots-gateway-v2.wl.r.appspot.com'
+  ?? 'wss://robots-gateway-779307899828.us-west2.run.app/device'
 // Base URL derived from GATEWAY_API (strips /api/device suffix if present)
 const GATEWAY_BASE = GATEWAY_API.replace(/\/api\/device$/, '');
 
