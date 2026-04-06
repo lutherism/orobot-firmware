@@ -15,6 +15,8 @@ import {
 } from './system';
 import { createWifiListHandler, createShareWifiHandler } from './wifi';
 import { createCameraHandler } from './camera';
+import { ProgramConfigService } from '../core/program-config';
+import { createLoadConfigHandler } from './program-config';
 import { MockWifiShellAdapter } from '../wifi/mock-shell-adapter';
 import { WifiStateMachine } from '../wifi/wifi-state-machine';
 import { WifiManager } from '../wifi/wifi-manager';
@@ -150,5 +152,61 @@ describe('Camera handler', () => {
     const bus = new EventBus();
     const handler = createCameraHandler(bus);
     await expect(handler(makeMsg({ type: 'getframe' }))).resolves.toBeUndefined();
+  });
+});
+
+// ── load-config handler ──────────────────────────────────────────
+
+describe('load-config handler', () => {
+  function makeTmpProgramConfig(): ProgramConfigService {
+    const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-cfg-handler-'));
+    const file = path.join(dir, 'program-config.json');
+    return new ProgramConfigService(file);
+  }
+
+  it('saves config to ProgramConfigService', async () => {
+    const configSvc = makeTmpProgramConfig();
+    const motor     = { setConstraints: vi.fn() } as unknown as StepperMotor;
+    const handler   = createLoadConfigHandler(configSvc, motor);
+    const payload   = { config: { motors: [{ name: 'shoulder', resource: 0, minAngle: -90, maxAngle: 90 }] }, unitId: 'unit-1' };
+
+    await handler(makeMsg({ type: 'load-config', data: JSON.stringify(payload) }));
+
+    expect(configSvc.get().motors?.[0]?.name).toBe('shoulder');
+    expect(configSvc.get().unitId).toBe('unit-1');
+  });
+
+  it('calls motor.setConstraints from motors[0]', async () => {
+    const configSvc = makeTmpProgramConfig();
+    const setConstraints = vi.fn();
+    const motor = { setConstraints } as unknown as StepperMotor;
+    const handler = createLoadConfigHandler(configSvc, motor);
+    const payload = { config: { motors: [{ name: 'shoulder', resource: 0, minAngle: -45, maxAngle: 45 }] }, unitId: 'u1' };
+
+    await handler(makeMsg({ type: 'load-config', data: JSON.stringify(payload) }));
+
+    expect(setConstraints).toHaveBeenCalledWith(-45, 45);
+  });
+
+  it('does not call setConstraints when motors array is empty', async () => {
+    const configSvc = makeTmpProgramConfig();
+    const setConstraints = vi.fn();
+    const motor = { setConstraints } as unknown as StepperMotor;
+    const handler = createLoadConfigHandler(configSvc, motor);
+    const payload = { config: {}, unitId: 'u1' };
+
+    await handler(makeMsg({ type: 'load-config', data: JSON.stringify(payload) }));
+
+    expect(setConstraints).not.toHaveBeenCalled();
+  });
+
+  it('handles malformed JSON in data without throwing', async () => {
+    const configSvc = makeTmpProgramConfig();
+    const motor = { setConstraints: vi.fn() } as unknown as StepperMotor;
+    const handler = createLoadConfigHandler(configSvc, motor);
+
+    await expect(
+      handler(makeMsg({ type: 'load-config', data: 'not json' }))
+    ).resolves.toBeUndefined();
   });
 });
