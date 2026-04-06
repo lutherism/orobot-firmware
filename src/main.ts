@@ -16,6 +16,8 @@ import {
 import { createWifiListHandler, createShareWifiHandler } from './handlers/wifi';
 import { ProgramConfigService } from './core/program-config';
 import { createLoadConfigHandler } from './handlers/program-config';
+import { DeviceSandboxService } from './core/device-sandbox';
+import { createLoadCodeHandler } from './handlers/load-code';
 import { StepperMotor } from './hardware/stepper-motor';
 import { RPiGPIODriver } from './hardware/gpio-driver';
 import { PTYManager, type PtySpawner } from './pty/pty-manager';
@@ -70,6 +72,7 @@ export function createApp(options: AppOptions = {}): App {
   const dataFilePath = options.dataFilePath ?? DEFAULT_DATA_FILE;
   const configFilePath = dataFilePath.replace(/data\.json$/, 'program-config.json');
   const programConfig  = new ProgramConfigService(configFilePath);
+  const deviceSandbox  = new DeviceSandboxService();
   const state  = new DeviceStateService(dataFilePath);
   const bus    = new EventBus();
 
@@ -113,6 +116,22 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('update',        createUpdateHandler(bus));
   registry.register('gotoangle',     true, createMotorHandler(motor));
   registry.register('load-config', createLoadConfigHandler(programConfig, motor));
+  registry.register('load-code', createLoadCodeHandler(deviceSandbox, motor, state));
+
+  // System message types must always reach the registry.
+  // User action types (e.g. 'go', 'home') are not in this set and can be
+  // intercepted by device code before the registry sees them.
+  const SYSTEM_MSG_TYPES = new Set([
+    'load-config', 'load-code', 'pty-in', 'getframe', 'getDeviceData',
+    'networkmode', 'share-wifi', 'wifiList', 'reboot', 'update', 'command-in',
+  ]);
+
+  registry.setPriorityDispatcher((msg) => {
+    if (SYSTEM_MSG_TYPES.has(msg.type)) return false;
+    let data: unknown;
+    try { data = msg.data ? JSON.parse(msg.data) : undefined; } catch { data = msg.data; }
+    return deviceSandbox.dispatch(msg.type, data);
+  });
 
   const wsFactory: WsFactory = (url, proto) => new WebSocket(url, proto);
   const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device);

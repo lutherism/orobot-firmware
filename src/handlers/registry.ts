@@ -11,6 +11,7 @@ type HandlerEntry =
 export class MessageHandlerRegistry {
   private readonly handlers = new Map<string, HandlerEntry>();
   private readonly log: ReturnType<typeof createLogger>;
+  private priorityDispatcher?: (msg: InboundMessage) => boolean;
 
   constructor(
     private readonly bus: EventBus,
@@ -34,11 +35,17 @@ export class MessageHandlerRegistry {
     }
   }
 
+  setPriorityDispatcher(fn: (msg: InboundMessage) => boolean): void {
+    this.priorityDispatcher = fn;
+  }
+
   async dispatch(msg: InboundMessage): Promise<void> {
     try {
-      const handler = this.findHandler(msg);
-      if (handler) {
-        await handler(msg);
+      if (!this.priorityDispatcher?.(msg)) {
+        const handler = this.findHandler(msg);
+        if (handler) {
+          await handler(msg);
+        }
       }
     } catch (error) {
       // Silently catch handler errors and continue to send ack

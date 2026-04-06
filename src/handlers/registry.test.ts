@@ -77,3 +77,46 @@ describe('MessageHandlerRegistry', () => {
     expect(ack.type).toBe('message-ack');
   });
 });
+
+describe('MessageHandlerRegistry — priority dispatcher', () => {
+  it('priority dispatcher intercepts message and skips registry handler', async () => {
+    const bus = new EventBus();
+    const registry = new MessageHandlerRegistry(bus, () => 'dev-1');
+    const registryHandlerCalled = vi.fn();
+    const priorityCalled = vi.fn().mockReturnValue(true);
+
+    registry.register('test', async () => { registryHandlerCalled(); });
+    registry.setPriorityDispatcher(priorityCalled);
+
+    await registry.dispatch(makeMsg({ type: 'test' }));
+
+    expect(priorityCalled).toHaveBeenCalled();
+    expect(registryHandlerCalled).not.toHaveBeenCalled();
+  });
+
+  it('falls through to registry handler when priority dispatcher returns false', async () => {
+    const bus = new EventBus();
+    const registry = new MessageHandlerRegistry(bus, () => 'dev-1');
+    const registryHandlerCalled = vi.fn();
+
+    registry.register('test', async () => { registryHandlerCalled(); });
+    registry.setPriorityDispatcher(() => false);
+
+    await registry.dispatch(makeMsg({ type: 'test' }));
+
+    expect(registryHandlerCalled).toHaveBeenCalled();
+  });
+
+  it('sends ack regardless of whether priority dispatcher handled the message', async () => {
+    const bus = new EventBus();
+    const sentPayloads: unknown[] = [];
+    bus.on('network:send', (p) => sentPayloads.push(p.payload));
+    const registry = new MessageHandlerRegistry(bus, () => 'dev-1');
+
+    registry.setPriorityDispatcher(() => true);
+    await registry.dispatch(makeMsg({ ackId: 'ack-99' }));
+
+    expect(sentPayloads).toHaveLength(1);
+    expect(sentPayloads[0]).toMatchObject({ type: 'message-ack', ackId: 'ack-99' });
+  });
+});
