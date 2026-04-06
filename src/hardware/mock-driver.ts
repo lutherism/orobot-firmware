@@ -1,4 +1,5 @@
 import type { GPIODriver, Pin } from './types';
+import { createLogger } from '../core/logger';
 
 export class MockPin implements Pin {
   value: 0 | 1 = 0;

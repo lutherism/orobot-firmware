@@ -12,20 +12,15 @@ const VALID_TRANSITIONS: Record<WifiState, WifiState[]> = {
   RECONNECTING: ['CONNECTED', 'SETUP_MODE'],
 };
 
+const log = createLogger('wifi-state-machine');
+
 export class WifiStateMachine {
   private _current: WifiState = 'UNCONFIGURED';
-  private readonly log: ReturnType<typeof createLogger>;
 
-  constructor(private readonly bus: EventBus, device?: string) {
-    this.log = createLogger('wifi-state-machine', device);
-  }
+  constructor(private readonly bus: EventBus) {}
 
   get current(): WifiState {
     return this._current;
-  }
-
-  reset(): void {
-    this._current = 'UNCONFIGURED';
   }
 
   transition(to: WifiState): void {
@@ -35,7 +30,7 @@ export class WifiStateMachine {
     }
     const from     = this._current;
     this._current  = to;
-    this.log.info({ event: 'wifi:transition', from, to }, 'WiFi state changed');
+    log.info({ event: 'wifi:transition', from, to }, 'WiFi state changed');
     this.bus.emit('wifi:state-changed', { from, to });
   }
 }
