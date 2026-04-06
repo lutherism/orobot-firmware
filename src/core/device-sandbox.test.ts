@@ -74,4 +74,18 @@ describe('DeviceSandboxService', () => {
     expect(() => svc.dispatch('go', {})).not.toThrow();
     expect(svc.dispatch('go', {})).toBe(true);
   });
+
+  it('motors[0].gotoAngle calls the same motor as motor.gotoAngle', () => {
+    const motor = {
+      gotoAngle: vi.fn().mockResolvedValue(undefined),
+    } as unknown as StepperMotor;
+    const svc = new DeviceSandboxService();
+    svc.load(
+      `onMessage((type, data) => { if (type === 'test') motors[0].gotoAngle(77); });`,
+      motor,
+      mockState,
+    );
+    svc.dispatch('test', {});
+    expect(motor.gotoAngle).toHaveBeenCalledWith(77);
+  });
 });

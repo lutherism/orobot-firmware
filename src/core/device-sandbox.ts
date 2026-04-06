@@ -20,6 +20,7 @@ export class DeviceSandboxService {
 
     const context = vm.createContext({
       motor,
+      motors: [motor],
       state,
       log: (...args: unknown[]) => console.log('[device-sandbox]', ...args),
       onMessage: (fn: MessageHandler) => { this.handler = fn; },
