@@ -9,19 +9,14 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "build:portal": "node node_modules/browserify/bin/cmd.js -t [ babelify --presets [ react ] ] ./portal/index.js -o ./public/index.js",
     "build:firmware": "tsc",
-    "build": "npm run build:portal && npm run build:firmware"
+    "build": "npm run build:firmware"
   },
   "parserOptions": {
     "sourceType": "module"
   },
   "dependencies": {
-    "babel-core": "^6.26.3",
-    "babel-preset-react": "^6.24.1",
-    "babelify": "^8.0.0",
-    "baseui": "^12.1.3",
-    "browserify": "^17.0.0",
+    "baseui": "^16.1.1",
     "express": "^4.18.1",
     "gpio": "^0.2.10",
     "node-pty": "^1.1.0",
@@ -45,6 +40,6 @@
     "supertest": "^7.2.2",
     "tsx": "^4.21.0",
     "typescript": "^5.4.0",
-    "vitest": "^1.6.0"
+    "vitest": "^4.1.2"
   }
 }

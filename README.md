@@ -72,9 +72,8 @@ No hardware required — `dev` mode uses `MockGPIODriver` and `MockWifiShellAdap
 | `npm run dev:local` | Run firmware locally against `localhost:8080` |
 | `npm run simulator` | Start the simulator server (`src/simulator/`) |
 | `npm run test` | Run Vitest once |
-| `npm run build` | Compile TypeScript to `dist/` (runs `build:portal` then `build:firmware`) |
-| `npm run build:portal` | Bundle captive portal React app to `public/index.js` |
-| `npm run build:firmware` | Compile TypeScript to `dist/` via `tsc` |
+| `npm run build` | Compile TypeScript to `dist/` via `tsc` |
+| `npm run build:firmware` | Alias for `build` |
 
 ## Testing
 
