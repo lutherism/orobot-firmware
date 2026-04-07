@@ -1,0 +1,10 @@
+steps:
+- name: 'node:22'
+  entrypoint: 'npm'
+  args: ['install']
+- name: 'node:22'
+  entrypoint: 'npm'
+  args: ['test']
+timeout: '1600s'
+options:
+  logging: CLOUD_LOGGING_ONLY
