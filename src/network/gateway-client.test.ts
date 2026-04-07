@@ -215,6 +215,37 @@ describe('GatewayClient', () => {
     }
   });
 
+  it('sends periodic ping frames to keep the connection alive', async () => {
+    const { wss, port } = await startServer();
+    let pingReceived = false;
+
+    wss.once('connection', (ws) => {
+      ws.on('ping', () => { pingReceived = true; });
+    });
+
+    const bus      = new EventBus();
+    const state    = new DeviceStateService(makeTmpStateFile());
+    const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
+    const client   = new GatewayClient(
+      bus, state, registry,
+      (url, proto) => new WebSocket(url, proto),
+      `ws://localhost:${port}`,
+      undefined,  // device prefix
+      50,         // pingIntervalMs — short for test
+    );
+
+    const connectedPromise = new Promise<void>((r) => bus.once('network:connected', () => r()));
+    try {
+      client.start();
+      await connectedPromise;
+      await new Promise((r) => setTimeout(r, 200)); // wait for at least one ping cycle
+      expect(pingReceived).toBe(true);
+    } finally {
+      client.stop();
+      await closeServer(wss);
+    }
+  });
+
   it('reconnects after server closes the connection', async () => {
     const { wss, port } = await startServer();
     let connectCount = 0;
