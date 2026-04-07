@@ -22,3 +22,14 @@ export function createGotoRelativeHandler(motor: StepperMotor): MessageHandler {
     await motor.gotoRelative(degrees);
   };
 }
+
+/**
+ * Handles 'stop' command: de-energizes all motor coils immediately.
+ * Registered as a system message type so user code cannot intercept it.
+ * Register with: registry.register('stop', createStopAllHandler(motor))
+ */
+export function createStopAllHandler(motor: StepperMotor): MessageHandler {
+  return async (_msg) => {
+    await motor.stop();
+  };
+}
