@@ -1,6 +1,7 @@
 import type { DeviceSandboxService } from '../core/device-sandbox';
 import type { StepperMotor } from '../hardware/stepper-motor';
 import type { DeviceStateService } from '../core/device-state';
+import type { EventBus } from '../core/event-bus';
 import type { MessageHandler } from './registry';
 import { createLogger } from '../core/logger';
 
@@ -10,6 +11,7 @@ export function createLoadCodeHandler(
   deviceSandbox: DeviceSandboxService,
   motor: StepperMotor,
   state: DeviceStateService,
+  bus: EventBus,
 ): MessageHandler {
   return async (msg) => {
     let payload: { code: string; unitId: string };
@@ -21,7 +23,7 @@ export function createLoadCodeHandler(
     }
 
     const { code, unitId } = payload;
-    deviceSandbox.load(code, motor, state);
+    deviceSandbox.load(code, motor, state, bus);
     log.info({ unitId }, 'load-code applied');
   };
 }
