@@ -117,7 +117,7 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('gotoangle',     true, createMotorHandler(motor));
   registry.register('gotorelative',  true, createGotoRelativeHandler(motor));
   registry.register('load-config', createLoadConfigHandler(programConfig, motor));
-  registry.register('load-code', createLoadCodeHandler(deviceSandbox, motor, state));
+  registry.register('load-code', createLoadCodeHandler(deviceSandbox, motor, state, bus));
 
   // System message types must always reach the registry.
   // User action types (e.g. 'go', 'home') are not in this set and can be
