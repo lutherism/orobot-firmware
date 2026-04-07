@@ -35,3 +35,9 @@ yarn-error.log*
 
 tmp/*
 scripts/openroboticsdata/data.json
+
+/dist
+/.superpowers
+
+# simulator persistence (local device state, not committed)
+.simulator/

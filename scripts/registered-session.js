@@ -2,7 +2,7 @@ const request = require('request');
 const fs = require('fs');
 
 const WS_URL = process.env.NODE_ENV === 'local' ?
-  'ws://localhost:8080/' : 'wss://robots-gateway.uc.r.appspot.com/';
+  'ws://localhost:8080/' : 'wss://robots-gateway-779307899828.us-west2.run.app/device';
 const API_URL = process.env.NODE_ENV === 'local' ?
   'http://localhost:8080' : 'https://robots-gateway.uc.r.appspot.com';
 const dataFilePath = './openroboticsdata/data.json';
