@@ -16,7 +16,6 @@
     "sourceType": "module"
   },
   "dependencies": {
-    "baseui": "^16.1.1",
     "express": "^4.18.1",
     "gpio": "^0.2.10",
     "node-pty": "^1.1.0",
