@@ -5,9 +5,15 @@ export default defineConfig({
     sourcemap: 'inline'
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      // Legacy CRA-era test file
+      'src/App.test.js',
+    ],
     passWithNoTests: true,
     coverage: {
+      enabled: true,
       provider: 'v8',
     }
   },
