@@ -23,6 +23,10 @@ export class WifiStateMachine {
     return this._current;
   }
 
+  reset(): void {
+    this._current = 'UNCONFIGURED';
+  }
+
   transition(to: WifiState): void {
     const allowed = VALID_TRANSITIONS[this._current];
     if (!allowed.includes(to)) {
