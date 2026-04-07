@@ -5,7 +5,7 @@ import { NetworkStateMachine } from '../network/state-machine';
 import type { InboundMessage } from '../core/types';
 import type { StepperMotor } from '../hardware/stepper-motor';
 import type { PTYManager } from '../pty/pty-manager';
-import { createMotorHandler } from './motor';
+import { createMotorHandler, createStopAllHandler } from './motor';
 import { createPtyHandler } from './pty';
 import {
   createGetDeviceDataHandler,
@@ -57,6 +57,26 @@ describe('Motor handler', () => {
     const handler = createMotorHandler(motor);
     await handler(makeMsg({ data: 'gotoangle:270' }));
     expect(gotoAngle).toHaveBeenCalledWith(270);
+  });
+});
+
+// ── Stop handler ─────────────────────────────────────────────────
+
+describe('Stop handler', () => {
+  it('calls motor.stop() when stop message received', async () => {
+    const stop = vi.fn().mockResolvedValue(undefined);
+    const motor = { stop } as unknown as StepperMotor;
+    const handler = createStopAllHandler(motor);
+    await handler(makeMsg({ type: 'stop', data: '' }));
+    expect(stop).toHaveBeenCalledOnce();
+  });
+
+  it('resolves even when motor.stop() rejects', async () => {
+    const stop = vi.fn().mockRejectedValue(new Error('motor fault'));
+    const motor = { stop } as unknown as StepperMotor;
+    const handler = createStopAllHandler(motor);
+    await expect(handler(makeMsg({ type: 'stop', data: '' }))).rejects.toThrow('motor fault');
+    expect(stop).toHaveBeenCalledOnce();
   });
 });
 

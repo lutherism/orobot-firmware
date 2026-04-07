@@ -4,7 +4,7 @@ import { WebSocket } from 'ws';
 import { DeviceStateService } from './core/device-state';
 import { EventBus } from './core/event-bus';
 import { MessageHandlerRegistry } from './handlers/registry';
-import { createMotorHandler, createGotoRelativeHandler } from './handlers/motor';
+import { createMotorHandler, createGotoRelativeHandler, createStopAllHandler } from './handlers/motor';
 import { createPtyHandler } from './handlers/pty';
 import { createCameraHandler } from './handlers/camera';
 import {
@@ -120,13 +120,14 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('gotorelative',  true, createGotoRelativeHandler(motor));
   registry.register('load-config', createLoadConfigHandler(programConfig, motor));
   registry.register('load-code', createLoadCodeHandler(deviceSandbox, motor, state, bus));
+  registry.register('stop',      createStopAllHandler(motor));
 
   // System message types must always reach the registry.
   // User action types (e.g. 'go', 'home') are not in this set and can be
   // intercepted by device code before the registry sees them.
   const SYSTEM_MSG_TYPES = new Set([
     'load-config', 'load-code', 'pty-in', 'getframe', 'getDeviceData',
-    'networkmode', 'share-wifi', 'wifiList', 'reboot', 'update', 'command-in',
+    'networkmode', 'share-wifi', 'wifiList', 'reboot', 'update', 'command-in', 'stop',
   ]);
 
   registry.setPriorityDispatcher((msg) => {
