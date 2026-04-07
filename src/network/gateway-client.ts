@@ -7,10 +7,12 @@ import { createLogger } from '../core/logger';
 
 export type WsFactory = (url: string, protocol: string) => WsWebSocket;
 
-const PROD_WS_URL  = 'wss://robots-gateway-v2.wl.r.appspot.com/';
-const MIN_BACKOFF  = 2_000;
-const MAX_BACKOFF  = 30_000;
-const WS_OPEN      = 1; // WebSocket.OPEN — socket is ready to send
+const PROD_WS_URL       = 'wss://robots-gateway-v2.wl.r.appspot.com/';
+const MIN_BACKOFF       = 2_000;
+const MAX_BACKOFF       = 30_000;
+const WS_OPEN           = 1;      // WebSocket.OPEN — socket is ready to send
+const DEFAULT_PING_MS   = 25_000; // safely under load-balancer idle timeout (~60 s)
+const PONG_TIMEOUT_MS   = 10_000; // force-close if no pong received within this window
 export class GatewayClient {
   private stopped            = false;
   private ws: WsWebSocket | null = null;
@@ -23,9 +25,10 @@ export class GatewayClient {
     private readonly bus:         EventBus,
     private readonly state:       DeviceStateService,
     private readonly registry:    MessageHandlerRegistry,
-    private readonly wsFactory:   WsFactory,
-    private readonly urlOverride?: string,  // injected URL; overrides dev/prod resolution when set
+    private readonly wsFactory:     WsFactory,
+    private readonly urlOverride?:  string,  // injected URL; overrides dev/prod resolution when set
     device?: string,
+    private readonly pingIntervalMs = DEFAULT_PING_MS,
   ) {
     this.log = createLogger('gateway-client', device);
   }
@@ -95,12 +98,34 @@ export class GatewayClient {
         }
       };
 
+      // --- keepalive ping/pong -------------------------------------------
+      // App Engine's load balancer silently kills idle TCP connections after
+      // ~60 s.  Sending periodic ping frames keeps the connection alive and
+      // lets us detect dead sockets via pong timeout rather than waiting for
+      // OS-level TCP keepalive (which defaults to ~2 hours).
+      let pingTimer: ReturnType<typeof setInterval> | null = null;
+      let pongTimer: ReturnType<typeof setTimeout>  | null = null;
+      const clearPingTimers = () => {
+        if (pingTimer !== null) { clearInterval(pingTimer); pingTimer = null; }
+        if (pongTimer !== null) { clearTimeout(pongTimer);  pongTimer = null; }
+      };
+      // -----------------------------------------------------------------------
+
       ws.on('open', () => {
         this.log.info({ event: 'ws:connected', url }, 'Gateway connection established');
         const { deviceUuid } = this.state.get();
         ws.send(JSON.stringify({ type: 'identify-connection', deviceUuid }));
         ws.send(JSON.stringify({ type: 'connect-to-user',     deviceUuid }));
         this.bus.emit('network:connected', { url });
+
+        pingTimer = setInterval(() => {
+          if (ws.readyState !== WS_OPEN) return;
+          ws.ping();
+          pongTimer = setTimeout(() => {
+            this.log.warn({ event: 'ws:pong-timeout' }, 'No pong received — terminating dead socket');
+            ws.terminate();
+          }, PONG_TIMEOUT_MS);
+        }, this.pingIntervalMs);
       });
 
       ws.on('message', (data: Buffer | string) => {
@@ -111,7 +136,12 @@ export class GatewayClient {
         } catch { /* ignore malformed messages */ }
       });
 
+      ws.on('pong', () => {
+        if (pongTimer !== null) { clearTimeout(pongTimer); pongTimer = null; }
+      });
+
       ws.on('close', () => {
+        clearPingTimers();
         this.log.info({ event: 'ws:closed' }, 'Gateway connection closed');
         this.ws = null;
         emitDisconnect('closed');
@@ -119,6 +149,7 @@ export class GatewayClient {
       });
 
       ws.on('error', (err: Error) => {
+        clearPingTimers();
         this.log.warn({ event: 'ws:error', err }, 'Gateway connection error');
         this.ws = null;
         emitDisconnect(err.message);

@@ -48,6 +48,8 @@ export interface AppOptions {
   dataFilePath?: string;
   /** Heartbeat interval in ms — defaults to 8000. */
   heartbeatIntervalMs?: number;
+  /** WebSocket ping interval in ms — defaults to 25000. */
+  pingIntervalMs?: number;
   /** Override command executor for testing; defaults to child_process.execFile (fire-and-forget). */
   execCommand?: (cmd: string, args: string[]) => void;
   /** WiFi shell adapter — defaults to RpiWifiShellAdapter. */
@@ -135,7 +137,7 @@ export function createApp(options: AppOptions = {}): App {
   });
 
   const wsFactory: WsFactory = (url, proto) => new WebSocket(url, proto);
-  const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device);
+  const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device, options.pingIntervalMs);
   const heartbeat     = new HeartbeatService(state, bus, fetch, device);
   const hbIntervalMs  = options.heartbeatIntervalMs ?? 8_000;
 
