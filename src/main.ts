@@ -4,7 +4,7 @@ import { WebSocket } from 'ws';
 import { DeviceStateService } from './core/device-state';
 import { EventBus } from './core/event-bus';
 import { MessageHandlerRegistry } from './handlers/registry';
-import { createMotorHandler } from './handlers/motor';
+import { createMotorHandler, createGotoRelativeHandler } from './handlers/motor';
 import { createPtyHandler } from './handlers/pty';
 import { createCameraHandler } from './handlers/camera';
 import {
@@ -115,6 +115,7 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('reboot',        createRebootHandler(bus));
   registry.register('update',        createUpdateHandler(bus));
   registry.register('gotoangle',     true, createMotorHandler(motor));
+  registry.register('gotorelative',  true, createGotoRelativeHandler(motor));
   registry.register('load-config', createLoadConfigHandler(programConfig, motor));
   registry.register('load-code', createLoadCodeHandler(deviceSandbox, motor, state));
 

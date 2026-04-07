@@ -23,7 +23,10 @@ export class DeviceSandboxService {
       motors: [motor],
       state,
       log: (...args: unknown[]) => console.log('[device-sandbox]', ...args),
-      onMessage: (fn: MessageHandler) => { this.handler = fn; },
+      // Wrap user's handler so it receives {msg, motor, data} instead of (type, data)
+      onMessage: (fn: (args: { msg: string; motor: StepperMotor; data: unknown }) => void) => {
+        this.handler = (type: string, data: unknown) => fn({ msg: type, motor, data });
+      },
     });
 
     try {
