@@ -22,13 +22,12 @@ describe('DeviceSandboxService', () => {
   });
 
   it('returns true and calls handler via motor side-effect', () => {
-    const calls: number[] = [];
     const motor = {
-      gotoAngle: vi.fn((angle: number) => { calls.push(angle); return Promise.resolve(); }),
+      gotoAngle: vi.fn().mockResolvedValue(undefined),
     } as unknown as StepperMotor;
     const svc = new DeviceSandboxService();
     svc.load(
-      `onMessage((type, data) => { if (type === 'go') motor.gotoAngle(99); });`,
+      `onMessage(({msg, motor}) => { if (msg === 'go') motor.gotoAngle(99); });`,
       motor,
       mockState,
     );
@@ -39,7 +38,7 @@ describe('DeviceSandboxService', () => {
 
   it('returns true for any type when handler is registered (handler decides what to act on)', () => {
     const svc = new DeviceSandboxService();
-    svc.load(`onMessage((type, data) => {});`, mockMotor, mockState);
+    svc.load(`onMessage(({msg, data}) => {});`, mockMotor, mockState);
     expect(svc.dispatch('stop', {})).toBe(true);
   });
 
@@ -49,12 +48,12 @@ describe('DeviceSandboxService', () => {
     } as unknown as StepperMotor;
     const svc = new DeviceSandboxService();
     svc.load(
-      `onMessage((type) => { motor.gotoAngle(1); });`,
+      `onMessage(({motor}) => { motor.gotoAngle(1); });`,
       motor,
       mockState,
     );
     svc.load(
-      `onMessage((type) => { motor.gotoAngle(2); });`,
+      `onMessage(({motor}) => { motor.gotoAngle(2); });`,
       motor,
       mockState,
     );
@@ -81,7 +80,7 @@ describe('DeviceSandboxService', () => {
     } as unknown as StepperMotor;
     const svc = new DeviceSandboxService();
     svc.load(
-      `onMessage((type, data) => { if (type === 'test') motors[0].gotoAngle(77); });`,
+      `onMessage(({msg}) => { if (msg === 'test') motors[0].gotoAngle(77); });`,
       motor,
       mockState,
     );

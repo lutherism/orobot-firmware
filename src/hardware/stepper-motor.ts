@@ -57,6 +57,16 @@ export class StepperMotor {
     return result;
   }
 
+  /**
+   * Moves `degrees` relative to the current tracked angle.
+   * Positive = CCW (increasing angle), negative = CW (decreasing angle).
+   */
+  async gotoRelative(degrees: number): Promise<void> {
+    const result = this.queue.then(() => this._gotoAngle(this._currentAngle + degrees));
+    this.queue = result.catch(() => {}); // keep queue alive even if this operation fails
+    return result;
+  }
+
   /** De-energizes all coils. Queued after any in-progress operation. */
   async stop(): Promise<void> {
     const result = this.queue.then(() => this._stop());
