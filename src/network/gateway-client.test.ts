@@ -246,6 +246,66 @@ describe('GatewayClient', () => {
     }
   });
 
+  it('terminates the connection and emits network:disconnected when no pong is received', async () => {
+    // Use a mock wsFactory so we can control pong behavior (ws library auto-pongs real sockets)
+    const { EventEmitter } = await import('node:events');
+    let terminateCalled = false;
+    let closeHandlers: Array<() => void> = [];
+
+    const mockWs = Object.assign(new EventEmitter(), {
+      readyState: 1, // WS_OPEN
+      send: (_data: string) => {},
+      ping: () => {}, // no auto-pong
+      close: () => {
+        mockWs.readyState = 3;
+        closeHandlers.forEach((h) => h());
+      },
+      terminate: () => {
+        terminateCalled = true;
+        mockWs.readyState = 3;
+        // Emit close event — simulates what ws.terminate() does
+        mockWs.emit('close', 1006, Buffer.alloc(0));
+      },
+    });
+
+    // Capture close listeners so we can fire them manually
+    const origOn = mockWs.on.bind(mockWs);
+    mockWs.on = (event: string, handler: (...args: unknown[]) => void) => {
+      if (event === 'close') closeHandlers.push(handler as () => void);
+      return origOn(event, handler);
+    };
+
+    const bus      = new EventBus();
+    const state    = new DeviceStateService(makeTmpStateFile());
+    const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
+    const disconnected: string[] = [];
+    bus.on('network:disconnected', ({ reason }) => disconnected.push(reason));
+
+    const client = new GatewayClient(
+      bus, state, registry,
+      (_url, _proto) => {
+        // Emit 'open' on next tick to simulate connection
+        setTimeout(() => mockWs.emit('open'), 0);
+        return mockWs as any;
+      },
+      'ws://mock',
+      undefined, // device prefix
+      30,        // pingIntervalMs — short for test
+      50,        // pongTimeoutMs — short for test
+    );
+
+    const disconnectedPromise = new Promise<void>((r) => bus.once('network:disconnected', () => r()));
+    try {
+      client.start();
+      // Wait for pong timeout (30ms ping + 50ms pong timeout + margin)
+      await Promise.race([disconnectedPromise, new Promise<void>((r) => setTimeout(r, 400))]);
+      expect(terminateCalled).toBe(true);
+      expect(disconnected.length).toBeGreaterThan(0);
+    } finally {
+      client.stop();
+    }
+  }, 5000);
+
   it('reconnects after server closes the connection', async () => {
     const { wss, port } = await startServer();
     let connectCount = 0;

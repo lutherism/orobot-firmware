@@ -45,7 +45,7 @@ export class HeartbeatService {
           payloadJSON: JSON.stringify({ type: s.type, pingTime: s.pingTime }),
         }),
       });
-      this.log.info({ event: 'heartbeat', pingTime: s.pingTime }, 'Heartbeat sent');
+      //this.log.info({ event: 'heartbeat', pingTime: s.pingTime }, 'Heartbeat sent');
       this.bus.emit('system:heartbeat-sent', { pingTime: s.pingTime });
     } catch (err) {
       this.log.warn({ event: 'heartbeat:fail', err: String(err) }, 'Heartbeat failed');

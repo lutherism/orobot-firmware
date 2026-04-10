@@ -63,6 +63,102 @@ describe('mockWifiAccept', () => {
   });
 });
 
+// ── Device management REST routes ────────────────────────────────────────────
+
+describe('GET /api/devices', () => {
+  it('returns all devices from the registry', async () => {
+    const devices = [makeDevice({ id: 'dev-1' }), makeDevice({ id: 'dev-2' })];
+    const app = createServer(makeRegistry(devices));
+    const res = await supertest(app).get('/api/devices');
+    expect(res.status).toBe(200);
+    expect(res.body.devices).toHaveLength(2);
+    expect(res.body.devices[0].id).toBe('dev-1');
+  });
+});
+
+describe('POST /api/devices', () => {
+  it('spawns a new device and returns 201', async () => {
+    const newDevice = makeDevice({ id: 'new-1', name: 'spawned' });
+    const registry  = makeRegistry();
+    vi.mocked(registry.spawn).mockResolvedValue(newDevice);
+
+    const app = createServer(registry);
+    const res = await supertest(app).post('/api/devices').send({ name: 'spawned' });
+    expect(res.status).toBe(201);
+    expect(res.body.device.id).toBe('new-1');
+    expect(registry.spawn).toHaveBeenCalledWith('spawned');
+  });
+});
+
+describe('DELETE /api/devices/:id', () => {
+  it('kills the device and returns ok', async () => {
+    const registry = makeRegistry();
+    vi.mocked(registry.kill).mockResolvedValue(undefined);
+
+    const app = createServer(registry);
+    const res = await supertest(app).delete('/api/devices/device-1');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(registry.kill).toHaveBeenCalledWith('device-1');
+  });
+});
+
+describe('POST /api/devices/:id/connect', () => {
+  it('calls setConnected(id, true) and returns ok', async () => {
+    const registry = makeRegistry();
+    vi.mocked(registry.setConnected).mockResolvedValue(undefined);
+
+    const app = createServer(registry);
+    const res = await supertest(app).post('/api/devices/device-1/connect');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(registry.setConnected).toHaveBeenCalledWith('device-1', true);
+  });
+});
+
+describe('POST /api/devices/:id/disconnect', () => {
+  it('calls setConnected(id, false) and returns ok', async () => {
+    const registry = makeRegistry();
+    vi.mocked(registry.setConnected).mockResolvedValue(undefined);
+
+    const app = createServer(registry);
+    const res = await supertest(app).post('/api/devices/device-1/disconnect');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(registry.setConnected).toHaveBeenCalledWith('device-1', false);
+  });
+});
+
+describe('POST /api/devices/:id/power', () => {
+  it('calls setPower(id, true) when on:true', async () => {
+    const registry = makeRegistry();
+    vi.mocked(registry.setPower).mockResolvedValue(undefined);
+
+    const app = createServer(registry);
+    const res = await supertest(app).post('/api/devices/device-1/power').send({ on: true });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(registry.setPower).toHaveBeenCalledWith('device-1', true);
+  });
+
+  it('calls setPower(id, false) when on:false', async () => {
+    const registry = makeRegistry();
+    vi.mocked(registry.setPower).mockResolvedValue(undefined);
+
+    const app = createServer(registry);
+    const res = await supertest(app).post('/api/devices/device-1/power').send({ on: false });
+    expect(res.status).toBe(200);
+    expect(registry.setPower).toHaveBeenCalledWith('device-1', false);
+  });
+
+  it('returns 400 when on is not a boolean', async () => {
+    const app = createServer(makeRegistry());
+    const res = await supertest(app).post('/api/devices/device-1/power').send({ on: 'yes' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/boolean/i);
+  });
+});
+
 // ── Portal live-reload SSE ────────────────────────────────────────────────────
 
 describe('GET /api/portal-reload', () => {

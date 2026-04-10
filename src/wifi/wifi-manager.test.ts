@@ -85,6 +85,18 @@ describe('WifiManager', () => {
     expect(adapter.startAPCalls).toBe(1);
   });
 
+  it('network:disconnected N times while RECONNECTING → falls back to SETUP_MODE + startAP', async () => {
+    const manager = new WifiManager(adapter, makeTmpState({ ssid: 'MyNet', password: 'pass' }), bus, wifiSM, 10, 3);
+    await manager.initialize();                                    // → CONNECTING
+    bus.emit('network:connected',    { url: 'ws://test' });       // → CONNECTED
+    bus.emit('network:disconnected', { reason: 'closed' });       // → RECONNECTING (no counter increment)
+    for (let i = 0; i < 3; i++) {
+      bus.emit('network:disconnected', { reason: 'error' });      // increments reconnectFailures
+    }
+    expect(wifiSM.current).toBe('SETUP_MODE');
+    expect(adapter.startAPCalls).toBe(1);
+  });
+
   it('provisionNetwork() patches state, calls adapter ops, transitions to CONNECTING', async () => {
     const state   = makeTmpState(null);
     const manager = new WifiManager(adapter, state, bus, wifiSM);
