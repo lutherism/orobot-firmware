@@ -1,4 +1,5 @@
 import express, { type Express } from 'express';
+import fs from 'fs';
 import type { Server } from 'http';
 import path from 'path';
 import type { DeviceStateService } from '../core/device-state';
@@ -9,6 +10,16 @@ import { createLogger } from '../core/logger';
 
 const PORTAL_PORT = 3006;
 const PUBLIC_DIR  = path.join(__dirname, '../../public');
+const SHELL_PATH  = path.join(PUBLIC_DIR, 'portal-shell.html');
+
+function buildPortalHtml(deviceName: string): string {
+  const shell = fs.readFileSync(SHELL_PATH, 'utf8');
+  const config = JSON.stringify({ wifiUrl: '/api/wifi', deviceName });
+  return shell.replace(
+    '<!-- OROBOT_PORTAL_CONFIG -->',
+    `<script>window.OROBOT_PORTAL = ${config};</script>`,
+  );
+}
 export class CaptivePortalServer {
   private server: Server | null = null;
   private readonly _app: Express;
@@ -35,7 +46,7 @@ export class CaptivePortalServer {
   start(): void {
     if (this.server) return;
     this.server = this._app.listen(PORTAL_PORT, () => {
-      log.info({ event: 'portal:started', port: PORTAL_PORT }, 'Captive portal listening');
+      this.log.info({ event: 'portal:started', port: PORTAL_PORT }, 'Captive portal listening');
     });
   }
 
@@ -48,7 +59,19 @@ export class CaptivePortalServer {
 
   private buildRoutes(app: Express): Express {
     app.use(express.json());
-    app.use(express.static(PUBLIC_DIR));
+    // Serve static portal assets (portal.js, etc.) but handle / ourselves so
+    // we can inject the per-device window.OROBOT_PORTAL config block.
+    app.use(express.static(PUBLIC_DIR, { index: false }));
+
+    app.get('/', (_req, res) => {
+      const { deviceUuid } = this.state.get();
+      try {
+        res.type('html').send(buildPortalHtml(deviceUuid ?? 'your robot'));
+      } catch {
+        this.log.warn({}, 'Portal shell not found — run npm run build:portal');
+        res.status(503).send('Portal unavailable. Run: npm run build:portal');
+      }
+    });
 
     app.get('/api/wifi', async (_req, res) => {
       try {

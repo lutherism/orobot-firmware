@@ -10,7 +10,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "build:firmware": "tsc",
-    "build": "npm run build:firmware"
+    "build:portal": "node scripts/build-portal.mjs",
+    "build": "npm run build:firmware && npm run build:portal"
   },
   "parserOptions": {
     "sourceType": "module"
@@ -32,11 +33,14 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^20.0.0",
+    "@types/react": "^17.0.91",
+    "@types/react-dom": "^17.0.26",
     "@types/supertest": "^7.2.0",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.1.2",
     "cross-env": "^10.1.0",
+    "esbuild": "^0.25.12",
     "supertest": "^7.2.2",
     "tsx": "^4.21.0",
     "typescript": "^5.4.0",

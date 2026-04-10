@@ -236,7 +236,7 @@ describe('load-config handler', () => {
 // ── load-code handler ────────────────────────────────────────────
 
 describe('load-code handler', () => {
-  function makeTmpConfig(): { motor: StepperMotor; state: DeviceStateService; sandbox: DeviceSandboxService } {
+  function makeTmpConfig(): { motor: StepperMotor; state: DeviceStateService; sandbox: DeviceSandboxService; bus: EventBus } {
     const dir   = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-load-code-'));
     const file  = path.join(dir, 'data.json');
     fs.writeFileSync(file, JSON.stringify({
@@ -246,12 +246,13 @@ describe('load-code handler', () => {
     const state   = new DeviceStateService(file);
     const motor   = { gotoAngle: vi.fn() } as unknown as StepperMotor;
     const sandbox = new DeviceSandboxService();
-    return { motor, state, sandbox };
+    const bus     = new EventBus();
+    return { motor, state, sandbox, bus };
   }
 
   it('loads device code into sandbox when data is valid', async () => {
-    const { motor, state, sandbox } = makeTmpConfig();
-    const handler = createLoadCodeHandler(sandbox, motor, state);
+    const { motor, state, sandbox, bus } = makeTmpConfig();
+    const handler = createLoadCodeHandler(sandbox, motor, state, bus);
     const code = `onMessage((type) => { motor.gotoAngle(50); });`;
     await handler(makeMsg({
       type: 'load-code',
@@ -262,8 +263,8 @@ describe('load-code handler', () => {
   });
 
   it('does not throw when data is malformed JSON', async () => {
-    const { motor, state, sandbox } = makeTmpConfig();
-    const handler = createLoadCodeHandler(sandbox, motor, state);
+    const { motor, state, sandbox, bus } = makeTmpConfig();
+    const handler = createLoadCodeHandler(sandbox, motor, state, bus);
     await expect(
       handler(makeMsg({ type: 'load-code', data: 'not-json' }))
     ).resolves.not.toThrow();

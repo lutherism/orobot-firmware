@@ -16,5 +16,5 @@
     "jsx": "react"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "scripts", "portal"]
+  "exclude": ["node_modules", "dist", "scripts", "portal", "src/simulator", "src/portal"]
 }

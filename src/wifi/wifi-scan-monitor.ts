@@ -48,7 +48,7 @@ export class WifiScanMonitor {
         });
       }
     } catch (err) {
-      log.warn({ err: String(err) }, 'WiFi scan failed');
+      this.log.warn({ err: String(err) }, 'WiFi scan failed');
     }
   }
 }

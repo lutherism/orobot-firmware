@@ -113,10 +113,10 @@ describe('GET /portal/:id', () => {
     expect(res.text).toContain('WiFi Setup');
   });
 
-  it('embeds device id in page script', async () => {
+  it('embeds device id in the portal config', async () => {
     const app = createServer(makeRegistry());
     const res = await supertest(app).get('/portal/device-1');
-    expect(res.text).toContain('"device-1"');
+    expect(res.text).toContain('/api/devices/device-1/wifi');
   });
 });
 
