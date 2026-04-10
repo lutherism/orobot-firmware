@@ -24,6 +24,7 @@ export interface DeviceOwner {
 }
 
 export interface DeviceRobot {
+  uuid: string;
   name: string;
   program: string;
 }
