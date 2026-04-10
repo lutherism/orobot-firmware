@@ -558,17 +558,37 @@ function GpioSection({ pins, status }: { pins: PinState[]; status: string }) {
   );
 }
 
+// ─── WiFi portal button ────────────────────────────────────────────────────────
+
+const WifiBtn = styled.button`
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid ${T.borderFaint};
+  background: transparent;
+  color: ${T.textDim};
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: ${T.amber};
+    color: ${T.amber};
+  }
+`;
+
 // ─── DeviceCard ───────────────────────────────────────────────────────────────
 
 interface DeviceCardProps {
   device: Device;
-  onConnect?:    () => void;
-  onDisconnect?: () => void;
-  onPower?:      (on: boolean) => void;
-  onKill?:       () => void;
+  onConnect?:     () => void;
+  onDisconnect?:  () => void;
+  onPower?:       (on: boolean) => void;
+  onKill?:        () => void;
+  onOpenPortal?:  () => void;
 }
 
-export function DeviceCard({ device, onConnect, onDisconnect, onPower, onKill }: DeviceCardProps) {
+export function DeviceCard({ device, onConnect, onDisconnect, onPower, onKill, onOpenPortal }: DeviceCardProps) {
   const { name, uuid, status, uptime, owner, robot, pins, events } = device;
 
   const connVariant =
@@ -598,6 +618,9 @@ export function DeviceCard({ device, onConnect, onDisconnect, onPower, onKill }:
             <DeviceUuid>{uuid}</DeviceUuid>
           </div>
         </TitleRow>
+        <WifiBtn title="Open WiFi captive portal" onClick={() => onOpenPortal?.()}>
+          WiFi
+        </WifiBtn>
       </Header>
 
       {/* Meta */}

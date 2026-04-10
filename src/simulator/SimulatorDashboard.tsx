@@ -220,12 +220,13 @@ interface Props {
   devices: Device[];
   watcherFile?: string;
   watcherLastReload?: string;
-  onSpawn?:      () => void;
-  onImport?:     () => void;
-  onConnect?:    (id: string) => void;
-  onDisconnect?: (id: string) => void;
-  onPower?:      (id: string, on: boolean) => void;
-  onKill?:       (id: string) => void;
+  onSpawn?:       () => void;
+  onImport?:      () => void;
+  onConnect?:     (id: string) => void;
+  onDisconnect?:  (id: string) => void;
+  onPower?:       (id: string, on: boolean) => void;
+  onKill?:        (id: string) => void;
+  onOpenPortal?:  (id: string) => void;
 }
 
 export function SimulatorDashboard({
@@ -238,6 +239,7 @@ export function SimulatorDashboard({
   onDisconnect,
   onPower,
   onKill,
+  onOpenPortal,
 }: Props) {
   const [search, setSearch]   = useState('');
   const [filter, setFilter]   = useState<FilterKey>('all');
@@ -345,10 +347,11 @@ export function SimulatorDashboard({
           <DeviceCard
             key={device.id}
             device={device}
-            onConnect={onConnect    ? () => onConnect(device.id)          : undefined}
-            onDisconnect={onDisconnect ? () => onDisconnect(device.id)    : undefined}
-            onPower={onPower        ? (on) => onPower(device.id, on)      : undefined}
-            onKill={onKill          ? () => onKill(device.id)             : undefined}
+            onConnect={onConnect       ? () => onConnect(device.id)           : undefined}
+            onDisconnect={onDisconnect ? () => onDisconnect(device.id)        : undefined}
+            onPower={onPower           ? (on) => onPower(device.id, on)       : undefined}
+            onKill={onKill             ? () => onKill(device.id)              : undefined}
+            onOpenPortal={onOpenPortal ? () => onOpenPortal(device.id)        : undefined}
           />
         ))}
       </DeviceGrid>
