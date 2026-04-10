@@ -220,7 +220,7 @@ const RobotIcon = styled.span`
   flex-shrink: 0;
 `;
 
-const RobotName = styled.span`
+const RobotName = styled.a`
   font-size: 10px;
   color: ${T.textMuted};
   font-weight: 600;
@@ -229,6 +229,8 @@ const RobotName = styled.span`
   text-overflow: ellipsis;
   flex: 1;
   min-width: 0;
+  text-decoration: none;
+  &:hover { color: ${T.blue}; text-decoration: underline; }
 `;
 
 const RobotSep = styled.span`
@@ -657,9 +659,15 @@ export function DeviceCard({ device, onConnect, onDisconnect, onPower, onKill, o
         {robot ? (
           <>
             <RobotIcon>🤖</RobotIcon>
-            <RobotName>{robot.name}</RobotName>
-            <RobotSep>·</RobotSep>
-            <ProgramChip>{robot.program}</ProgramChip>
+            <RobotName href={`https://orobot.io/o/robots/${robot.uuid}`} target="_blank" rel="noreferrer">
+              {robot.name}
+            </RobotName>
+            {robot.program && (
+              <>
+                <RobotSep>·</RobotSep>
+                <ProgramChip>{robot.program}</ProgramChip>
+              </>
+            )}
           </>
         ) : (
           <NoRobotLabel>no robot assigned</NoRobotLabel>

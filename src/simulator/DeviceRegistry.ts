@@ -74,6 +74,7 @@ interface DeviceInstance {
   pinHistory:     Map<number, (0 | 1)[]>;
   unsubs:         Array<() => void>;
   owner:          DeviceOwner | null;
+  robot:          DeviceRobot | null;
   ownerPollTimer: ReturnType<typeof setInterval> | null;
 }
 
@@ -143,6 +144,7 @@ export class DeviceRegistry extends EventEmitter {
         pinHistory:     new Map(RASPI_PINS.map(p => [p, []])),
         unsubs:         [],
         owner:          null,
+        robot:          null,
         ownerPollTimer: null,
       };
 
@@ -217,6 +219,7 @@ export class DeviceRegistry extends EventEmitter {
       pinHistory:     new Map(RASPI_PINS.map(p => [p, []])),
       unsubs:         [],
       owner:          null,
+      robot:          null,
       ownerPollTimer: null,
     };
 
@@ -372,6 +375,7 @@ export class DeviceRegistry extends EventEmitter {
       status: inst.status,
       uptime: uptimeSecs === null ? 'off' : formatUptime(uptimeSecs),
       owner:  inst.owner ?? undefined,
+      robot:  inst.robot ?? undefined,
       pins,
       events: inst.events.slice(0, 8),
     };
@@ -393,36 +397,50 @@ export class DeviceRegistry extends EventEmitter {
   }
 
   private async refreshOwner(inst: DeviceInstance): Promise<void> {
-    const owner = await this.fetchOwner(inst.uuid);
+    const { owner, robot } = await this.fetchDeviceInfo(inst.uuid);
+    let changed = false;
     if (JSON.stringify(owner) !== JSON.stringify(inst.owner)) {
       inst.owner = owner;
-      this.notify(inst);
+      changed = true;
     }
+    if (JSON.stringify(robot) !== JSON.stringify(inst.robot)) {
+      inst.robot = robot;
+      changed = true;
+    }
+    if (changed) this.notify(inst);
   }
 
-  private async fetchOwner(uuid: string): Promise<DeviceOwner | null> {
+  private async fetchDeviceInfo(uuid: string): Promise<{ owner: DeviceOwner | null; robot: DeviceRobot | null }> {
     try {
       const devRes = await fetch(`${GATEWAY_API}/${uuid}`);
-      if (!devRes.ok) return null;
+      if (!devRes.ok) return { owner: null, robot: null };
       const dev = await devRes.json() as {
         ownerId: number | null;
         owner:   { name: string; uuid: string } | null;
+        Robot:   { name: string; uuid: string; Program?: { name: string; uuid: string } | null } | null;
       };
-      if (!dev.ownerId || !dev.owner) return null;
 
-      const userRes = await fetch(`${GATEWAY_BASE}/api/user/${dev.owner.uuid}`);
-      const user    = userRes.ok
-        ? await userRes.json() as { email?: string }
-        : {};
+      let owner: DeviceOwner | null = null;
+      if (dev.ownerId && dev.owner) {
+        const userRes = await fetch(`${GATEWAY_BASE}/api/user/${dev.owner.uuid}`);
+        const user    = userRes.ok
+          ? await userRes.json() as { email?: string }
+          : {};
+        owner = {
+          name:     dev.owner.name,
+          email:    user.email ?? '',
+          initials: ownerInitials(dev.owner.name),
+          color:    ownerColor(dev.owner.uuid),
+        };
+      }
 
-      return {
-        name:     dev.owner.name,
-        email:    user.email ?? '',
-        initials: ownerInitials(dev.owner.name),
-        color:    ownerColor(dev.owner.uuid),
-      };
+      const robot: DeviceRobot | null = dev.Robot
+        ? { uuid: dev.Robot.uuid, name: dev.Robot.name, program: dev.Robot.Program?.name ?? '' }
+        : null;
+
+      return { owner, robot };
     } catch {
-      return null;
+      return { owner: null, robot: null };
     }
   }
 
