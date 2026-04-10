@@ -612,7 +612,12 @@ export function DeviceCard({ device, onConnect, onDisconnect, onPower, onKill, o
       {/* Header */}
       <Header>
         <TitleRow>
-          <PowerButton $on={status !== 'off'} onClick={() => onPower?.(status === 'off')}>⏻</PowerButton>
+          <PowerButton $on={status !== 'off'} onClick={() => onPower?.(status === 'off')} aria-label="Power">
+            <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <path d="M8 2v4" />
+              <path d="M5 4.2A5 5 0 1 0 11 4.2" strokeLinejoin="round" />
+            </svg>
+          </PowerButton>
           <div>
             <DeviceName>{name}</DeviceName>
             <DeviceUuid>{uuid}</DeviceUuid>
