@@ -275,6 +275,11 @@ export class DeviceRegistry extends EventEmitter {
     return Array.from(this.instances.values()).map(i => this.toDevice(i));
   }
 
+  getById(id: string): Device | undefined {
+    const inst = this.instances.get(id);
+    return inst ? this.toDevice(inst) : undefined;
+  }
+
   destroy(): void {
     if (this.sampleTimer) clearInterval(this.sampleTimer);
     for (const inst of this.instances.values()) {

@@ -147,6 +147,10 @@ function SimulatorApp() {
     }
   }, []);
 
+  const handleOpenPortal = useCallback((id: string) => {
+    window.open(`/portal/${id}`, '_blank', 'noopener,noreferrer');
+  }, []);
+
   return (
     <SimulatorDashboard
       devices={state.devices}
@@ -156,6 +160,7 @@ function SimulatorApp() {
       onDisconnect={handleDisconnect}
       onPower={handlePower}
       onKill={handleKill}
+      onOpenPortal={handleOpenPortal}
     />
   );
 }

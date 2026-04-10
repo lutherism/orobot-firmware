@@ -75,6 +75,61 @@ const HTML_SHELL = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// ── Captive portal mock data ───────────────────────────────────────────────────
+
+export interface MockWifiNetwork {
+  ssid:     string;
+  signal:   number;  // dBm, e.g. -45
+  security: 'WPA2' | 'WPA3' | 'open';
+}
+
+export const MOCK_WIFI_NETWORKS: MockWifiNetwork[] = [
+  { ssid: 'HomeNetwork',    signal: -45, security: 'WPA2' },
+  { ssid: 'OfficeWifi',     signal: -60, security: 'WPA2' },
+  { ssid: 'CafeGuest',      signal: -72, security: 'open' },
+  { ssid: 'IoTNetwork',     signal: -55, security: 'WPA2' },
+  { ssid: 'Mobile_Hotspot', signal: -80, security: 'WPA2' },
+];
+
+/**
+ * Simulate a password check for mock networks.
+ * Open networks always succeed. WPA2/WPA3 require a password of at least 4 chars.
+ */
+export function mockWifiAccept(ssid: string, password: string): boolean {
+  const network = MOCK_WIFI_NETWORKS.find(n => n.ssid === ssid);
+  if (!network) return false;
+  if (network.security === 'open') return true;
+  return password.length >= 4;
+}
+
+// ── Captive portal HTML page ──────────────────────────────────────────────────
+//
+// The portal is a React app built from src/portal/index.tsx into public/portal.js.
+// Both the real device (CaptivePortalServer) and simulator serve the same shell HTML
+// with a device-specific window.OROBOT_PORTAL config injected before </head>.
+
+const PORTAL_SHELL = path.join(__dirname, '../../public/portal-shell.html');
+const PORTAL_JS    = path.join(__dirname, '../../public/portal.js');
+
+function buildPortalHtml(deviceId: string, deviceName: string): string {
+  let shell: string;
+  try {
+    shell = fs.readFileSync(PORTAL_SHELL, 'utf8');
+  } catch {
+    return `<!DOCTYPE html><html><body><p>Portal unavailable. Run: npm run build:portal</p></body></html>`;
+  }
+  const wifiUrl = `/api/devices/${deviceId}/wifi`;
+  const config  = JSON.stringify({ wifiUrl, deviceName });
+  return shell.replace(
+    '<!-- OROBOT_PORTAL_CONFIG -->',
+    `<script>window.OROBOT_PORTAL = ${config};</script>`,
+  );
+}
+
+// ── Server birth time (used by live-reload) ───────────────────────────────────
+
+const SERVER_BIRTH = Date.now();
+
 // ── Express app ───────────────────────────────────────────────────────────────
 
 export function createServer(registry: DeviceRegistry) {
@@ -91,6 +146,9 @@ export function createServer(registry: DeviceRegistry) {
     }
     res.type('js').sendFile(BUNDLE_OUT);
   });
+
+  // Serve portal assets (portal.js, logo3-thumb.png, etc.) from public/
+  app.use(express.static(path.join(__dirname, '../../public'), { index: false }));
 
   // ── SSE: real-time device state stream ──────────────────────────────────────
   //
@@ -175,6 +233,53 @@ export function createServer(registry: DeviceRegistry) {
       await registry.setPower(req.params.id, on);
       res.json({ ok: true });
     } catch (err) { next(err); }
+  });
+
+  // ── Portal live-reload (SSE) ─────────────────────────────────────────────────
+  //
+  // The portal page connects here. On connect it receives the server birth time.
+  // When tsx-watch restarts the process, the SSE connection drops and reconnects
+  // with a new birth time, which the portal page uses to trigger a page reload.
+
+  app.get('/api/portal-reload', (_req, res) => {
+    res.setHeader('Content-Type',  'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection',    'keep-alive');
+    res.flushHeaders();
+    res.write(`data: ${JSON.stringify({ birth: SERVER_BIRTH })}\n\n`);
+    const heartbeat = setInterval(() => res.write(': ping\n\n'), 15_000);
+    _req.on('close', () => clearInterval(heartbeat));
+  });
+
+  // ── Captive portal simulation ────────────────────────────────────────────────
+
+  /** Serve the WiFi captive portal page for a device */
+  app.get('/portal/:id', (req, res) => {
+    const device = registry.getById(req.params.id);
+    if (!device) return res.status(404).send('Device not found');
+    res.type('html').send(buildPortalHtml(device.id, device.name));
+  });
+
+  /** Return mock WiFi networks for a device */
+  app.get('/api/devices/:id/wifi', (req, res) => {
+    if (!registry.getById(req.params.id)) {
+      return res.status(404).json({ error: 'device not found' });
+    }
+    res.json({ networks: MOCK_WIFI_NETWORKS });
+  });
+
+  /** Simulate connecting to a WiFi network */
+  app.post('/api/devices/:id/wifi', (req, res) => {
+    if (!registry.getById(req.params.id)) {
+      return res.status(404).json({ error: 'device not found' });
+    }
+    const { ssid, password = '' } = req.body as { ssid?: string; password?: string };
+    if (!ssid) return res.status(400).json({ error: 'ssid is required' });
+    if (mockWifiAccept(ssid, password)) {
+      res.json({ ok: true });
+    } else {
+      res.json({ ok: false, error: 'Incorrect password. Try again.' });
+    }
   });
 
   // ── Error handler ───────────────────────────────────────────────────────────
