@@ -7,12 +7,12 @@ import { createLogger } from '../core/logger';
 
 export type WsFactory = (url: string, protocol: string) => WsWebSocket;
 
-const PROD_WS_URL       = 'wss://robots-gateway-v2.wl.r.appspot.com/';
-const MIN_BACKOFF       = 2_000;
-const MAX_BACKOFF       = 30_000;
-const WS_OPEN           = 1;      // WebSocket.OPEN — socket is ready to send
-const DEFAULT_PING_MS   = 25_000; // safely under load-balancer idle timeout (~60 s)
-const PONG_TIMEOUT_MS   = 10_000; // force-close if no pong received within this window
+const PROD_WS_URL          = 'wss://robots-gateway-v2.wl.r.appspot.com/';
+const MIN_BACKOFF          = 2_000;
+const MAX_BACKOFF          = 30_000;
+const WS_OPEN              = 1;      // WebSocket.OPEN — socket is ready to send
+const DEFAULT_PING_MS      = 25_000; // safely under load-balancer idle timeout (~60 s)
+const DEFAULT_PONG_TIMEOUT = 10_000; // force-close if no pong received within this window
 export class GatewayClient {
   private stopped            = false;
   private ws: WsWebSocket | null = null;
@@ -25,10 +25,11 @@ export class GatewayClient {
     private readonly bus:         EventBus,
     private readonly state:       DeviceStateService,
     private readonly registry:    MessageHandlerRegistry,
-    private readonly wsFactory:     WsFactory,
-    private readonly urlOverride?:  string,  // injected URL; overrides dev/prod resolution when set
+    private readonly wsFactory:       WsFactory,
+    private readonly urlOverride?:    string,  // injected URL; overrides dev/prod resolution when set
     device?: string,
     private readonly pingIntervalMs = DEFAULT_PING_MS,
+    private readonly pongTimeoutMs  = DEFAULT_PONG_TIMEOUT,
   ) {
     this.log = createLogger('gateway-client', device);
   }
@@ -124,7 +125,7 @@ export class GatewayClient {
           pongTimer = setTimeout(() => {
             this.log.warn({ event: 'ws:pong-timeout' }, 'No pong received — terminating dead socket');
             ws.terminate();
-          }, PONG_TIMEOUT_MS);
+          }, this.pongTimeoutMs);
         }, this.pingIntervalMs);
       });
 
