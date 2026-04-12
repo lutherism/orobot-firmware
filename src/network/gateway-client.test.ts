@@ -4,26 +4,7 @@ import { GatewayClient } from './gateway-client';
 import { EventBus } from '../core/event-bus';
 import { DeviceStateService } from '../core/device-state';
 import { MessageHandlerRegistry } from '../handlers/registry';
-import os from 'os';
-import path from 'path';
-import fs from 'fs';
-
-function makeTmpStateFile(): string {
-  const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-gw-'));
-  const file = path.join(dir, 'data.json');
-  fs.writeFileSync(file, JSON.stringify({
-    deviceUuid:    'test-device-uuid',
-    networkMode:   'client',
-    wifiSettings:  null,
-    knownNetworks: [],
-    ownerUuid:     null,
-    type:          'wifi-motor',
-    hardware:      'raspi',
-    pingTime:       0,
-    devIP:          null,
-  }));
-  return file;
-}
+import { makeTmpStateFile } from '../test-utils/make-state';
 
 /** Starts a WebSocketServer on a random port and returns { wss, port }. */
 async function startServer(): Promise<{ wss: WebSocketServer; port: number }> {
@@ -60,7 +41,7 @@ describe('GatewayClient', () => {
     const handshakePromise = waitForMessages(wss, 2);
 
     const bus      = new EventBus();
-    const state    = new DeviceStateService(makeTmpStateFile());
+    const state    = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'test-device-uuid' }));
     const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
     const client   = new GatewayClient(
       bus, state, registry,
@@ -85,7 +66,7 @@ describe('GatewayClient', () => {
     const connectedUrls: string[] = [];
     const bus      = new EventBus();
     bus.on('network:connected', ({ url }) => connectedUrls.push(url));
-    const state    = new DeviceStateService(makeTmpStateFile());
+    const state    = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'test-device-uuid' }));
     const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
     const client   = new GatewayClient(
       bus, state, registry,
@@ -111,7 +92,7 @@ describe('GatewayClient', () => {
     const dispatched: object[] = [];
 
     const bus      = new EventBus();
-    const state    = new DeviceStateService(makeTmpStateFile());
+    const state    = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'test-device-uuid' }));
     const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
     registry.register('test-type', async (msg) => { dispatched.push(msg); });
 
@@ -149,7 +130,7 @@ describe('GatewayClient', () => {
     const { wss, port } = await startServer();
 
     const bus      = new EventBus();
-    const state    = new DeviceStateService(makeTmpStateFile());
+    const state    = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'test-device-uuid' }));
     const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
 
     // Collect messages after the handshake (first 2)
@@ -185,7 +166,7 @@ describe('GatewayClient', () => {
     const { wss, port } = await startServer();
 
     const bus      = new EventBus();
-    const state    = new DeviceStateService(makeTmpStateFile());
+    const state    = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'test-device-uuid' }));
     const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
 
     const allMsgs: object[] = [];
@@ -224,7 +205,7 @@ describe('GatewayClient', () => {
     });
 
     const bus      = new EventBus();
-    const state    = new DeviceStateService(makeTmpStateFile());
+    const state    = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'test-device-uuid' }));
     const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
     const client   = new GatewayClient(
       bus, state, registry,
@@ -276,7 +257,7 @@ describe('GatewayClient', () => {
     };
 
     const bus      = new EventBus();
-    const state    = new DeviceStateService(makeTmpStateFile());
+    const state    = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'test-device-uuid' }));
     const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
     const disconnected: string[] = [];
     bus.on('network:disconnected', ({ reason }) => disconnected.push(reason));
@@ -312,7 +293,7 @@ describe('GatewayClient', () => {
     wss.on('connection', () => { connectCount++; });
 
     const bus      = new EventBus();
-    const state    = new DeviceStateService(makeTmpStateFile());
+    const state    = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'test-device-uuid' }));
     const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
     const client   = new GatewayClient(
       bus, state, registry,

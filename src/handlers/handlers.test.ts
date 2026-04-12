@@ -22,22 +22,13 @@ import { createLoadCodeHandler } from './load-code';
 import { MockWifiShellAdapter } from '../wifi/mock-shell-adapter';
 import { WifiStateMachine } from '../wifi/wifi-state-machine';
 import { WifiManager } from '../wifi/wifi-manager';
+import { makeTmpState } from '../test-utils/make-state';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
 
 function makeMsg(overrides: Partial<InboundMessage> = {}): InboundMessage {
   return { type: 'command-in', data: '', ackId: 'ack-1', deviceUuid: 'dev-123', ...overrides };
-}
-
-function makeTmpState(networkMode: string): DeviceStateService {
-  const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-sys-handler-'));
-  const file = path.join(dir, 'data.json');
-  fs.writeFileSync(file, JSON.stringify({
-    deviceUuid: 'dev-123', networkMode, wifiSettings: null, knownNetworks: [],
-    ownerUuid: null, type: 'wifi-motor', hardware: 'raspi', pingTime: 0, devIP: null,
-  }));
-  return new DeviceStateService(file);
 }
 
 // ── Motor handler ────────────────────────────────────────────────
@@ -126,7 +117,7 @@ describe('System handlers', () => {
 
   it('networkmode handler patches state.networkMode to client', async () => {
     const bus   = new EventBus();
-    const state = makeTmpState('ap');
+    const state = makeTmpState({ deviceUuid: 'dev-123', networkMode: 'ap' });
     const sm    = new NetworkStateMachine(state, bus);
     const handler = createNetworkModeHandler(sm);
     await handler(makeMsg({ type: 'networkmode', data: 'client' }));
@@ -135,7 +126,7 @@ describe('System handlers', () => {
 
   it('networkmode handler parses dev:192.168.1.1 and patches devIP', async () => {
     const bus   = new EventBus();
-    const state = makeTmpState('client');
+    const state = makeTmpState({ deviceUuid: 'dev-123', networkMode: 'client' });
     const sm    = new NetworkStateMachine(state, bus);
     const handler = createNetworkModeHandler(sm);
     await handler(makeMsg({ type: 'networkmode', data: 'dev:192.168.1.1' }));
@@ -149,7 +140,7 @@ describe('System handlers', () => {
 describe('WiFi handlers', () => {
   function makeWifiManager(): { wifiManager: WifiManager; state: DeviceStateService; bus: EventBus } {
     const bus     = new EventBus();
-    const state   = makeTmpState('client');
+    const state   = makeTmpState({ deviceUuid: 'dev-123', networkMode: 'client' });
     const adapter = new MockWifiShellAdapter();
     const wifiSM  = new WifiStateMachine(bus);
     const wifiManager = new WifiManager(adapter, state, bus, wifiSM);
@@ -237,13 +228,7 @@ describe('load-config handler', () => {
 
 describe('load-code handler', () => {
   function makeTmpConfig(): { motor: StepperMotor; state: DeviceStateService; sandbox: DeviceSandboxService; bus: EventBus } {
-    const dir   = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-load-code-'));
-    const file  = path.join(dir, 'data.json');
-    fs.writeFileSync(file, JSON.stringify({
-      deviceUuid: 'dev-1', networkMode: 'client', wifiSettings: null, knownNetworks: [],
-      ownerUuid: null, type: 'wifi-motor', hardware: 'raspi', pingTime: 0, devIP: null,
-    }));
-    const state   = new DeviceStateService(file);
+    const state   = makeTmpState({ deviceUuid: 'dev-1' });
     const motor   = { gotoAngle: vi.fn() } as unknown as StepperMotor;
     const sandbox = new DeviceSandboxService();
     const bus     = new EventBus();

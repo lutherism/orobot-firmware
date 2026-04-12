@@ -2,27 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { HeartbeatService } from './heartbeat';
 import { EventBus } from '../core/event-bus';
 import { DeviceStateService } from '../core/device-state';
-import os from 'os';
-import path from 'path';
-import fs from 'fs';
-
-function makeTmpStateFile(partial: object = {}): string {
-  const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-hb-'));
-  const file = path.join(dir, 'data.json');
-  fs.writeFileSync(file, JSON.stringify({
-    deviceUuid:    'hb-device-uuid',
-    networkMode:   'client',
-    wifiSettings:  null,
-    knownNetworks: [],
-    ownerUuid:     null,
-    type:          'wifi-motor',
-    hardware:      'raspi',
-    pingTime:       42,
-    devIP:          null,
-    ...partial,
-  }));
-  return file;
-}
+import { makeTmpStateFile } from '../test-utils/make-state';
 
 type FetchCall = { url: string; body: Record<string, unknown> };
 
@@ -39,7 +19,7 @@ describe('HeartbeatService', () => {
   it('fires immediately on start()', async () => {
     const calls: FetchCall[] = [];
     const bus   = new EventBus();
-    const state = new DeviceStateService(makeTmpStateFile());
+    const state = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'hb-device-uuid', pingTime: 42 }));
     const svc   = new HeartbeatService(state, bus, mockFetch(calls) as typeof fetch);
 
     svc.start(60_000);
