@@ -71,4 +71,31 @@ describe('CaptivePortalServer', () => {
     const res    = await supertest(portal.expressApp).get('/api/wifi');
     expect(res.status).toBe(500);
   });
+
+  it('POST /api/wifi returns 500 when provisionNetwork rejects', async () => {
+    const bus   = new EventBus();
+    const state = makeTmpState({ networkMode: 'ap', knownNetworks: [] });
+    const mock  = {
+      scanNetworks:     vi.fn(),
+      provisionNetwork: vi.fn().mockRejectedValue(new Error('provision failed')),
+    } as unknown as WifiManager;
+    const portal = new CaptivePortalServer(mock, state, bus);
+    const res    = await supertest(portal.expressApp)
+      .post('/api/wifi')
+      .send({ ssid: 'BadNet', password: 'bad' });
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'provision failed' });
+  });
+
+  it('GET / returns HTML with injected OROBOT_PORTAL config', async () => {
+    const bus   = new EventBus();
+    const state = makeTmpState({ deviceUuid: 'dev-123', networkMode: 'ap', knownNetworks: [] });
+    const mock  = { scanNetworks: vi.fn(), provisionNetwork: vi.fn() } as unknown as WifiManager;
+    const portal = new CaptivePortalServer(mock, state, bus);
+    const res    = await supertest(portal.expressApp).get('/');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('html');
+    expect(res.text).toContain('window.OROBOT_PORTAL');
+    expect(res.text).toContain('dev-123');
+  });
 });
