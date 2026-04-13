@@ -2,27 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { NetworkStateMachine } from './state-machine';
 import { EventBus } from '../core/event-bus';
 import { DeviceStateService } from '../core/device-state';
-import os from 'os';
-import path from 'path';
-import fs from 'fs';
-
-function makeTmpStateFile(initial: object): string {
-  const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-sm-'));
-  const file = path.join(dir, 'data.json');
-  fs.writeFileSync(file, JSON.stringify({
-    deviceUuid: 'test-uuid',
-    networkMode: 'client',
-    wifiSettings: null,
-    knownNetworks: [],
-    ownerUuid: null,
-    type: 'wifi-motor',
-    hardware: 'raspi',
-    pingTime: 0,
-    devIP: null,
-    ...initial,
-  }));
-  return file;
-}
+import { makeTmpStateFile } from '../test-utils/make-state';
 
 describe('NetworkStateMachine', () => {
   it('current() reflects the initial networkMode from DeviceState', () => {

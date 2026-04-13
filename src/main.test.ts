@@ -4,31 +4,7 @@ import { createApp } from './main';
 import { MockGPIODriver } from './hardware/mock-driver';
 import { MockWifiShellAdapter } from './wifi/mock-shell-adapter';
 import type { PtySpawner } from './pty/pty-manager';
-import os from 'os';
-import path from 'path';
-import fs from 'fs';
-
-/**
- * Creates a temp data.json with wifiSettings set so wifiManager.initialize()
- * transitions to CONNECTING (not SETUP_MODE), allowing gatewayClient.start()
- * to fire via the wifi:state-changed bus listener.
- */
-function makeTmpDataFile(): string {
-  const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-main-'));
-  const file = path.join(dir, 'data.json');
-  fs.writeFileSync(file, JSON.stringify({
-    deviceUuid:    'main-test-uuid',
-    networkMode:   'client',
-    wifiSettings:  { ssid: 'TestNet', password: 'testpass' },
-    knownNetworks: [],
-    ownerUuid:     null,
-    type:          'wifi-motor',
-    hardware:      'raspi',
-    pingTime:      0,
-    devIP:         null,
-  }));
-  return file;
-}
+import { makeTmpStateFile } from './test-utils/make-state';
 
 /** PtySpawner that does nothing — lets PTYManager start without spawning a real shell. */
 function makeNullPtySpawner(): PtySpawner {
@@ -60,7 +36,7 @@ function baseOptions(port: number) {
     driver:              new MockGPIODriver(),
     ptySpawner:          makeNullPtySpawner(),
     gatewayUrl:          `ws://localhost:${port}`,
-    dataFilePath:        makeTmpDataFile(),
+    dataFilePath:        makeTmpStateFile({ deviceUuid: 'main-test-uuid', wifiSettings: { ssid: 'TestNet', password: 'testpass' } }),
     heartbeatIntervalMs: 60_000,
     wifiShellAdapter:    new MockWifiShellAdapter(),
     scanIntervalMs:      60_000, // prevent scans during tests

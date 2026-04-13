@@ -1,30 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import os from 'os';
-import path from 'path';
-import fs from 'fs';
 import { WifiManager } from './wifi-manager';
 import { WifiStateMachine } from './wifi-state-machine';
 import { MockWifiShellAdapter } from './mock-shell-adapter';
 import { EventBus } from '../core/event-bus';
-import { DeviceStateService } from '../core/device-state';
-import type { WifiCredentials } from '../core/types';
-
-function makeTmpState(wifiSettings: WifiCredentials | null = null): DeviceStateService {
-  const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-wm-'));
-  const file = path.join(dir, 'data.json');
-  fs.writeFileSync(file, JSON.stringify({
-    deviceUuid:    'test-uuid',
-    networkMode:   'client',
-    wifiSettings,
-    knownNetworks: [],
-    ownerUuid:     null,
-    type:          'wifi-motor',
-    hardware:      'raspi',
-    pingTime:      0,
-    devIP:         null,
-  }));
-  return new DeviceStateService(file);
-}
+import { makeTmpState } from '../test-utils/make-state';
 
 describe('WifiManager', () => {
   let adapter: MockWifiShellAdapter;
@@ -38,28 +17,28 @@ describe('WifiManager', () => {
   });
 
   it('initialize() with no wifiSettings → SETUP_MODE + startAP called', async () => {
-    const manager = new WifiManager(adapter, makeTmpState(null), bus, wifiSM);
+    const manager = new WifiManager(adapter, makeTmpState(), bus, wifiSM);
     await manager.initialize();
     expect(wifiSM.current).toBe('SETUP_MODE');
     expect(adapter.startAPCalls).toBe(1);
   });
 
   it('initialize() with wifiSettings → CONNECTING, startAP NOT called', async () => {
-    const manager = new WifiManager(adapter, makeTmpState({ ssid: 'MyNet', password: 'pass' }), bus, wifiSM);
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: { ssid: 'MyNet', password: 'pass' } }), bus, wifiSM);
     await manager.initialize();
     expect(wifiSM.current).toBe('CONNECTING');
     expect(adapter.startAPCalls).toBe(0);
   });
 
   it('network:connected while CONNECTING → transitions to CONNECTED', async () => {
-    const manager = new WifiManager(adapter, makeTmpState({ ssid: 'MyNet', password: 'pass' }), bus, wifiSM);
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: { ssid: 'MyNet', password: 'pass' } }), bus, wifiSM);
     await manager.initialize();
     bus.emit('network:connected', { url: 'ws://test' });
     expect(wifiSM.current).toBe('CONNECTED');
   });
 
   it('network:disconnected while CONNECTED → DEGRADED then RECONNECTING', async () => {
-    const manager = new WifiManager(adapter, makeTmpState({ ssid: 'MyNet', password: 'pass' }), bus, wifiSM);
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: { ssid: 'MyNet', password: 'pass' } }), bus, wifiSM);
     await manager.initialize();
     bus.emit('network:connected',    { url: 'ws://test' });
     bus.emit('network:disconnected', { reason: 'closed' });
@@ -67,7 +46,7 @@ describe('WifiManager', () => {
   });
 
   it('network:connected while RECONNECTING → back to CONNECTED', async () => {
-    const manager = new WifiManager(adapter, makeTmpState({ ssid: 'MyNet', password: 'pass' }), bus, wifiSM);
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: { ssid: 'MyNet', password: 'pass' } }), bus, wifiSM);
     await manager.initialize();
     bus.emit('network:connected',    { url: 'ws://test' });
     bus.emit('network:disconnected', { reason: 'closed' });
@@ -76,7 +55,7 @@ describe('WifiManager', () => {
   });
 
   it('network:disconnected N times while CONNECTING → falls back to SETUP_MODE + startAP', async () => {
-    const manager = new WifiManager(adapter, makeTmpState({ ssid: 'MyNet', password: 'pass' }), bus, wifiSM, 3);
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: { ssid: 'MyNet', password: 'pass' } }), bus, wifiSM, 3);
     await manager.initialize();
     for (let i = 0; i < 3; i++) {
       bus.emit('network:disconnected', { reason: 'error' });
@@ -86,7 +65,7 @@ describe('WifiManager', () => {
   });
 
   it('network:disconnected N times while RECONNECTING → falls back to SETUP_MODE + startAP', async () => {
-    const manager = new WifiManager(adapter, makeTmpState({ ssid: 'MyNet', password: 'pass' }), bus, wifiSM, 10, 3);
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: { ssid: 'MyNet', password: 'pass' } }), bus, wifiSM, 10, 3);
     await manager.initialize();                                    // → CONNECTING
     bus.emit('network:connected',    { url: 'ws://test' });       // → CONNECTED
     bus.emit('network:disconnected', { reason: 'closed' });       // → RECONNECTING (no counter increment)
@@ -98,7 +77,7 @@ describe('WifiManager', () => {
   });
 
   it('provisionNetwork() patches state, calls adapter ops, transitions to CONNECTING', async () => {
-    const state   = makeTmpState(null);
+    const state   = makeTmpState();
     const manager = new WifiManager(adapter, state, bus, wifiSM);
     await manager.initialize(); // → SETUP_MODE
     await manager.provisionNetwork({ ssid: 'NewNet', password: 'newpass' });
@@ -112,7 +91,7 @@ describe('WifiManager', () => {
   });
 
   it('scanNetworks() delegates to adapter', async () => {
-    const manager  = new WifiManager(adapter, makeTmpState(null), bus, wifiSM);
+    const manager  = new WifiManager(adapter, makeTmpState(), bus, wifiSM);
     const networks = [{ ssid: 'TestNet', mac: 'aa:bb', security: 'WPA2' }];
     adapter.setScanResults(networks);
     await manager.initialize();
@@ -121,7 +100,7 @@ describe('WifiManager', () => {
 
   it('shareCredentials() calls adapter.pushCredentials with correct SSID', async () => {
     const creds   = { ssid: 'Home', password: 'homepass' };
-    const manager = new WifiManager(adapter, makeTmpState(creds), bus, wifiSM);
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: creds }), bus, wifiSM);
     await manager.initialize();
     await manager.shareCredentials(JSON.stringify({ tagUuid: 'abc123' }));
     expect(adapter.pushCalls).toEqual([{

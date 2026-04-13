@@ -1,28 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import os from 'os';
-import path from 'path';
-import fs from 'fs';
 import { WifiScanMonitor } from './wifi-scan-monitor';
 import { MockWifiShellAdapter } from './mock-shell-adapter';
 import { EventBus } from '../core/event-bus';
-import { DeviceStateService } from '../core/device-state';
-
-function makeTmpState(wifiSettings: { ssid: string; password: string } | null = { ssid: 'Home', password: 'pass' }): DeviceStateService {
-  const dir  = fs.mkdtempSync(path.join(os.tmpdir(), 'orobot-scanmon-'));
-  const file = path.join(dir, 'data.json');
-  fs.writeFileSync(file, JSON.stringify({
-    deviceUuid:    'monitor-uuid',
-    networkMode:   'client',
-    wifiSettings,
-    knownNetworks: [],
-    ownerUuid:     null,
-    type:          'wifi-motor',
-    hardware:      'raspi',
-    pingTime:      0,
-    devIP:         null,
-  }));
-  return new DeviceStateService(file);
-}
+import { makeTmpState } from '../test-utils/make-state';
 
 describe('WifiScanMonitor', () => {
   let adapter: MockWifiShellAdapter;
@@ -40,7 +20,7 @@ describe('WifiScanMonitor', () => {
 
   it('does not push before start() is called', async () => {
     adapter.setScanResults([{ ssid: 'OROBOT-Setup-abc', mac: 'aa:bb', security: '' }]);
-    new WifiScanMonitor(adapter, makeTmpState(), bus);
+    new WifiScanMonitor(adapter, makeTmpState({ wifiSettings: { ssid: 'Home', password: 'pass' } }), bus);
     await vi.advanceTimersByTimeAsync(30_000);
     expect(adapter.pushCalls).toHaveLength(0);
   });
@@ -49,7 +29,7 @@ describe('WifiScanMonitor', () => {
     const handler = vi.fn();
     bus.on('wifi:credentials-shared', handler);
     adapter.setScanResults([{ ssid: 'OROBOT-Setup-xyz', mac: 'aa:bb', security: '' }]);
-    const monitor = new WifiScanMonitor(adapter, makeTmpState(), bus);
+    const monitor = new WifiScanMonitor(adapter, makeTmpState({ wifiSettings: { ssid: 'Home', password: 'pass' } }), bus);
     monitor.start(1000);
     await vi.advanceTimersByTimeAsync(1100);
     expect(adapter.pushCalls).toHaveLength(1);
@@ -61,7 +41,7 @@ describe('WifiScanMonitor', () => {
 
   it('does NOT push credentials for non-OROBOT-Setup SSIDs', async () => {
     adapter.setScanResults([{ ssid: 'SomeRandomNetwork', mac: 'aa:bb', security: '' }]);
-    const monitor = new WifiScanMonitor(adapter, makeTmpState(), bus);
+    const monitor = new WifiScanMonitor(adapter, makeTmpState({ wifiSettings: { ssid: 'Home', password: 'pass' } }), bus);
     monitor.start(1000);
     await vi.advanceTimersByTimeAsync(1100);
     expect(adapter.pushCalls).toHaveLength(0);
@@ -70,7 +50,7 @@ describe('WifiScanMonitor', () => {
 
   it('does NOT push if device has no wifiSettings', async () => {
     adapter.setScanResults([{ ssid: 'OROBOT-Setup-abc', mac: 'aa:bb', security: '' }]);
-    const monitor = new WifiScanMonitor(adapter, makeTmpState(null), bus);
+    const monitor = new WifiScanMonitor(adapter, makeTmpState({ wifiSettings: null }), bus);
     monitor.start(1000);
     await vi.advanceTimersByTimeAsync(1100);
     expect(adapter.pushCalls).toHaveLength(0);
@@ -79,7 +59,7 @@ describe('WifiScanMonitor', () => {
 
   it('stop() prevents further scanning', async () => {
     adapter.setScanResults([{ ssid: 'OROBOT-Setup-abc', mac: 'aa:bb', security: '' }]);
-    const monitor = new WifiScanMonitor(adapter, makeTmpState(), bus);
+    const monitor = new WifiScanMonitor(adapter, makeTmpState({ wifiSettings: { ssid: 'Home', password: 'pass' } }), bus);
     monitor.start(1000);
     await vi.advanceTimersByTimeAsync(1100);
     monitor.stop();
@@ -93,7 +73,7 @@ describe('WifiScanMonitor', () => {
       { ssid: 'OROBOT-Setup-aaa', mac: 'aa:bb', security: '' },
       { ssid: 'OROBOT-Setup-bbb', mac: 'cc:dd', security: '' },
     ]);
-    const monitor = new WifiScanMonitor(adapter, makeTmpState(), bus);
+    const monitor = new WifiScanMonitor(adapter, makeTmpState({ wifiSettings: { ssid: 'Home', password: 'pass' } }), bus);
     monitor.start(1000);
     await vi.advanceTimersByTimeAsync(1100);
     const ssids = adapter.pushCalls.map((c) => c.targetSsid);
