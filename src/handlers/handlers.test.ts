@@ -5,7 +5,7 @@ import { NetworkStateMachine } from '../network/state-machine';
 import type { InboundMessage } from '../core/types';
 import type { StepperMotor } from '../hardware/stepper-motor';
 import type { PTYManager } from '../pty/pty-manager';
-import { createMotorHandler, createStopAllHandler } from './motor';
+import { createMotorHandler, createGotoRelativeHandler, createStopAllHandler } from './motor';
 import { createPtyHandler } from './pty';
 import {
   createGetDeviceDataHandler,
@@ -48,6 +48,98 @@ describe('Motor handler', () => {
     const handler = createMotorHandler(motor);
     await handler(makeMsg({ data: 'gotoangle:270' }));
     expect(gotoAngle).toHaveBeenCalledWith(270);
+  });
+
+  it('treats gotoangle: (empty after colon) as 0', async () => {
+    const gotoAngle = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoAngle } as unknown as StepperMotor;
+    const handler = createMotorHandler(motor);
+    await handler(makeMsg({ data: 'gotoangle:' }));
+    expect(gotoAngle).toHaveBeenCalledWith(0);
+  });
+
+  it('ignores gotoangle with NaN (malformed payload)', async () => {
+    const gotoAngle = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoAngle } as unknown as StepperMotor;
+    const handler = createMotorHandler(motor);
+    await handler(makeMsg({ data: 'gotoangle:abc' }));
+    expect(gotoAngle).not.toHaveBeenCalled();
+  });
+
+  it('ignores gotoangle with NaN (no colon separator)', async () => {
+    const gotoAngle = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoAngle } as unknown as StepperMotor;
+    const handler = createMotorHandler(motor);
+    await handler(makeMsg({ data: 'gotoangle' }));
+    expect(gotoAngle).not.toHaveBeenCalled();
+  });
+
+  it('parses gotoangle:0 correctly (edge case)', async () => {
+    const gotoAngle = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoAngle } as unknown as StepperMotor;
+    const handler = createMotorHandler(motor);
+    await handler(makeMsg({ data: 'gotoangle:0' }));
+    expect(gotoAngle).toHaveBeenCalledWith(0);
+  });
+
+  it('parses negative gotoangle:-45 correctly', async () => {
+    const gotoAngle = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoAngle } as unknown as StepperMotor;
+    const handler = createMotorHandler(motor);
+    await handler(makeMsg({ data: 'gotoangle:-45' }));
+    expect(gotoAngle).toHaveBeenCalledWith(-45);
+  });
+});
+
+// ── GotoRelative handler ────────────────────────────────────────
+
+describe('GotoRelative handler', () => {
+  it('parses gotorelative:45 and calls motor.gotoRelative(45)', async () => {
+    const gotoRelative = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoRelative } as unknown as StepperMotor;
+    const handler = createGotoRelativeHandler(motor);
+    await handler(makeMsg({ data: 'gotorelative:45' }));
+    expect(gotoRelative).toHaveBeenCalledWith(45);
+  });
+
+  it('parses negative gotorelative:-30', async () => {
+    const gotoRelative = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoRelative } as unknown as StepperMotor;
+    const handler = createGotoRelativeHandler(motor);
+    await handler(makeMsg({ data: 'gotorelative:-30' }));
+    expect(gotoRelative).toHaveBeenCalledWith(-30);
+  });
+
+  it('ignores gotorelative with NaN (malformed payload)', async () => {
+    const gotoRelative = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoRelative } as unknown as StepperMotor;
+    const handler = createGotoRelativeHandler(motor);
+    await handler(makeMsg({ data: 'gotorelative:abc' }));
+    expect(gotoRelative).not.toHaveBeenCalled();
+  });
+
+  it('treats gotorelative: (empty after colon) as 0', async () => {
+    const gotoRelative = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoRelative } as unknown as StepperMotor;
+    const handler = createGotoRelativeHandler(motor);
+    await handler(makeMsg({ data: 'gotorelative:' }));
+    expect(gotoRelative).toHaveBeenCalledWith(0);
+  });
+
+  it('ignores gotorelative with NaN (no colon separator)', async () => {
+    const gotoRelative = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoRelative } as unknown as StepperMotor;
+    const handler = createGotoRelativeHandler(motor);
+    await handler(makeMsg({ data: 'gotorelative' }));
+    expect(gotoRelative).not.toHaveBeenCalled();
+  });
+
+  it('parses gotorelative:0 correctly (edge case)', async () => {
+    const gotoRelative = vi.fn().mockResolvedValue(undefined);
+    const motor = { gotoRelative } as unknown as StepperMotor;
+    const handler = createGotoRelativeHandler(motor);
+    await handler(makeMsg({ data: 'gotorelative:0' }));
+    expect(gotoRelative).toHaveBeenCalledWith(0);
   });
 });
 

@@ -8,6 +8,10 @@ import type { MessageHandler } from './registry';
 export function createMotorHandler(motor: StepperMotor): MessageHandler {
   return async (msg) => {
     const degrees = Number(msg.data.split(':')[1]);
+    if (Number.isNaN(degrees)) {
+      console.warn(`[motor] ignoring gotoangle with NaN from: ${msg.data}`);
+      return;
+    }
     await motor.gotoAngle(degrees);
   };
 }
@@ -19,6 +23,10 @@ export function createMotorHandler(motor: StepperMotor): MessageHandler {
 export function createGotoRelativeHandler(motor: StepperMotor): MessageHandler {
   return async (msg) => {
     const degrees = Number(msg.data.split(':')[1]);
+    if (Number.isNaN(degrees)) {
+      console.warn(`[motor] ignoring gotorelative with NaN from: ${msg.data}`);
+      return;
+    }
     await motor.gotoRelative(degrees);
   };
 }
