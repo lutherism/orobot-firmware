@@ -41,3 +41,4 @@ scripts/openroboticsdata/data.json
 
 # simulator persistence (local device state, not committed)
 .simulator/
+bash.exe.stackdump
