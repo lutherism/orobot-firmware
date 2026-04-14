@@ -5,7 +5,10 @@ import type { MessageHandlerRegistry } from '../handlers/registry';
 import type { InboundMessage } from '../core/types';
 import { createLogger } from '../core/logger';
 
-export type WsFactory = (url: string, protocol: string) => WsWebSocket;
+export type WsFactory  = (url: string, protocol: string) => WsWebSocket;
+export type SleepFn    = (ms: number) => Promise<void>;
+
+const defaultSleep: SleepFn = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const PROD_WS_URL          = 'wss://robots-gateway-v2.wl.r.appspot.com/';
 const MIN_BACKOFF          = 2_000;
@@ -30,6 +33,7 @@ export class GatewayClient {
     device?: string,
     private readonly pingIntervalMs = DEFAULT_PING_MS,
     private readonly pongTimeoutMs  = DEFAULT_PONG_TIMEOUT,
+    private readonly sleepFn: SleepFn = defaultSleep,
   ) {
     this.log = createLogger('gateway-client', device);
   }
@@ -161,8 +165,8 @@ export class GatewayClient {
 
   private sleep(ms: number): Promise<void> {
     return new Promise<void>((resolve) => {
-      const timer       = setTimeout(resolve, ms);
-      this.sleepAbort   = () => { clearTimeout(timer); resolve(); };
+      this.sleepAbort = resolve;             // stop() can call this to abort early
+      void this.sleepFn(ms).then(resolve);   // injected delay; defaults to setTimeout
     });
   }
 }
