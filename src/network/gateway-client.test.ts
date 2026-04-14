@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { WebSocketServer, WebSocket } from 'ws';
-import { GatewayClient } from './gateway-client';
+import { GatewayClient, SleepFn } from './gateway-client';
 import { EventBus } from '../core/event-bus';
 import { DeviceStateService } from '../core/device-state';
 import { MessageHandlerRegistry } from '../handlers/registry';
@@ -286,6 +286,49 @@ describe('GatewayClient', () => {
       client.stop();
     }
   }, 5000);
+
+  it('doubles backoffMs on each failed connection attempt', async () => {
+    const { EventEmitter } = await import('node:events');
+    const sleepCalls: number[] = [];
+    const fakeSleep: SleepFn = (ms) => { sleepCalls.push(ms); return Promise.resolve(); };
+
+    // wsFactory that always emits an error — simulates unreachable server
+    const makeFailingWs = () => {
+      const ws = Object.assign(new EventEmitter(), {
+        readyState: 3, // CLOSED
+        send: () => {},
+        ping: () => {},
+        close: () => {},
+        terminate: () => {},
+      });
+      setTimeout(() => ws.emit('error', new Error('ECONNREFUSED')), 0);
+      return ws;
+    };
+
+    const bus      = new EventBus();
+    const state    = new DeviceStateService(makeTmpStateFile({ deviceUuid: 'test-device-uuid' }));
+    const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid);
+    const client   = new GatewayClient(
+      bus, state, registry,
+      () => makeFailingWs() as any,
+      'ws://unreachable',
+      undefined,       // device prefix
+      25_000,          // pingIntervalMs (default)
+      10_000,          // pongTimeoutMs (default)
+      fakeSleep,
+    );
+
+    client.start();
+    // Allow 3 failure cycles to complete: each is one Promise.resolve() tick
+    await new Promise((r) => setTimeout(r, 100));
+    client.stop();
+
+    // backoffMs starts at 2000, doubles: 2000 → 4000 → 8000 → ...
+    expect(sleepCalls.length).toBeGreaterThanOrEqual(3);
+    expect(sleepCalls[0]).toBe(2_000);
+    expect(sleepCalls[1]).toBe(4_000);
+    expect(sleepCalls[2]).toBe(8_000);
+  });
 
   it('reconnects after server closes the connection', async () => {
     const { wss, port } = await startServer();
