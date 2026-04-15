@@ -230,19 +230,37 @@ describe('System handlers', () => {
 // ── WiFi + Camera stubs ──────────────────────────────────────────
 
 describe('WiFi handlers', () => {
-  function makeWifiManager(): { wifiManager: WifiManager; state: DeviceStateService; bus: EventBus } {
+  function makeWifiManager(): { wifiManager: WifiManager; state: DeviceStateService; bus: EventBus; adapter: MockWifiShellAdapter } {
     const bus     = new EventBus();
     const state   = makeTmpState({ deviceUuid: 'dev-123', networkMode: 'client' });
     const adapter = new MockWifiShellAdapter();
     const wifiSM  = new WifiStateMachine(bus);
     const wifiManager = new WifiManager(adapter, state, bus, wifiSM);
-    return { wifiManager, state, bus };
+    return { wifiManager, state, bus, adapter };
   }
 
   it('wifiList handler resolves without throwing', async () => {
     const { wifiManager, state, bus } = makeWifiManager();
     const handler = createWifiListHandler(wifiManager, state, bus);
     await expect(handler(makeMsg({ data: 'wifiList' }))).resolves.toBeUndefined();
+  });
+
+  it('wifiList handler emits network:send with correct payload structure', async () => {
+    const { wifiManager, state, bus, adapter } = makeWifiManager();
+    adapter.setScanResults([{ ssid: 'HomeWifi', mac: 'aa:bb:cc', signal: -50 }]);
+    const sent: unknown[] = [];
+    bus.on('network:send', (p) => sent.push(p));
+    const handler = createWifiListHandler(wifiManager, state, bus);
+    await handler(makeMsg({ data: 'wifiList' }));
+    expect(sent).toHaveLength(1);
+    const payload = (sent[0] as any).payload;
+    expect(payload.type).toBe('wifiList');
+    expect(payload.deviceUuid).toBe('dev-123');
+    const data = JSON.parse(payload.data);
+    expect(data.uniqueNetworks).toHaveLength(1);
+    expect(data.uniqueNetworks[0].ssid).toBe('HomeWifi');
+    expect(data.rawNetworks).toHaveLength(1);
+    expect(data.knownNetworks).toBeInstanceOf(Array);
   });
 
   it('share-wifi handler resolves without throwing', async () => {
