@@ -84,10 +84,14 @@ export class DeviceRegistry extends EventEmitter {
   private instances   = new Map<string, DeviceInstance>();
   private sampleTimer: ReturnType<typeof setInterval> | null = null;
   private seq         = 0;
+  private readonly gatewayApiUrl: string;
+  private readonly gatewayBase: string;
 
-  constructor() {
+  constructor(gatewayApiUrl: string = GATEWAY_API) {
     super();
-    this.sampleTimer = setInterval(() => this.sampleAllPins(), SAMPLE_MS);
+    this.gatewayApiUrl = gatewayApiUrl;
+    this.gatewayBase   = gatewayApiUrl.replace(/\/api\/device$/, '');
+    this.sampleTimer   = setInterval(() => this.sampleAllPins(), SAMPLE_MS);
   }
 
   // ── Persistence ─────────────────────────────────────────────────────────────
@@ -412,7 +416,7 @@ export class DeviceRegistry extends EventEmitter {
 
   private async fetchDeviceInfo(uuid: string): Promise<{ owner: DeviceOwner | null; robot: DeviceRobot | null }> {
     try {
-      const devRes = await fetch(`${GATEWAY_API}/${uuid}`);
+      const devRes = await fetch(`${this.gatewayApiUrl}/${uuid}`);
       if (!devRes.ok) return { owner: null, robot: null };
       const dev = await devRes.json() as {
         ownerId: number | null;
@@ -422,7 +426,7 @@ export class DeviceRegistry extends EventEmitter {
 
       let owner: DeviceOwner | null = null;
       if (dev.ownerId && dev.owner) {
-        const userRes = await fetch(`${GATEWAY_BASE}/api/user/${dev.owner.uuid}`);
+        const userRes = await fetch(`${this.gatewayBase}/api/user/${dev.owner.uuid}`);
         const user    = userRes.ok
           ? await userRes.json() as { email?: string }
           : {};
@@ -453,7 +457,7 @@ export class DeviceRegistry extends EventEmitter {
   private async registerWithGateway(name: string): Promise<string> {
     const uuid = randomUUID();
     try {
-      const res = await fetch(GATEWAY_API + '/sim', {
+      const res = await fetch(this.gatewayApiUrl + '/sim', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ uuid, name, sim: true }),
