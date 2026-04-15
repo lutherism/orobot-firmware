@@ -105,6 +105,18 @@ export class CaptivePortalServer {
       this.bus.emit('wifi:goto-client-requested', {});
     });
 
+    app.post('/api/claim-code', async (req, res) => {
+      const { code } = req.body as { code?: string };
+      const normalized = (code ?? '').replace(/\s/g, '');
+      if (!/^\d{7}$/.test(normalized)) {
+        res.status(400).json({ error: 'Code must be 7 digits' });
+        return;
+      }
+      await this.state.patch({ pendingClaimCode: normalized });
+      this.log.info({ event: 'claim-code:stored', code: normalized }, 'Claim code stored');
+      res.json({ ok: true });
+    });
+
     return app;
   }
 }

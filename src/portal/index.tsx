@@ -14,7 +14,7 @@ interface PortalConfig {
   deviceName: string;
 }
 
-type View = 'scan' | 'connect' | 'success';
+type View = 'scan' | 'connect' | 'success' | 'claim';
 
 // ── Runtime config (injected by the server) ───────────────────────────────────
 
@@ -183,6 +183,19 @@ const S = {
   successH2: { fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 8 },
   successP: { fontSize: 13, color: '#64748b', lineHeight: 1.5 },
   successHint: { marginTop: 24, fontSize: 12, color: '#94a3b8' },
+  codeDisplay: {
+    fontFamily: 'monospace',
+    fontSize: '2.2rem',
+    fontWeight: 700,
+    letterSpacing: '0.25em',
+    textAlign: 'center' as const,
+    background: '#f8fafc',
+    border: '2px solid #e2e8f0',
+    borderRadius: 10,
+    padding: '16px 0',
+    marginBottom: 8,
+    color: '#0f172a',
+  },
 };
 
 // ── Signal bars ───────────────────────────────────────────────────────────────
@@ -392,7 +405,7 @@ function ConnectView({ ssid, isOpen, onBack, onSuccess }: ConnectViewProps) {
 
 // ── SuccessView ───────────────────────────────────────────────────────────────
 
-function SuccessView({ ssid }: { ssid: string }) {
+function SuccessView({ ssid, onRegister }: { ssid: string; onRegister: () => void }) {
   return (
     <div style={S.successScreen}>
       <div style={S.successIcon}>
@@ -406,7 +419,103 @@ function SuccessView({ ssid }: { ssid: string }) {
         <strong style={{ color: '#475569' }}>{CONFIG.deviceName}</strong> is now connecting to
         &ldquo;{ssid}&rdquo;.
       </p>
-      <p style={S.successHint}>You can close this page.</p>
+      <p style={{ ...S.successP, marginTop: 16 }}>
+        Enter the 7-digit code from your setup wizard to register this device to your account.
+      </p>
+      <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+        <button style={{ ...S.btnPrimary(false), maxWidth: 240 }} onClick={onRegister}>
+          Enter Claim Code
+        </button>
+        <button style={{ ...S.btnSecondary, maxWidth: 240 }} onClick={() => {}}>
+          Skip for now
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── ClaimView ─────────────────────────────────────────────────────────────────
+
+function ClaimView() {
+  const [code,    setCode]    = useState('');
+  const [busy,    setBusy]    = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+  const [done,    setDone]    = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  const submit = useCallback(async () => {
+    const normalized = code.replace(/\s/g, '');
+    if (!/^\d{7}$/.test(normalized)) {
+      setError('Please enter the 7-digit code exactly as shown.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res  = await fetch('/api/claim-code', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ code: normalized }),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (data.ok) {
+        setDone(true);
+      } else {
+        setError(data.error ?? 'Failed to save code. Please try again.');
+        setBusy(false);
+      }
+    } catch {
+      setError('Could not reach the device. Please try again.');
+      setBusy(false);
+    }
+  }, [code]);
+
+  if (done) {
+    return (
+      <div style={S.successScreen}>
+        <div style={S.successIcon}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+            stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <h2 style={S.successH2}>Code saved!</h2>
+        <p style={S.successP}>
+          Your device will automatically register to your account once it connects to the internet.
+          You can close this page.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={S.connectForm}>
+      <h2 style={S.h2}>Enter claim code</h2>
+      <p style={S.formSub}>
+        Enter the 7-digit code shown in your setup wizard on your computer or phone.
+      </p>
+      <label style={S.fieldLabel} htmlFor="claim-code">Claim code</label>
+      <input
+        id="claim-code"
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9 ]*"
+        maxLength={8}
+        value={code}
+        onChange={e => setCode(e.target.value.replace(/[^0-9\s]/g, ''))}
+        onKeyDown={e => e.key === 'Enter' && submit()}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder="e.g. 483 9271"
+        autoFocus
+        style={{ ...S.input(focused), ...S.codeDisplay, padding: '16px 0' }}
+      />
+      {error && <div style={S.errorBox}>{error}</div>}
+      <div style={{ ...S.btnRow, marginTop: 16 }}>
+        <button style={S.btnPrimary(busy)} onClick={submit} disabled={busy}>
+          {busy ? 'Saving\u2026' : 'Register Device'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -424,12 +533,14 @@ function App() {
     setView('connect');
   };
 
+  const headerTitle = view === 'claim' ? 'Register Device' : 'Connect to WiFi';
+
   return (
     <div style={S.body}>
       <div style={S.card}>
         <div style={S.header}>
           <PortalLogo />
-          <h1 style={S.h1}>Connect to WiFi</h1>
+          <h1 style={S.h1}>{headerTitle}</h1>
           <p style={S.headerSub}>
             Select a network for{' '}
             <strong style={{ color: '#475569' }}>{CONFIG.deviceName}</strong>
@@ -445,7 +556,10 @@ function App() {
             onSuccess={() => setView('success')}
           />
         )}
-        {view === 'success' && <SuccessView ssid={ssid} />}
+        {view === 'success' && (
+          <SuccessView ssid={ssid} onRegister={() => setView('claim')} />
+        )}
+        {view === 'claim' && <ClaimView />}
       </div>
     </div>
   );

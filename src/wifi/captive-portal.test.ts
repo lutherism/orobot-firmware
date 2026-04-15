@@ -87,6 +87,43 @@ describe('CaptivePortalServer', () => {
     expect(res.body).toEqual({ error: 'provision failed' });
   });
 
+  it('POST /api/claim-code stores valid 7-digit code in device state', async () => {
+    const bus   = new EventBus();
+    const state = makeTmpState({ networkMode: 'ap', knownNetworks: [], pendingClaimCode: null });
+    const mock  = { scanNetworks: vi.fn(), provisionNetwork: vi.fn() } as unknown as WifiManager;
+    const portal = new CaptivePortalServer(mock, state, bus);
+    const res   = await supertest(portal.expressApp)
+      .post('/api/claim-code')
+      .send({ code: '4839271' });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(state.get().pendingClaimCode).toBe('4839271');
+  });
+
+  it('POST /api/claim-code accepts code with space and normalizes it', async () => {
+    const bus   = new EventBus();
+    const state = makeTmpState({ networkMode: 'ap', knownNetworks: [], pendingClaimCode: null });
+    const mock  = { scanNetworks: vi.fn(), provisionNetwork: vi.fn() } as unknown as WifiManager;
+    const portal = new CaptivePortalServer(mock, state, bus);
+    const res   = await supertest(portal.expressApp)
+      .post('/api/claim-code')
+      .send({ code: '483 9271' });
+    expect(res.status).toBe(200);
+    expect(state.get().pendingClaimCode).toBe('4839271');
+  });
+
+  it('POST /api/claim-code rejects invalid code format', async () => {
+    const bus   = new EventBus();
+    const state = makeTmpState({ networkMode: 'ap', knownNetworks: [], pendingClaimCode: null });
+    const mock  = { scanNetworks: vi.fn(), provisionNetwork: vi.fn() } as unknown as WifiManager;
+    const portal = new CaptivePortalServer(mock, state, bus);
+    const res   = await supertest(portal.expressApp)
+      .post('/api/claim-code')
+      .send({ code: 'abc1234' });
+    expect(res.status).toBe(400);
+    expect(state.get().pendingClaimCode).toBeNull();
+  });
+
   it('GET / returns HTML with injected OROBOT_PORTAL config', async () => {
     const bus   = new EventBus();
     const state = makeTmpState({ deviceUuid: 'dev-123', networkMode: 'ap', knownNetworks: [] });

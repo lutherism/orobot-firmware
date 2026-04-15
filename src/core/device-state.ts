@@ -8,27 +8,29 @@ import type {
 } from './types';
 
 export interface DeviceState {
-  deviceUuid:    string;
-  networkMode:   NetworkMode;
-  wifiSettings:  WifiCredentials | null;
-  knownNetworks: Array<{ ssid: string; mac: string; password: string }>;
-  ownerUuid:     string | null;
-  type:          DeviceType;
-  hardware:      HardwareProfile;
-  pingTime:      number;
-  devIP:         string | null;
+  deviceUuid:       string;
+  networkMode:      NetworkMode;
+  wifiSettings:     WifiCredentials | null;
+  knownNetworks:    Array<{ ssid: string; mac: string; password: string }>;
+  ownerUuid:        string | null;
+  type:             DeviceType;
+  hardware:         HardwareProfile;
+  pingTime:         number;
+  devIP:            string | null;
+  pendingClaimCode: string | null;
 }
 
 const DEFAULT_STATE: Readonly<DeviceState> = Object.freeze({
-  deviceUuid:    '',
-  networkMode:   'ap',
-  wifiSettings:  null,
-  knownNetworks: [],
-  ownerUuid:     null,
-  type:          'wifi-motor',
-  hardware:      'raspi',
-  pingTime:      0,
-  devIP:         null,
+  deviceUuid:       '',
+  networkMode:      'ap',
+  wifiSettings:     null,
+  knownNetworks:    [],
+  ownerUuid:        null,
+  type:             'wifi-motor',
+  hardware:         'raspi',
+  pingTime:         0,
+  devIP:            null,
+  pendingClaimCode: null,
 });
 
 export class DeviceStateService {

@@ -32,10 +32,16 @@ import { WifiScanMonitor } from './wifi/wifi-scan-monitor';
 import { RpiWifiShellAdapter } from './wifi/rpi-shell-adapter';
 import type { WifiShellAdapter } from './wifi/types';
 
-const DEFAULT_DATA_FILE     = path.join(__dirname, '../scripts/openroboticsdata/data.json');
-const RASPI_PINS            = [17, 18, 22, 27];
-const BANANA_PINS           = [0, 1, 3, 2];
-const DEFAULT_SCAN_INTERVAL = 10_000;
+const DEFAULT_DATA_FILE       = path.join(__dirname, '../scripts/openroboticsdata/data.json');
+const RASPI_PINS              = [17, 18, 22, 27];
+const BANANA_PINS             = [0, 1, 3, 2];
+const DEFAULT_SCAN_INTERVAL   = 10_000;
+const PROD_GATEWAY_HTTP_URL   = 'https://robots-gateway-v2.wl.r.appspot.com';
+
+/** Derive the gateway REST base URL from a WebSocket URL. */
+function wsUrlToHttpBase(wsUrl: string): string {
+  return wsUrl.replace(/^wss?:\/\//, (m) => m === 'wss://' ? 'https://' : 'http://').replace(/\/$/, '');
+}
 
 export interface AppOptions {
   /** GPIO driver — defaults to whatever `selectDriver()` returns based on
@@ -156,6 +162,19 @@ export function createApp(options: AppOptions = {}): App {
         bus.on('system:reboot-requested',  () => exec('sudo', ['reboot'])),
         bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', [])),
         bus.on('network:connected',        () => heartbeat.start(hbIntervalMs)),
+        bus.on('network:connected',        () => {
+          const { pendingClaimCode, deviceUuid } = state.get();
+          if (!pendingClaimCode) return;
+          const gatewayHttpBase = options.gatewayUrl
+            ? wsUrlToHttpBase(options.gatewayUrl)
+            : PROD_GATEWAY_HTTP_URL;
+          void fetch(`${gatewayHttpBase}/device/claim-code/redeem`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ code: pendingClaimCode, deviceUuid }),
+          }).then(() => state.patch({ pendingClaimCode: null }))
+            .catch(() => { /* will retry on next connection */ });
+        }),
         bus.on('network:disconnected',     () => heartbeat.stop()),
         bus.on('wifi:goto-client-requested', () => void wifiManager.gotoClient()),
         bus.on('wifi:state-changed', ({ to }) => {
