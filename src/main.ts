@@ -19,7 +19,7 @@ import { createLoadConfigHandler } from './handlers/program-config';
 import { DeviceSandboxService } from './core/device-sandbox';
 import { createLoadCodeHandler } from './handlers/load-code';
 import { StepperMotor } from './hardware/stepper-motor';
-import { RPiGPIODriver } from './hardware/gpio-driver';
+import { selectDriver } from './hardware/driver-registry';
 import { PTYManager, type PtySpawner } from './pty/pty-manager';
 import { NetworkStateMachine } from './network/state-machine';
 import { GatewayClient, type WsFactory } from './network/gateway-client';
@@ -38,7 +38,8 @@ const BANANA_PINS           = [0, 1, 3, 2];
 const DEFAULT_SCAN_INTERVAL = 10_000;
 
 export interface AppOptions {
-  /** GPIO driver — defaults to RPiGPIODriver (real hardware). */
+  /** GPIO driver — defaults to whatever `selectDriver()` returns based on
+   *  `OROBOT_PLATFORM` (defaults to RPi). Override in tests/simulator. */
   driver?: GPIODriver;
   /** PTY spawner — must be provided in tests; defaults to node-pty in production. */
   ptySpawner?: PtySpawner;
@@ -80,7 +81,7 @@ export function createApp(options: AppOptions = {}): App {
 
   const hw     = state.get().hardware;
   const pins   = hw === 'banana' ? BANANA_PINS : RASPI_PINS;
-  const driver = options.driver ?? new RPiGPIODriver();
+  const driver = options.driver ?? selectDriver();
   const motor  = new StepperMotor(driver, pins, bus);
 
   // Apply any saved motor constraints from a previous deploy
