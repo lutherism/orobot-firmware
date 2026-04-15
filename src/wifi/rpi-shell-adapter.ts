@@ -12,7 +12,7 @@ const WPA_CONF   = '/etc/wpa_supplicant/wpa_supplicant.conf';
 const PEER_IP    = '192.168.0.172';
 const PEER_DELAY = 3000; // ms to wait for wlan0 to associate with peer AP
 
-function parseIwlistOutput(raw: string): ScanResult[] {
+export function parseIwlistOutput(raw: string): ScanResult[] {
   const cells  = raw.split('      Cell').slice(1);
   const seen:  Record<string, boolean> = {};
   const out:   ScanResult[] = [];
