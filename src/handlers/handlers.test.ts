@@ -5,6 +5,7 @@ import { NetworkStateMachine } from '../network/state-machine';
 import type { InboundMessage } from '../core/types';
 import type { StepperMotor } from '../hardware/stepper-motor';
 import type { PTYManager } from '../pty/pty-manager';
+import { PTYManager as PTYManagerClass } from '../pty/pty-manager';
 import { createMotorHandler, createGotoRelativeHandler, createStopAllHandler } from './motor';
 import { createPtyHandler } from './pty';
 import {
@@ -172,6 +173,11 @@ describe('PTY handler', () => {
     const handler = createPtyHandler(manager);
     await handler(makeMsg({ type: 'pty-in', data: 'ls -la\r' }));
     expect(write).toHaveBeenCalledWith('ls -la\r');
+  });
+
+  it('PTYManager.write() throws when called before start()', () => {
+    const mgr = new PTYManagerClass();
+    expect(() => mgr.write('hello')).toThrow('PTYManager not started');
   });
 });
 
