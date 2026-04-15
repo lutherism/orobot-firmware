@@ -99,6 +99,20 @@ pm2 start ecosystem.config.js
 
 On the Pi, `pm2 startup` registers PM2 to restart on reboot. `build.sh` at the repo root is a shorthand for `npm run build`.
 
+### NVIDIA Jetson (Nano / Xavier NX / Orin Nano)
+
+Jetson boards use a different SoC than the Pi but expose a compatible 40-pin header. The firmware ships a sysfs-based GPIO driver (`src/hardware/jetson-driver.ts`) and a logical→SoC pin map covering the J41 header.
+
+One-shot install on a JetPack-flashed device:
+
+```bash
+sudo ./scripts/install-jetson.sh
+```
+
+The script installs Node.js 20, clones the repo to `/opt/orobot`, builds, and registers a systemd unit that boots with `OROBOT_PLATFORM=jetson` so [`selectDriver`](src/hardware/driver-registry.ts) picks the Jetson driver. Logs: `journalctl -u orobot.service -f`.
+
+To run on a different platform, set `OROBOT_PLATFORM` (`pi`, `jetson`, or `mock`) before launching.
+
 ## Key Directories
 
 ```

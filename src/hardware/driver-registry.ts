@@ -16,14 +16,16 @@
 import type { GPIODriver } from './types';
 import { RPiGPIODriver } from './gpio-driver';
 import { MockGPIODriver } from './mock-driver';
+import { JetsonGPIODriver } from './jetson-driver';
 
-export type Platform = 'pi' | 'mock';
+export type Platform = 'pi' | 'jetson' | 'mock';
 
 export type DriverFactory = () => GPIODriver;
 
 const builtins: Record<Platform, DriverFactory> = {
-  pi:   () => new RPiGPIODriver(),
-  mock: () => new MockGPIODriver(),
+  pi:     () => new RPiGPIODriver(),
+  jetson: () => new JetsonGPIODriver(),
+  mock:   () => new MockGPIODriver(),
 };
 
 export function selectDriver(env: NodeJS.ProcessEnv = process.env): GPIODriver {
