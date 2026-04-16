@@ -4,6 +4,10 @@
 
 Node.js firmware for Raspberry Pi devices on the [Open Robots](https://orobot.io) platform. Maintains a persistent WebSocket connection to the cloud gateway, translates inbound messages into motor and PTY actions, and manages WiFi connectivity with an automatic hotspot fallback.
 
+**Ports:** the Pi/Jetson firmware lives under `src/` (Node.js). A native
+C++/Arduino port for ESP32 lives under [`esp32/`](./esp32/) — scaffolding
+only right now, filled in across PRs #509–#511.
+
 ## Stack
 
 - **Node.js 22** with **TypeScript** (`tsx` for dev, `tsc` for production builds)

@@ -1,0 +1,56 @@
+name: esp32 build
+
+on:
+  pull_request:
+    paths:
+      - 'esp32/**'
+      - '.github/workflows/esp32-build.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'esp32/**'
+      - '.github/workflows/esp32-build.yml'
+
+# Only the latest commit per PR needs CI.
+concurrency:
+  group: esp32-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: pio run -e esp32dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # PlatformIO's own cache covers ~/.platformio (toolchains + libraries).
+      # A cold first run downloads ~300 MB; subsequent runs are ~30 s.
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio/.cache
+            ~/.platformio/packages
+            ~/.platformio/platforms
+            esp32/.pio
+          key: pio-${{ runner.os }}-${{ hashFiles('esp32/platformio.ini') }}
+          restore-keys: |
+            pio-${{ runner.os }}-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio==6.1.15
+
+      - name: Static analysis
+        working-directory: esp32
+        run: pio check -e esp32dev --skip-packages --fail-on-defect=high
+
+      - name: Build
+        working-directory: esp32
+        run: pio run -e esp32dev
