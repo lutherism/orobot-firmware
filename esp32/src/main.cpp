@@ -1,35 +1,167 @@
-// orobot-firmware esp32 — scaffold
+// orobot-firmware esp32 — boot flow
 //
-// This is intentionally the smallest possible Arduino sketch that still
-// exercises the toolchain. A 1 Hz heartbeat on GPIO 2 (the built-in LED on
-// most ESP32 DevKits) proves:
-//   - platformio.ini resolves the right platform/board/framework
-//   - the sketch compiles with -Wall -Wextra -Werror
-//   - the binary actually boots and runs on a real ESP32
+// State machine lives in a handful of enums and a single loop() dispatch:
 //
-// Later PRs replace this loop with a proper state machine driving WiFi
-// (#509), WebSocket (#510), and the orobot protocol (#511). Don't let this
-// file accrete placeholders for work that hasn't landed yet — keep it
-// single-purpose until its successor is ready.
+//   BOOT ──┬─► STA (NVS has creds)
+//          └─► AP  (no creds, or 3 STA retries failed)
+//
+//   AP  ── user submits form ──► reboot ──► BOOT
+//   STA ── sustained disconnect ► BOOT (may fall to AP after retries)
+//
+// Later PRs layer WebSocket client (#510) and the orobot message protocol
+// (#511) on top of the STA state.
 
 #include <Arduino.h>
+#include <WiFi.h>
+
+#include "nvs_store.h"
+#include "wifi_portal.h"
 
 namespace {
+
+enum class State {
+  kBoot,
+  kStaConnecting,
+  kStaConnected,
+  kAp,
+  kRebootPending,
+};
+
+constexpr uint8_t kStaMaxAttempts = 3;
+constexpr uint32_t kStaConnectTimeoutMs = 15000;
 constexpr uint8_t kHeartbeatPin = 2;
 constexpr uint32_t kHeartbeatPeriodMs = 1000;
+
+orobot::NvsStore g_store;
+orobot::WifiPortal g_portal;
+State g_state = State::kBoot;
+uint8_t g_sta_attempts = 0;
+uint32_t g_sta_started_ms = 0;
+uint32_t g_reboot_at_ms = 0;
+uint32_t g_last_heartbeat_ms = 0;
+
+void logTransition(const char* to) {
+  Serial.print("state=");
+  Serial.println(to);
+}
+
+void enterAp() {
+  logTransition("ap");
+  g_state = State::kAp;
+  if (!g_portal.begin(&g_store)) {
+    Serial.println("ap-start-failed; rebooting in 5s");
+    g_reboot_at_ms = millis() + 5000;
+    g_state = State::kRebootPending;
+  }
+}
+
+void enterStaConnect(const orobot::WifiCreds& creds) {
+  logTransition("sta-connecting");
+  g_state = State::kStaConnecting;
+  g_sta_started_ms = millis();
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(creds.ssid.c_str(), creds.password.c_str());
+}
+
+void tickStaConnecting(const orobot::WifiCreds& creds) {
+  if (WiFi.status() == WL_CONNECTED) {
+    logTransition("sta-connected");
+    Serial.print("ip=");
+    Serial.println(WiFi.localIP());
+    g_state = State::kStaConnected;
+    g_sta_attempts = 0;
+    return;
+  }
+  if (millis() - g_sta_started_ms < kStaConnectTimeoutMs) {
+    return;
+  }
+  ++g_sta_attempts;
+  Serial.print("sta-failed attempt=");
+  Serial.println(g_sta_attempts);
+  if (g_sta_attempts >= kStaMaxAttempts) {
+    enterAp();
+  } else {
+    enterStaConnect(creds);
+  }
+}
+
+void heartbeat() {
+  const uint32_t now = millis();
+  if (now - g_last_heartbeat_ms < kHeartbeatPeriodMs) return;
+  g_last_heartbeat_ms = now;
+  static bool on = false;
+  on = !on;
+  digitalWrite(kHeartbeatPin, on ? HIGH : LOW);
+}
+
 }  // namespace
+
+// Creds re-read each boot — cheaper than caching and keeps "reset button
+// clears NVS then reboots" working without special cases.
+static orobot::WifiCreds g_creds;
 
 void setup() {
   Serial.begin(115200);
   pinMode(kHeartbeatPin, OUTPUT);
+
   Serial.println();
   Serial.print("orobot-esp32 boot  firmware=");
   Serial.println(OROBOT_FIRMWARE_VERSION);
+
+  if (!g_store.begin()) {
+    Serial.println("nvs-init-failed; entering AP");
+    enterAp();
+    return;
+  }
+
+  g_creds = g_store.readWifi();
+  if (g_creds.empty()) {
+    Serial.println("no-creds");
+    enterAp();
+  } else {
+    Serial.print("have-creds ssid=");
+    Serial.println(g_creds.ssid);
+    enterStaConnect(g_creds);
+  }
 }
 
 void loop() {
-  static uint32_t beat = 0;
-  digitalWrite(kHeartbeatPin, (beat & 1) ? LOW : HIGH);
-  Serial.printf("heartbeat %u\n", ++beat);
-  delay(kHeartbeatPeriodMs);
+  heartbeat();
+
+  switch (g_state) {
+    case State::kBoot:
+      // setup() leaves us in one of the real states; kBoot should never
+      // appear here, but bail safely if it does.
+      enterAp();
+      break;
+
+    case State::kStaConnecting:
+      tickStaConnecting(g_creds);
+      break;
+
+    case State::kStaConnected:
+      // Placeholder — #510 drives the WebSocket client from here.
+      if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("sta-dropped");
+        enterStaConnect(g_creds);
+      }
+      break;
+
+    case State::kAp:
+      g_portal.tick();
+      if (g_portal.credsReceived()) {
+        Serial.println("creds-saved; rebooting in 3s");
+        g_reboot_at_ms = millis() + 3000;
+        g_state = State::kRebootPending;
+      }
+      break;
+
+    case State::kRebootPending:
+      if (millis() >= g_reboot_at_ms) {
+        Serial.println("reboot");
+        Serial.flush();
+        ESP.restart();
+      }
+      break;
+  }
 }
