@@ -125,8 +125,10 @@ function buildPortalHtml(deviceId: string, deviceName: string): string {
   } catch {
     return `<!DOCTYPE html><html><body><p>Portal unavailable. Run: npm run build:portal</p></body></html>`;
   }
-  const wifiUrl = `/api/devices/${deviceId}/wifi`;
-  const config  = JSON.stringify({ wifiUrl, deviceName });
+  const wifiUrl   = `/api/devices/${deviceId}/wifi`;
+  const claimUrl  = `/api/devices/${deviceId}/claim-code`;
+  const statusUrl = `/api/devices/${deviceId}/setup-status`;
+  const config    = JSON.stringify({ wifiUrl, claimUrl, statusUrl, deviceName });
   return shell.replace(
     '<!-- OROBOT_PORTAL_CONFIG -->',
     `<script>window.OROBOT_PORTAL = ${config};</script>`,
@@ -290,6 +292,29 @@ export function createServer(registry: DeviceRegistry) {
     } else {
       res.json({ ok: false, error: 'Incorrect password. Try again.' });
     }
+  });
+
+  /** Portal: claim-code submission (per-device) */
+  app.post('/api/devices/:id/claim-code', async (req, res, next) => {
+    try {
+      const device = registry.getById(req.params.id);
+      if (!device) return res.status(404).json({ error: 'device not found' });
+      const { code } = req.body as { code?: string };
+      const normalized = (code ?? '').replace(/\s/g, '');
+      if (!/^\d{6}$/.test(normalized)) {
+        return res.status(400).json({ error: 'Code must be 6 digits' });
+      }
+      await registry.setPendingClaimCode(device.id, normalized);
+      res.json({ ok: true });
+    } catch (err) { next(err); }
+  });
+
+  /** Portal: setup status (last error + pending claim code) */
+  app.get('/api/devices/:id/setup-status', (req, res) => {
+    const device = registry.getById(req.params.id);
+    if (!device) return res.status(404).json({ error: 'device not found' });
+    const { lastSetupError, pendingClaimCode } = registry.getPortalState(device.id);
+    res.json({ lastError: lastSetupError, pendingClaimCode });
   });
 
   // ── Error handler ───────────────────────────────────────────────────────────

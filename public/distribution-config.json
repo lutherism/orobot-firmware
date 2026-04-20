@@ -1,0 +1,13 @@
+{
+  "distributions": [
+    {
+      "id": "rpi",
+      "type": "raspberry-pi",
+      "label": "Raspberry Pi",
+      "description": "All Pi models (5, 4, 400, Zero, Compute Module)",
+      "imageUrl": "",
+      "imageSize": 0,
+      "boardIds": ["rpi5", "rpi4", "rpi400", "rpi-zero", "rpi-cm"]
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "motors": [
+    {
+      "resource": 0,
+      "name": "motor0",
+      "minAngle": -3600,
+      "maxAngle": 3600,
+      "homeAngle": 0
+    },
+    {
+      "resource": 1,
+      "name": "motor1",
+      "minAngle": -3600,
+      "maxAngle": 3600,
+      "homeAngle": 0
+    }
+  ],
+  "actions": [
+    {
+      "label": "Feed Paper",
+      "function": "onMessage",
+      "args": {
+        "command": "feed"
+      },
+      "motor": "motor0"
+    },
+    {
+      "label": "Reverse Paper",
+      "function": "onMessage",
+      "args": {
+        "command": "reverse"
+      },
+      "motor": "motor0"
+    },
+    {
+      "label": "Pen Left",
+      "function": "onMessage",
+      "args": {
+        "command": "left"
+      },
+      "motor": "motor1"
+    },
+    {
+      "label": "Pen Right",
+      "function": "onMessage",
+      "args": {
+        "command": "right"
+      },
+      "motor": "motor1"
+    },
+    {
+      "label": "Draw Square",
+      "function": "onMessage",
+      "args": {
+        "command": "draw-square"
+      },
+      "motor": "motor1"
+    },
+    {
+      "label": "Draw H",
+      "function": "onMessage",
+      "args": {
+        "command": "draw-h"
+      },
+      "motor": "motor1"
+    },
+    {
+      "label": "Stop",
+      "function": "onMessage",
+      "args": {
+        "command": "stop"
+      },
+      "motor": "motor1"
+    }
+  ],
+  "unitId": "b56782ca-4412-4a7b-8967-624555ab2617"
+}

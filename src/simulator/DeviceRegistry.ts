@@ -80,8 +80,14 @@ interface DeviceInstance {
 
 // ── DeviceRegistry ────────────────────────────────────────────────────────────
 
+interface PortalSetupState {
+  pendingClaimCode: string | null;
+  lastSetupError:   string | null;
+}
+
 export class DeviceRegistry extends EventEmitter {
   private instances   = new Map<string, DeviceInstance>();
+  private portalState = new Map<string, PortalSetupState>();
   private sampleTimer: ReturnType<typeof setInterval> | null = null;
   private seq         = 0;
   private readonly gatewayApiUrl: string;
@@ -304,6 +310,7 @@ export class DeviceRegistry extends EventEmitter {
       inst.app.bus.emit('portal:claim-code-stored', { code });
     }
   }
+
 
   async networkConnected(id: string): Promise<void> {
     const inst = this.instances.get(id);

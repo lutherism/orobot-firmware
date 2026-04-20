@@ -93,6 +93,11 @@ export class CaptivePortalServer {
       }
     });
 
+    app.get('/api/setup-status', (_req, res) => {
+      const { lastSetupError, pendingClaimCode } = this.state.get();
+      res.json({ lastError: lastSetupError, pendingClaimCode });
+    });
+
     app.get('/api/known-wifi', (_req, res) => {
       const { knownNetworks } = this.state.get();
       res.json({
@@ -108,12 +113,13 @@ export class CaptivePortalServer {
     app.post('/api/claim-code', async (req, res) => {
       const { code } = req.body as { code?: string };
       const normalized = (code ?? '').replace(/\s/g, '');
-      if (!/^\d{7}$/.test(normalized)) {
-        res.status(400).json({ error: 'Code must be 7 digits' });
+      if (!/^\d{6}$/.test(normalized)) {
+        res.status(400).json({ error: 'Code must be 6 digits' });
         return;
       }
       await this.state.patch({ pendingClaimCode: normalized });
       this.log.info({ event: 'claim-code:stored', code: normalized }, 'Claim code stored');
+      this.bus.emit('portal:claim-code-stored', { code: normalized });
       res.json({ ok: true });
     });
 
