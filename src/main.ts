@@ -31,6 +31,7 @@ import { CaptivePortalServer } from './wifi/captive-portal';
 import { WifiScanMonitor } from './wifi/wifi-scan-monitor';
 import { RpiWifiShellAdapter } from './wifi/rpi-shell-adapter';
 import type { WifiShellAdapter } from './wifi/types';
+import { createLogger } from './core/logger';
 
 const DEFAULT_DATA_FILE       = path.join(__dirname, '../scripts/openroboticsdata/data.json');
 const RASPI_PINS              = [17, 18, 22, 27];
@@ -170,7 +171,7 @@ export function createApp(options: AppOptions = {}): App {
       ? wsUrlToHttpBase(options.gatewayUrl)
       : PROD_GATEWAY_HTTP_URL;
     try {
-      const res = await fetch(`${gatewayHttpBase}/device/claim-code/redeem`, {
+      const res = await fetch(`${gatewayHttpBase}/api/device/claim-code/redeem`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ code: pendingClaimCode, deviceUuid }),
