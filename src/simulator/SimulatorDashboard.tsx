@@ -327,6 +327,7 @@ export function SimulatorDashboard({
   const [search, setSearch]   = useState('');
   const [filter, setFilter]   = useState<FilterKey>('all');
   const [page, setPage]       = useState(0);
+
   const [spawnMenuOpen, setSpawnMenuOpen] = useState(false);
   const spawnMenuRef = useRef<HTMLDivElement>(null);
   
