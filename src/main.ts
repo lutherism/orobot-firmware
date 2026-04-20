@@ -172,18 +172,36 @@ export function createApp(options: AppOptions = {}): App {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ code: pendingClaimCode, deviceUuid }),
-          }).then(() => state.patch({ pendingClaimCode: null }))
-            .catch(() => { /* will retry on next connection */ });
+          }).then(async (res) => {
+            if (res.ok) {
+              await state.patch({ pendingClaimCode: null, lastSetupError: null });
+            } else {
+              await state.patch({
+                lastSetupError: `Registration failed (${res.status}). Please double-check the claim code.`,
+              });
+            }
+          }).catch(() => { /* will retry on next connection */ });
         }),
         bus.on('network:disconnected',     () => heartbeat.stop()),
         bus.on('wifi:goto-client-requested', () => void wifiManager.gotoClient()),
-        bus.on('wifi:state-changed', ({ to }) => {
+        bus.on('wifi:state-changed', ({ from, to }) => {
           if (to === 'CONNECTING') {
             gatewayClient.start();
           } else if (to === 'SETUP_MODE') {
             gatewayClient.stop();
             captivePortal.start();
             wifiScanMonitor.stop();
+            // Fell back from an attempted wifi join — surface the failure on
+            // next portal visit so the user can correct credentials.
+            if (from === 'CONNECTING' || from === 'RECONNECTING') {
+              const { wifiSettings } = state.get();
+              const ssid = wifiSettings?.ssid;
+              void state.patch({
+                lastSetupError: ssid
+                  ? `Could not connect to "${ssid}". Please check the password or pick a different network.`
+                  : 'Could not connect to the network. Please try again.',
+              });
+            }
           } else if (to === 'CONNECTED') {
             captivePortal.stop();
             wifiScanMonitor.start(scanIntervalMs);

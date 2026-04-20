@@ -87,17 +87,17 @@ describe('CaptivePortalServer', () => {
     expect(res.body).toEqual({ error: 'provision failed' });
   });
 
-  it('POST /api/claim-code stores valid 7-digit code in device state', async () => {
+  it('POST /api/claim-code stores valid 6-digit code in device state', async () => {
     const bus   = new EventBus();
     const state = makeTmpState({ networkMode: 'ap', knownNetworks: [], pendingClaimCode: null });
     const mock  = { scanNetworks: vi.fn(), provisionNetwork: vi.fn() } as unknown as WifiManager;
     const portal = new CaptivePortalServer(mock, state, bus);
     const res   = await supertest(portal.expressApp)
       .post('/api/claim-code')
-      .send({ code: '4839271' });
+      .send({ code: '483927' });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
-    expect(state.get().pendingClaimCode).toBe('4839271');
+    expect(state.get().pendingClaimCode).toBe('483927');
   });
 
   it('POST /api/claim-code accepts code with space and normalizes it', async () => {
@@ -107,9 +107,9 @@ describe('CaptivePortalServer', () => {
     const portal = new CaptivePortalServer(mock, state, bus);
     const res   = await supertest(portal.expressApp)
       .post('/api/claim-code')
-      .send({ code: '483 9271' });
+      .send({ code: '483 927' });
     expect(res.status).toBe(200);
-    expect(state.get().pendingClaimCode).toBe('4839271');
+    expect(state.get().pendingClaimCode).toBe('483927');
   });
 
   it('POST /api/claim-code rejects invalid code format', async () => {

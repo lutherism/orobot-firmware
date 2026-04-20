@@ -18,6 +18,7 @@ export interface DeviceState {
   pingTime:         number;
   devIP:            string | null;
   pendingClaimCode: string | null;
+  lastSetupError:   string | null;
 }
 
 const DEFAULT_STATE: Readonly<DeviceState> = Object.freeze({
@@ -31,6 +32,7 @@ const DEFAULT_STATE: Readonly<DeviceState> = Object.freeze({
   pingTime:         0,
   devIP:            null,
   pendingClaimCode: null,
+  lastSetupError:   null,
 });
 
 export class DeviceStateService {

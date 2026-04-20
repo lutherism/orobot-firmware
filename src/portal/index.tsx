@@ -14,7 +14,7 @@ interface PortalConfig {
   deviceName: string;
 }
 
-type View = 'scan' | 'connect' | 'success' | 'claim';
+type View = 'claim' | 'scan' | 'connect' | 'done';
 
 // ── Runtime config (injected by the server) ───────────────────────────────────
 
@@ -403,9 +403,9 @@ function ConnectView({ ssid, isOpen, onBack, onSuccess }: ConnectViewProps) {
   );
 }
 
-// ── SuccessView ───────────────────────────────────────────────────────────────
+// ── DoneView ──────────────────────────────────────────────────────────────────
 
-function SuccessView({ ssid, onRegister }: { ssid: string; onRegister: () => void }) {
+function DoneView({ ssid }: { ssid: string }) {
   return (
     <div style={S.successScreen}>
       <div style={S.successIcon}>
@@ -414,39 +414,44 @@ function SuccessView({ ssid, onRegister }: { ssid: string; onRegister: () => voi
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </div>
-      <h2 style={S.successH2}>Connected!</h2>
+      <h2 style={S.successH2}>All set!</h2>
       <p style={S.successP}>
-        <strong style={{ color: '#475569' }}>{CONFIG.deviceName}</strong> is now connecting to
-        &ldquo;{ssid}&rdquo;.
+        <strong style={{ color: '#475569' }}>{CONFIG.deviceName}</strong> will attempt to join
+        &ldquo;{ssid}&rdquo; and register to your account. It should appear in the app in about
+        10 seconds.
       </p>
       <p style={{ ...S.successP, marginTop: 16 }}>
-        Enter the 7-digit code from your setup wizard to register this device to your account.
+        You can now <strong style={{ color: '#475569' }}>reconnect your phone or computer to
+        your regular WiFi</strong>.
       </p>
-      <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-        <button style={{ ...S.btnPrimary(false), maxWidth: 240 }} onClick={onRegister}>
-          Enter Claim Code
-        </button>
-        <button style={{ ...S.btnSecondary, maxWidth: 240 }} onClick={() => {}}>
-          Skip for now
-        </button>
-      </div>
+      <p style={{ ...S.successP, marginTop: 16 }}>
+        If the device doesn&rsquo;t show up within 30 seconds, something went wrong. The device
+        will reopen this setup network so you can rejoin and correct the credentials.
+      </p>
     </div>
   );
 }
 
 // ── ClaimView ─────────────────────────────────────────────────────────────────
 
-function ClaimView() {
-  const [code,    setCode]    = useState('');
-  const [busy,    setBusy]    = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
-  const [done,    setDone]    = useState(false);
-  const [focused, setFocused] = useState(false);
+function ClaimView({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
+  const [code,      setCode]      = useState('');
+  const [busy,      setBusy]      = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
+  const [focused,   setFocused]   = useState(false);
+  const [priorError, setPriorError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/setup-status')
+      .then(r => r.json())
+      .then((d: { lastError?: string | null }) => { if (d.lastError) setPriorError(d.lastError); })
+      .catch(() => {});
+  }, []);
 
   const submit = useCallback(async () => {
     const normalized = code.replace(/\s/g, '');
-    if (!/^\d{7}$/.test(normalized)) {
-      setError('Please enter the 7-digit code exactly as shown.');
+    if (!/^\d{6}$/.test(normalized)) {
+      setError('Please enter the 6-digit code exactly as shown.');
       return;
     }
     setBusy(true);
@@ -459,7 +464,7 @@ function ClaimView() {
       });
       const data = await res.json() as { ok?: boolean; error?: string };
       if (data.ok) {
-        setDone(true);
+        onNext();
       } else {
         setError(data.error ?? 'Failed to save code. Please try again.');
         setBusy(false);
@@ -468,52 +473,41 @@ function ClaimView() {
       setError('Could not reach the device. Please try again.');
       setBusy(false);
     }
-  }, [code]);
-
-  if (done) {
-    return (
-      <div style={S.successScreen}>
-        <div style={S.successIcon}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-            stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </div>
-        <h2 style={S.successH2}>Code saved!</h2>
-        <p style={S.successP}>
-          Your device will automatically register to your account once it connects to the internet.
-          You can close this page.
-        </p>
-      </div>
-    );
-  }
+  }, [code, onNext]);
 
   return (
     <div style={S.connectForm}>
       <h2 style={S.h2}>Enter claim code</h2>
       <p style={S.formSub}>
-        Enter the 7-digit code shown in your setup wizard on your computer or phone.
+        Enter the 6-digit code shown in your setup wizard. Saving the code now ensures the device
+        registers to your account as soon as it connects to your WiFi in the next step.
       </p>
+      {priorError && (
+        <div style={{ ...S.errorBox, marginBottom: 14 }}>
+          <strong>Last attempt failed:</strong> {priorError}
+        </div>
+      )}
       <label style={S.fieldLabel} htmlFor="claim-code">Claim code</label>
       <input
         id="claim-code"
         type="text"
         inputMode="numeric"
         pattern="[0-9 ]*"
-        maxLength={8}
+        maxLength={7}
         value={code}
         onChange={e => setCode(e.target.value.replace(/[^0-9\s]/g, ''))}
         onKeyDown={e => e.key === 'Enter' && submit()}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholder="e.g. 483 9271"
+        placeholder="e.g. 483 927"
         autoFocus
         style={{ ...S.input(focused), ...S.codeDisplay, padding: '16px 0' }}
       />
       {error && <div style={S.errorBox}>{error}</div>}
       <div style={{ ...S.btnRow, marginTop: 16 }}>
+        <button style={S.btnSecondary} onClick={onSkip} disabled={busy}>Skip</button>
         <button style={S.btnPrimary(busy)} onClick={submit} disabled={busy}>
-          {busy ? 'Saving\u2026' : 'Register Device'}
+          {busy ? 'Saving\u2026' : 'Save & Continue'}
         </button>
       </div>
     </div>
@@ -523,7 +517,7 @@ function ClaimView() {
 // ── App ───────────────────────────────────────────────────────────────────────
 
 function App() {
-  const [view,     setView]     = useState<View>('scan');
+  const [view,     setView]     = useState<View>('claim');
   const [ssid,     setSsid]     = useState('');
   const [isOpen,   setIsOpen]   = useState(false);
 
@@ -533,7 +527,14 @@ function App() {
     setView('connect');
   };
 
-  const headerTitle = view === 'claim' ? 'Register Device' : 'Connect to WiFi';
+  const headerTitle =
+    view === 'claim' ? 'Register Device' :
+    view === 'done'  ? 'Device Ready' :
+                       'Connect to WiFi';
+  const headerSub =
+    view === 'claim' ? <>Register <strong style={{ color: '#475569' }}>{CONFIG.deviceName}</strong> to your account</> :
+    view === 'done'  ? <>Setup complete</> :
+                       <>Select a network for <strong style={{ color: '#475569' }}>{CONFIG.deviceName}</strong></>;
 
   return (
     <div style={S.body}>
@@ -541,25 +542,25 @@ function App() {
         <div style={S.header}>
           <PortalLogo />
           <h1 style={S.h1}>{headerTitle}</h1>
-          <p style={S.headerSub}>
-            Select a network for{' '}
-            <strong style={{ color: '#475569' }}>{CONFIG.deviceName}</strong>
-          </p>
+          <p style={S.headerSub}>{headerSub}</p>
         </div>
 
+        {view === 'claim' && (
+          <ClaimView
+            onNext={() => setView('scan')}
+            onSkip={() => setView('scan')}
+          />
+        )}
         {view === 'scan'    && <ScanView onSelect={handleSelect} />}
         {view === 'connect' && (
           <ConnectView
             ssid={ssid}
             isOpen={isOpen}
             onBack={() => setView('scan')}
-            onSuccess={() => setView('success')}
+            onSuccess={() => setView('done')}
           />
         )}
-        {view === 'success' && (
-          <SuccessView ssid={ssid} onRegister={() => setView('claim')} />
-        )}
-        {view === 'claim' && <ClaimView />}
+        {view === 'done' && <DoneView ssid={ssid} />}
       </div>
     </div>
   );
