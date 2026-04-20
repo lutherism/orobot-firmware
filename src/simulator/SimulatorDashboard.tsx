@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { DeviceCard } from './DeviceCard';
+import { FlashManager, detectDrives } from './FlashManager';
+import { type Drive, type Distribution, type FlashState } from './flashUtils';
 import type { Device, DeviceStatus } from './types';
+
+type View = 'devices' | 'flash';
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -56,6 +60,25 @@ const Badge = styled.span<{ $variant?: 'green' | 'yellow' | 'default' }>`
 `;
 
 const Spacer = styled.div`flex: 1;`;
+
+// ─── View tabs ────────────────────────────────────────────────────────────
+
+const ViewTabs = styled.div`
+  display: flex;
+  gap: 4px;
+  margin-left: 16px;
+`;
+
+const ViewTab = styled.button<{ $active: boolean }>`
+  background: ${({ $active }) => $active ? '#1e293b' : 'transparent'};
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: ${({ $active }) => $active ? T.text : T.textDim};
+  cursor: pointer;
+`;
 
 const HdrButton = styled.button<{ $secondary?: boolean }>`
   background: ${({ $secondary }) => ($secondary ? '#1e293b' : T.accent)};
@@ -241,9 +264,39 @@ export function SimulatorDashboard({
   onKill,
   onOpenPortal,
 }: Props) {
+  const [view, setView]       = useState<View>('devices');
   const [search, setSearch]   = useState('');
   const [filter, setFilter]   = useState<FilterKey>('all');
   const [page, setPage]       = useState(0);
+  
+  // Flash manager state
+  const [drives, setDrives] = useState<Drive[]>([
+    { letter: 'E:', name: 'SD_CARD', size: 32 * 1024 * 1024 * 1024, free: 0, condition: 'ready' },
+    { letter: 'F:', name: 'USB_DRIVE', size: 64 * 1024 * 1024 * 1024, free: 32 * 1024 * 1024 * 1024, condition: 'ready' },
+  ]);
+  const [distributions, setDistributions] = useState<Distribution[]>([]);
+  const [flashState, setFlashState] = useState<FlashState>({ 
+    status: 'flashing', 
+    progress: 0, 
+    log: [],
+    driveStates: {
+      'E:': { status: 'preparing', progress: 0 },
+      'F:': { status: 'flashing', progress: 30 },
+    },
+    driveLogs: {
+      'E:': 'writing bits...hello?',
+      'F:': 'writing bits...hello?',
+    },
+  });
+  
+  // Load drives and distributions on mount
+  useEffect(() => {
+    // detectDrives().then(setDrives);
+    fetch('/distribution-config.json')
+      .then(r => r.json())
+      .then(cfg => setDistributions(cfg.distributions || []))
+      .catch(() => {});
+  }, []);
 
   const counts: Record<FilterKey, number> = {
     all:          devices.length,
@@ -290,6 +343,10 @@ export function SimulatorDashboard({
           <Badge $variant="yellow">{counts.reconnecting} reconnecting</Badge>
         )}
         <Badge>{devices.length} total</Badge>
+        <ViewTabs>
+          <ViewTab $active={view === 'devices'} onClick={() => setView('devices')}>Devices</ViewTab>
+          <ViewTab $active={view === 'flash'} onClick={() => setView('flash')}>Flash Manager</ViewTab>
+        </ViewTabs>
         <Spacer />
         <HdrButton $secondary onClick={onImport}>Import UUID</HdrButton>
         <HdrButton onClick={onSpawn}>+ Spawn Device</HdrButton>
@@ -341,32 +398,51 @@ export function SimulatorDashboard({
         </Pagination>
       </Toolbar>
 
-      {/* Device grid */}
-      <DeviceGrid>
-        {pageDevices.map(device => (
-          <DeviceCard
-            key={device.id}
-            device={device}
-            onConnect={onConnect       ? () => onConnect(device.id)           : undefined}
-            onDisconnect={onDisconnect ? () => onDisconnect(device.id)        : undefined}
-            onPower={onPower           ? (on) => onPower(device.id, on)       : undefined}
-            onKill={onKill             ? () => onKill(device.id)              : undefined}
-            onOpenPortal={onOpenPortal ? () => onOpenPortal(device.id)        : undefined}
-          />
-        ))}
-      </DeviceGrid>
+      {/* Content based on view */}
+      {view === 'devices' && (
+        <DeviceGrid>
+          {pageDevices.map(device => (
+            <DeviceCard
+              key={device.id}
+              device={device}
+              onConnect={onConnect ? () => onConnect(device.id) : undefined}
+              onDisconnect={onDisconnect ? () => onDisconnect(device.id) : undefined}
+              onPower={onPower ? (on) => onPower(device.id, on) : undefined}
+              onKill={onKill ? () => onKill(device.id) : undefined}
+              onOpenPortal={onOpenPortal ? () => onOpenPortal(device.id) : undefined}
+            />
+          ))}
+        </DeviceGrid>
+      )}
 
-      {/* Stats bar */}
-      <StatsBar>
-        <span>Total: <StatVal>{devices.length}</StatVal></span>
-        <span>Connected: <StatVal $color={T.blue}>{counts.connected}</StatVal></span>
-        <span>Reconnecting: <StatVal $color={T.amber}>{counts.reconnecting}</StatVal></span>
-        <span>Disconnected: <StatVal $color={T.red}>{counts.disconnected}</StatVal></span>
-        <span>Off: <StatVal>{counts.off}</StatVal></span>
-        <Spacer />
-        <span>Page {page + 1} of {totalPages}</span>
-        <span>Watcher: <StatVal $color={T.green}>active</StatVal></span>
-      </StatsBar>
+      {view === 'flash' && (
+        <FlashManager
+          drives={drives}
+          distributions={distributions}
+          flashState={flashState}
+          onFlash={(drive, distro) => {
+            console.log('Flash', drive, distro);
+          }}
+          onCancel={() => setFlashState({ status: 'idle', progress: 0, log: [] })}
+          onAddDrive={(drive) => {
+            setDrives(prev => [...prev, drive]);
+          }}
+        />
+      )}
+
+      {/* Stats bar - only show for devices view */}
+      {view === 'devices' && (
+        <StatsBar>
+          <span>Total: <StatVal>{devices.length}</StatVal></span>
+          <span>Connected: <StatVal $color={T.blue}>{counts.connected}</StatVal></span>
+          <span>Reconnecting: <StatVal $color={T.amber}>{counts.reconnecting}</StatVal></span>
+          <span>Disconnected: <StatVal $color={T.red}>{counts.disconnected}</StatVal></span>
+          <span>Off: <StatVal>{counts.off}</StatVal></span>
+          <Spacer />
+          <span>Page {page + 1} of {totalPages}</span>
+          <span>Watcher: <StatVal $color={T.green}>active</StatVal></span>
+        </StatsBar>
+      )}
     </div>
   );
 }

@@ -14,9 +14,11 @@ const DATA_DIR       = path.join(__dirname, '../scripts/openroboticsdata');
 const DEV_STATE_FILE = path.join(DATA_DIR, 'dev-state.json');
 const DATA_FILE      = path.join(DATA_DIR, 'data.json');
 
+const CLOUD_RUN_HOST = 'robots-gateway-779307899828.us-west2.run.app';
+
 const REG_URL = LOCAL
   ? 'http://localhost:8080/api/device'
-  : 'https://robots-gateway-v2.wl.r.appspot.com/api/device';
+  : `https://${CLOUD_RUN_HOST}/api/device`;
 
 interface DevState { deviceUuid: string }
 
@@ -75,7 +77,7 @@ function writeDataJson(deviceUuid: string): void {
 function attachLogger(bus: EventBus, deviceUuid: string): void {
   const gw = LOCAL
     ? 'ws://localhost:8080'
-    : 'wss://robots-gateway-v2.wl.r.appspot.com/';
+    : `wss://${CLOUD_RUN_HOST}/device`;
 
   console.log('');
   console.log('┌─ orobot-firmware dev ──────────────────────────────────────────────┐');
@@ -108,6 +110,7 @@ async function main(): Promise<void> {
     execCommand:      (cmd, args) =>
       console.log(`[system]    exec suppressed: ${cmd} ${args.join(' ')}`),
     scanIntervalMs:   60_000, // suppress peer scans in dev
+    gatewayUrl:       LOCAL ? 'ws://localhost:8080' : `wss://${CLOUD_RUN_HOST}/device`,
   });
 
   attachLogger(app.bus, deviceUuid);
