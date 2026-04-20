@@ -297,9 +297,18 @@ export class DeviceRegistry extends EventEmitter {
     return this.portalState.get(id) ?? { pendingClaimCode: null, lastSetupError: null };
   }
 
-  setPendingClaimCode(id: string, code: string): void {
+  async setPendingClaimCode(id: string, code: string): Promise<void> {
     const prev = this.getPortalState(id);
     this.portalState.set(id, { ...prev, pendingClaimCode: code });
+    // Also patch the underlying firmware state so the on-device
+    // `network:connected` handler performs the claim-code redeem against
+    // the gateway. Without this, the sim portal stores the code in the
+    // registry's ephemeral map and orobotio never sees it.
+    const inst = this.instances.get(id);
+    if (inst) {
+      await inst.app.state.patch({ pendingClaimCode: code });
+      inst.app.bus.emit('portal:claim-code-stored', { code });
+    }
   }
 
   setLastSetupError(id: string, err: string | null): void {

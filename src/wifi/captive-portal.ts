@@ -119,6 +119,7 @@ export class CaptivePortalServer {
       }
       await this.state.patch({ pendingClaimCode: normalized });
       this.log.info({ event: 'claim-code:stored', code: normalized }, 'Claim code stored');
+      this.bus.emit('portal:claim-code-stored', { code: normalized });
       res.json({ ok: true });
     });
 

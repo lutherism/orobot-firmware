@@ -284,17 +284,19 @@ export function createServer(registry: DeviceRegistry) {
     }
   });
 
-  /** Portal: claim-code submission (per-device, ephemeral) */
-  app.post('/api/devices/:id/claim-code', (req, res) => {
-    const device = registry.getById(req.params.id);
-    if (!device) return res.status(404).json({ error: 'device not found' });
-    const { code } = req.body as { code?: string };
-    const normalized = (code ?? '').replace(/\s/g, '');
-    if (!/^\d{6}$/.test(normalized)) {
-      return res.status(400).json({ error: 'Code must be 6 digits' });
-    }
-    registry.setPendingClaimCode(device.id, normalized);
-    res.json({ ok: true });
+  /** Portal: claim-code submission (per-device) */
+  app.post('/api/devices/:id/claim-code', async (req, res, next) => {
+    try {
+      const device = registry.getById(req.params.id);
+      if (!device) return res.status(404).json({ error: 'device not found' });
+      const { code } = req.body as { code?: string };
+      const normalized = (code ?? '').replace(/\s/g, '');
+      if (!/^\d{6}$/.test(normalized)) {
+        return res.status(400).json({ error: 'Code must be 6 digits' });
+      }
+      await registry.setPendingClaimCode(device.id, normalized);
+      res.json({ ok: true });
+    } catch (err) { next(err); }
   });
 
   /** Portal: setup status (last error + pending claim code) */

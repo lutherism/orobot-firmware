@@ -38,9 +38,12 @@ const BANANA_PINS             = [0, 1, 3, 2];
 const DEFAULT_SCAN_INTERVAL   = 10_000;
 const PROD_GATEWAY_HTTP_URL   = 'https://robots-gateway-v2.wl.r.appspot.com';
 
-/** Derive the gateway REST base URL from a WebSocket URL. */
+/** Derive the gateway REST base URL (scheme + host + port) from a WebSocket URL.
+ *  Strips any path — WS URLs like `ws://host:8080/device` map to `http://host:8080`. */
 function wsUrlToHttpBase(wsUrl: string): string {
-  return wsUrl.replace(/^wss?:\/\//, (m) => m === 'wss://' ? 'https://' : 'http://').replace(/\/$/, '');
+  const u = new URL(wsUrl);
+  const scheme = u.protocol === 'wss:' ? 'https:' : 'http:';
+  return `${scheme}//${u.host}`;
 }
 
 export interface AppOptions {
@@ -75,6 +78,10 @@ export interface App {
   start(): Promise<void>;
   stop(): Promise<void>;
   readonly bus: EventBus;
+  /** Exposed so test harnesses and the simulator can patch firmware state
+   *  (e.g. portal claim-code submission) that normally would be written by
+   *  the on-device captive portal. */
+  readonly state: DeviceStateService;
 }
 
 export function createApp(options: AppOptions = {}): App {
@@ -156,32 +163,41 @@ export function createApp(options: AppOptions = {}): App {
 
   const unsubscribers: Array<() => void> = [];
 
+  async function tryRedeemClaimCode(): Promise<void> {
+    const { pendingClaimCode, deviceUuid } = state.get();
+    if (!pendingClaimCode) return;
+    const gatewayHttpBase = options.gatewayUrl
+      ? wsUrlToHttpBase(options.gatewayUrl)
+      : PROD_GATEWAY_HTTP_URL;
+    try {
+      const res = await fetch(`${gatewayHttpBase}/device/claim-code/redeem`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ code: pendingClaimCode, deviceUuid }),
+      });
+      if (res.ok) {
+        await state.patch({ pendingClaimCode: null, lastSetupError: null });
+      } else {
+        await state.patch({
+          lastSetupError: `Registration failed (${res.status}). Please double-check the claim code.`,
+        });
+      }
+    } catch {
+      /* network down — will retry on next network:connected */
+    }
+  }
+
   return {
     async start(): Promise<void> {
       unsubscribers.push(
         bus.on('system:reboot-requested',  () => exec('sudo', ['reboot'])),
         bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', [])),
         bus.on('network:connected',        () => heartbeat.start(hbIntervalMs)),
-        bus.on('network:connected',        () => {
-          const { pendingClaimCode, deviceUuid } = state.get();
-          if (!pendingClaimCode) return;
-          const gatewayHttpBase = options.gatewayUrl
-            ? wsUrlToHttpBase(options.gatewayUrl)
-            : PROD_GATEWAY_HTTP_URL;
-          void fetch(`${gatewayHttpBase}/device/claim-code/redeem`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ code: pendingClaimCode, deviceUuid }),
-          }).then(async (res) => {
-            if (res.ok) {
-              await state.patch({ pendingClaimCode: null, lastSetupError: null });
-            } else {
-              await state.patch({
-                lastSetupError: `Registration failed (${res.status}). Please double-check the claim code.`,
-              });
-            }
-          }).catch(() => { /* will retry on next connection */ });
-        }),
+        // Attempt claim-code redeem on either event: when the network comes up
+        // (pendingClaimCode was set earlier during AP provisioning) or when a
+        // code is submitted after we're already connected (simulator / reclaim).
+        bus.on('network:connected',        () => { void tryRedeemClaimCode(); }),
+        bus.on('portal:claim-code-stored', () => { void tryRedeemClaimCode(); }),
         bus.on('network:disconnected',     () => heartbeat.stop()),
         bus.on('wifi:goto-client-requested', () => void wifiManager.gotoClient()),
         bus.on('wifi:state-changed', ({ from, to }) => {
@@ -225,6 +241,7 @@ export function createApp(options: AppOptions = {}): App {
       await motor.stop(); // de-energize coils before process exits
     },
     get bus() { return bus; },
+    get state() { return state; },
   };
 }
 
