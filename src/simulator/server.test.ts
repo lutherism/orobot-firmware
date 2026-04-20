@@ -35,6 +35,7 @@ function makeRegistry(devices: Device[] = [makeDevice()]): DeviceRegistry {
     kill:        vi.fn(),
     setPower:    vi.fn(),
     setConnected: vi.fn(),
+    networkConnected: vi.fn(),
     restore:     vi.fn(),
     destroy:     vi.fn(),
   } as unknown as DeviceRegistry;
@@ -86,7 +87,20 @@ describe('POST /api/devices', () => {
     const res = await supertest(app).post('/api/devices').send({ name: 'spawned' });
     expect(res.status).toBe(201);
     expect(res.body.device.id).toBe('new-1');
-    expect(registry.spawn).toHaveBeenCalledWith('spawned');
+    expect(registry.spawn).toHaveBeenCalledWith('spawned', undefined, true);
+  });
+});
+
+describe('POST /api/devices attach=false', () => {
+  it('spawns an unattached device', async () => {
+    const newDevice = makeDevice({ id: 'new-1', name: 'spawned' });
+    const registry = makeRegistry();
+    vi.mocked(registry.spawn).mockResolvedValue(newDevice);
+
+    const app = createServer(registry);
+    const res = await supertest(app).post('/api/devices').send({ name: 'spawned', attach: false });
+    expect(res.status).toBe(201);
+    expect(registry.spawn).toHaveBeenCalledWith('spawned', undefined, false);
   });
 });
 

@@ -20,6 +20,13 @@ import fs      from 'fs';
 import os      from 'os';
 import { DeviceRegistry } from './DeviceRegistry.js';
 
+function readCookie(req: express.Request, name: string): string | undefined {
+  const cookie = req.get('cookie');
+  if (!cookie) return undefined;
+  const match = cookie.split(';').map(part => part.trim()).find(part => part.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.slice(name.length + 1)) : undefined;
+}
+
 // ── Bundle React app at startup ───────────────────────────────────────────────
 
 const BUNDLE_OUT = path.join(os.tmpdir(), 'orobot-simulator-bundle.js');
@@ -48,7 +55,7 @@ async function buildClient(): Promise<void> {
     target:      'es2017',
     jsx:         'automatic',
     jsxImportSource: 'react',
-    sourcemap:    true,
+    sourcemap:    'inline',
     define:      { 'process.env.NODE_ENV': '"production"' },
     minify:      false,
     logLevel:    'warning',
@@ -193,8 +200,10 @@ export function createServer(registry: DeviceRegistry) {
   /** Spawn a new device */
   app.post('/api/devices', async (req, res, next) => {
     try {
-      const { name } = req.body as { name?: string };
-      const device = await registry.spawn(name);
+      const { name, attach } = req.body as { name?: string; attach?: boolean };
+      const attachToUser = attach !== false;
+      const authToken = readCookie(req, '_osess');
+      const device = await registry.spawn(name, authToken, attachToUser);
       res.status(201).json({ device });
     } catch (err) { next(err); }
   });
@@ -269,13 +278,14 @@ export function createServer(registry: DeviceRegistry) {
   });
 
   /** Simulate connecting to a WiFi network */
-  app.post('/api/devices/:id/wifi', (req, res) => {
+  app.post('/api/devices/:id/wifi', async (req, res) => {
     if (!registry.getById(req.params.id)) {
       return res.status(404).json({ error: 'device not found' });
     }
     const { ssid, password = '' } = req.body as { ssid?: string; password?: string };
     if (!ssid) return res.status(400).json({ error: 'ssid is required' });
     if (mockWifiAccept(ssid, password)) {
+      await registry.networkConnected(req.params.id);
       res.json({ ok: true });
     } else {
       res.json({ ok: false, error: 'Incorrect password. Try again.' });
