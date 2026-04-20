@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { DeviceCard } from './DeviceCard';
 import type { Device, DeviceStatus } from './types';
@@ -66,6 +66,59 @@ const HdrButton = styled.button<{ $secondary?: boolean }>`
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+`;
+
+const SplitButtonWrap = styled.div`
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+`;
+
+const SplitButtonMain = styled(HdrButton)`
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+`;
+
+const SplitButtonToggle = styled(HdrButton)<{ $open?: boolean }>`
+  width: 30px;
+  padding: 6px 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: ${({ $open }) => ($open ? '#334155' : '#1e293b')};
+  color: ${T.textMuted};
+  display: grid;
+  place-items: center;
+`;
+
+const SplitMenu = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  min-width: 220px;
+  padding: 6px;
+  background: #111827;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.35);
+`;
+
+const SplitMenuItem = styled.button`
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: ${T.text};
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:hover {
+    background: #1f2937;
+  }
 `;
 
 // ─── Watcher bar ──────────────────────────────────────────────────────────────
@@ -220,7 +273,10 @@ interface Props {
   devices: Device[];
   watcherFile?: string;
   watcherLastReload?: string;
+  userLabel?: string;
+  onLogout?: () => void;
   onSpawn?:       () => void;
+  onSpawnUnattached?: () => void;
   onImport?:      () => void;
   onConnect?:     (id: string) => void;
   onDisconnect?:  (id: string) => void;
@@ -233,7 +289,10 @@ export function SimulatorDashboard({
   devices,
   watcherFile = 'src/**/*.ts',
   watcherLastReload,
+  userLabel,
+  onLogout,
   onSpawn,
+  onSpawnUnattached,
   onImport,
   onConnect,
   onDisconnect,
@@ -244,6 +303,48 @@ export function SimulatorDashboard({
   const [search, setSearch]   = useState('');
   const [filter, setFilter]   = useState<FilterKey>('all');
   const [page, setPage]       = useState(0);
+  const [spawnMenuOpen, setSpawnMenuOpen] = useState(false);
+  const spawnMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Flash manager state
+  const [drives, setDrives] = useState<Drive[]>([
+    { letter: 'E:', name: 'SD_CARD', size: 32 * 1024 * 1024 * 1024, free: 0, condition: 'ready' },
+    { letter: 'F:', name: 'USB_DRIVE', size: 64 * 1024 * 1024 * 1024, free: 32 * 1024 * 1024 * 1024, condition: 'ready' },
+  ]);
+  const [distributions, setDistributions] = useState<Distribution[]>([]);
+  const [flashState, setFlashState] = useState<FlashState>({ 
+    status: 'flashing', 
+    progress: 0, 
+    log: [],
+    driveStates: {
+      'E:': { status: 'preparing', progress: 0 },
+      'F:': { status: 'flashing', progress: 30 },
+    },
+    driveLogs: {
+      'E:': 'writing bits...hello?',
+      'F:': 'writing bits...hello?',
+    },
+  });
+  
+  // Load drives and distributions on mount
+  useEffect(() => {
+    // detectDrives().then(setDrives);
+    fetch('/distribution-config.json')
+      .then(r => r.json())
+      .then(cfg => setDistributions(cfg.distributions || []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const onDocMouseDown = (event: MouseEvent) => {
+      if (!spawnMenuRef.current?.contains(event.target as Node)) {
+        setSpawnMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, []);
 
   const counts: Record<FilterKey, number> = {
     all:          devices.length,
@@ -291,8 +392,38 @@ export function SimulatorDashboard({
         )}
         <Badge>{devices.length} total</Badge>
         <Spacer />
+        {userLabel && <Badge>{userLabel}</Badge>}
+        {onLogout && <HdrButton $secondary onClick={onLogout}>Log out</HdrButton>}
         <HdrButton $secondary onClick={onImport}>Import UUID</HdrButton>
-        <HdrButton onClick={onSpawn}>+ Spawn Device</HdrButton>
+        {onSpawn && (
+          <SplitButtonWrap ref={spawnMenuRef}>
+            <SplitButtonMain onClick={onSpawn}>+ Spawn Device</SplitButtonMain>
+            <SplitButtonToggle
+              type="button"
+              $open={spawnMenuOpen}
+              onClick={() => setSpawnMenuOpen(v => !v)}
+              aria-haspopup="menu"
+              aria-expanded={spawnMenuOpen}
+              aria-label="Spawn device options"
+            >
+              ▾
+            </SplitButtonToggle>
+            {spawnMenuOpen && onSpawnUnattached && (
+              <SplitMenu role="menu">
+                <SplitMenuItem
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setSpawnMenuOpen(false);
+                    onSpawnUnattached();
+                  }}
+                >
+                  Spawn unattached device
+                </SplitMenuItem>
+              </SplitMenu>
+            )}
+          </SplitButtonWrap>
+        )}
       </AppHeader>
 
       {/* Watcher bar */}
