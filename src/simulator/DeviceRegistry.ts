@@ -80,8 +80,14 @@ interface DeviceInstance {
 
 // ── DeviceRegistry ────────────────────────────────────────────────────────────
 
+interface PortalSetupState {
+  pendingClaimCode: string | null;
+  lastSetupError:   string | null;
+}
+
 export class DeviceRegistry extends EventEmitter {
   private instances   = new Map<string, DeviceInstance>();
+  private portalState = new Map<string, PortalSetupState>();
   private sampleTimer: ReturnType<typeof setInterval> | null = null;
   private seq         = 0;
   private readonly gatewayApiUrl: string;
@@ -285,6 +291,20 @@ export class DeviceRegistry extends EventEmitter {
   getById(id: string): Device | undefined {
     const inst = this.instances.get(id);
     return inst ? this.toDevice(inst) : undefined;
+  }
+
+  getPortalState(id: string): PortalSetupState {
+    return this.portalState.get(id) ?? { pendingClaimCode: null, lastSetupError: null };
+  }
+
+  setPendingClaimCode(id: string, code: string): void {
+    const prev = this.getPortalState(id);
+    this.portalState.set(id, { ...prev, pendingClaimCode: code });
+  }
+
+  setLastSetupError(id: string, err: string | null): void {
+    const prev = this.getPortalState(id);
+    this.portalState.set(id, { ...prev, lastSetupError: err });
   }
 
   destroy(): void {

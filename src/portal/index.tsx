@@ -11,6 +11,8 @@ interface WifiNetwork {
 
 interface PortalConfig {
   wifiUrl:    string;   // base URL for GET/POST
+  claimUrl:   string;   // POST claim code here
+  statusUrl:  string;   // GET lastError/pendingClaimCode here
   deviceName: string;
 }
 
@@ -26,6 +28,8 @@ declare global {
 
 const CONFIG: PortalConfig = {
   wifiUrl:    '/api/wifi',
+  claimUrl:   '/api/claim-code',
+  statusUrl:  '/api/setup-status',
   deviceName: 'your robot',
   ...window.OROBOT_PORTAL,
 };
@@ -442,7 +446,7 @@ function ClaimView({ onNext, onSkip }: { onNext: () => void; onSkip: () => void 
   const [priorError, setPriorError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/setup-status')
+    fetch(CONFIG.statusUrl)
       .then(r => r.json())
       .then((d: { lastError?: string | null }) => { if (d.lastError) setPriorError(d.lastError); })
       .catch(() => {});
@@ -457,7 +461,7 @@ function ClaimView({ onNext, onSkip }: { onNext: () => void; onSkip: () => void 
     setBusy(true);
     setError(null);
     try {
-      const res  = await fetch('/api/claim-code', {
+      const res  = await fetch(CONFIG.claimUrl, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ code: normalized }),
