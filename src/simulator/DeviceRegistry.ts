@@ -186,12 +186,12 @@ export class DeviceRegistry extends EventEmitter {
 
   // ── Public API ──────────────────────────────────────────────────────────────
 
-  async spawn(nameSuffix?: string): Promise<Device> {
+  async spawn(nameSuffix?: string, authToken?: string, attachToUser = true): Promise<Device> {
     const id   = randomUUID();
     const seq  = ++this.seq;
     const name = nameSuffix ?? `sim-${String(seq).padStart(2, '0')}`;
 
-    const uuid = await this.registerWithGateway(name);
+    const uuid = await this.registerWithGateway(name, authToken, attachToUser);
 
     // Write data.json into persistent device dir
     const dataDir  = path.join(DEVICES_DIR, id);
@@ -309,6 +309,11 @@ export class DeviceRegistry extends EventEmitter {
       await inst.app.state.patch({ pendingClaimCode: code });
       inst.app.bus.emit('portal:claim-code-stored', { code });
     }
+  }
+
+  async networkConnected(id: string): Promise<void> {
+    const inst = this.instances.get(id);
+    inst?.app.bus.emit('network:connected', {url: GATEWAY_WS});
   }
 
   setLastSetupError(id: string, err: string | null): void {
@@ -483,12 +488,17 @@ export class DeviceRegistry extends EventEmitter {
     return inst;
   }
 
-  private async registerWithGateway(name: string): Promise<string> {
+  private async registerWithGateway(name: string, authToken?: string, attachToUser = true): Promise<string> {
     const uuid = randomUUID();
     try {
-      const res = await fetch(this.gatewayApiUrl + '/sim', {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (attachToUser && authToken) {
+        headers['Cookie'] = `_osess=${authToken}`;
+      }
+      const endpoint = attachToUser ? `${this.gatewayApiUrl}/sim` : `${this.gatewayBase}/api/device`;
+      const res = await fetch(endpoint, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body:    JSON.stringify({ uuid, name, sim: true }),
       });
       if (!res.ok) throw new Error(`${res.status}`);
