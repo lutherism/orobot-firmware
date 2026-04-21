@@ -55,7 +55,7 @@ The device runs in one of three modes, stored in `scripts/openroboticsdata/data.
 |------|-----------|
 | `client` | Connects to the production gateway WebSocket |
 | `ap` | Device acts as a WiFi hotspot; captive portal (port 3006) lets a user enter WiFi credentials |
-| `dev` | Connects to a local gateway at a configurable IP — set via gateway message or `--local` flag |
+| `dev` | Connects to a local gateway at a configurable IP — set via gateway message |
 
 After repeated connection failures in `client` mode, the device automatically falls back to `ap` mode.
 
