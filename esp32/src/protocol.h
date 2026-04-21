@@ -20,7 +20,7 @@ class Protocol {
   String handlePing();
   String handleSetPin(long pin, const String& mode, long value);
   String handleReadPin(long pin);
-  String handleRunStepper(const JsonArrayConst& pins, long steps, long delay_us);
+  String handleRunStepper(const JsonArray& pins, long steps, long delay_us);
   String ack(const char* type, bool ok, const String& data = String());
   bool isSafePin(long pin, bool force) const;
 };

@@ -35,7 +35,7 @@ String Protocol::handle(const String& raw) {
     return handleReadPin(doc["pin"] | kInvalidPin);
   }
   if (strcmp(type, "run-stepper") == 0) {
-    return handleRunStepper(doc["pins"].as<JsonArrayConst>(),
+    return handleRunStepper(doc["pins"].as<JsonArray>(),
                             doc["steps"] | 0,
                             doc["delay_us"] | 0);
   }
@@ -91,7 +91,7 @@ String Protocol::handleReadPin(long pin) {
   return ack("read-pin", true, String(value));
 }
 
-String Protocol::handleRunStepper(const JsonArrayConst& pins, long steps, long delay_us) {
+String Protocol::handleRunStepper(const JsonArray& pins, long steps, long delay_us) {
   if (pins.size() != 4) {
     return ack("run-stepper", false, "bad-pins");
   }
