@@ -4,10 +4,10 @@ Native C++ orobot firmware for ESP32. Sibling to the Node.js Pi/Jetson
 firmware in `../src/`. The two code bases do not share source — they share a
 protocol (see the sub-4 spec in `robots-gateway/docs/device-protocol.md`).
 
-> **Status:** Scaffolding only. This directory currently compiles a heartbeat
-> LED sketch to prove the toolchain works. Real device behavior — WiFi
-> provisioning, gateway WebSocket, pin control — lands in follow-up PRs
-> (#509, #510, #511).
+> **Status:** Scaffolding plus device protocol handlers. WiFi provisioning and
+> gateway WebSocket still land in follow-up PRs (#509, #510), but the ESP32
+> now has the first command handlers for ping, pin control, pin readback, and
+> stepper motion (#511).
 
 ## Why a separate port
 

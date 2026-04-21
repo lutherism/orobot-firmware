@@ -15,6 +15,7 @@
 #include <WiFi.h>
 
 #include "nvs_store.h"
+#include "protocol.h"
 #include "wifi_portal.h"
 
 namespace {
@@ -34,6 +35,7 @@ constexpr uint32_t kHeartbeatPeriodMs = 1000;
 
 orobot::NvsStore g_store;
 orobot::WifiPortal g_portal;
+orobot::Protocol g_protocol;
 State g_state = State::kBoot;
 uint8_t g_sta_attempts = 0;
 uint32_t g_sta_started_ms = 0;
@@ -141,6 +143,7 @@ void loop() {
 
     case State::kStaConnected:
       // Placeholder — #510 drives the WebSocket client from here.
+      // #511 owns the device-side command handlers once messages arrive.
       if (WiFi.status() != WL_CONNECTED) {
         Serial.println("sta-dropped");
         enterStaConnect(g_creds);
