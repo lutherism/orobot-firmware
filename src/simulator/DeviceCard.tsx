@@ -579,6 +579,23 @@ const WifiBtn = styled.button`
   }
 `;
 
+const DeleteBtn = styled.button`
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #7f1d1d;
+  background: transparent;
+  color: ${T.softRed};
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: ${T.red};
+    color: ${T.red};
+  }
+`;
+
 // ─── DeviceCard ───────────────────────────────────────────────────────────────
 
 interface DeviceCardProps {
@@ -625,9 +642,23 @@ export function DeviceCard({ device, onConnect, onDisconnect, onPower, onKill, o
             <DeviceUuid>{uuid}</DeviceUuid>
           </div>
         </TitleRow>
-        <WifiBtn title="Open WiFi captive portal" onClick={() => onOpenPortal?.()}>
-          WiFi
-        </WifiBtn>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <WifiBtn title="Open WiFi captive portal" onClick={() => onOpenPortal?.()}>
+            WiFi
+          </WifiBtn>
+          {onKill && (
+            <DeleteBtn
+              title="Delete this simulated device"
+              onClick={() => {
+                if (window.confirm(`Delete ${name}? This cannot be undone.`)) {
+                  onKill();
+                }
+              }}
+            >
+              Delete
+            </DeleteBtn>
+          )}
+        </div>
       </Header>
 
       {/* Meta */}
