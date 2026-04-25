@@ -38,6 +38,8 @@ class SlotConfig {
 
   size_t size() const { return slots_.size(); }
 
+  const std::vector<MotorSlot>& all() const { return slots_; }
+
  private:
   std::vector<MotorSlot> slots_;
 };

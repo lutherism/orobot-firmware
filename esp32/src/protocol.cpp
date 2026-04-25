@@ -6,6 +6,8 @@
 
 #include <ArduinoJson.h>
 #include <cstring>
+#include <string>
+#include "lib/slot_config.h"
 
 namespace orobot {
 
@@ -38,6 +40,12 @@ String Protocol::handle(const String& raw) {
     return handleRunStepper(doc["pins"].as<JsonArray>(),
                             doc["steps"] | 0,
                             doc["delay_us"] | 0);
+  }
+  if (strcmp(type, "load-config") == 0) {
+    return handleLoadConfig(doc["data"] | static_cast<const char*>(nullptr));
+  }
+  if (strcmp(type, "command-in") == 0) {
+    return handleCommandIn(doc["data"] | static_cast<const char*>(nullptr));
   }
 
   Serial.print("protocol unknown type: ");
@@ -131,6 +139,75 @@ String Protocol::handleRunStepper(const JsonArray& pins, long steps, long delay_
   Serial.print(" delay_us=");
   Serial.println(delay_us);
   return ack("run-stepper", true);
+}
+
+String Protocol::handleLoadConfig(const char* dataStr) {
+  // data is a JSON-stringified string from the gateway deploy pipeline.
+  // Inner shape: { config: { motors: [...] }, unitId: "<uuid>" }
+  // Each motors[] entry mirrors the MotorSlot fields written by
+  // robots-gateway/src/modules/programs/service.ts (load-config emit).
+  if (!dataStr) {
+    Serial.println("protocol load-config: no data");
+    return ack("load-config", false, "no-data");
+  }
+
+  JsonDocument inner;
+  const DeserializationError err = deserializeJson(inner, dataStr);
+  if (err) {
+    Serial.print("protocol load-config bad json: ");
+    Serial.println(err.c_str());
+    return ack("load-config", false, "bad-config-json");
+  }
+
+  SlotConfig cfg;
+  for (JsonObject m : inner["config"]["motors"].as<JsonArray>()) {
+    MotorSlot s;
+    s.name = m["name"].as<const char*>() ? m["name"].as<const char*>() : "";
+    s.stepPin = m["stepPin"] | -1;
+    s.dirPin = m["dirPin"] | -1;
+    s.minAngle = m["minAngle"] | 0;
+    s.maxAngle = m["maxAngle"] | 180;
+    s.homeAngle = m["homeAngle"] | 0;
+    s.stepsPerRev = m["stepsPerRev"] | 200;
+    cfg.add(s);
+  }
+
+  motorRuntime_.applyConfig(cfg);
+  Serial.print("protocol load-config: slots=");
+  Serial.println(static_cast<int>(motorRuntime_.slotCount()));
+  return ack("load-config", true);
+}
+
+String Protocol::handleCommandIn(const char* dataStr) {
+  // data is a colon-delimited string "<verb>:<arg>" from the cloud sandbox.
+  // Example: "gotoangle:90"
+  if (!dataStr) {
+    Serial.println("protocol command-in: no data");
+    return ack("command-in", false, "no-data");
+  }
+
+  const std::string s(dataStr);
+  const size_t colon = s.find(':');
+  const std::string verb = (colon == std::string::npos) ? s : s.substr(0, colon);
+  const std::string arg = (colon == std::string::npos) ? "" : s.substr(colon + 1);
+
+  if (verb == "gotoangle") {
+    const int angle = atoi(arg.c_str());
+    // Bring-up assumption: one motor per device; dispatch to the first loaded
+    // slot. The gateway emits no slot field on command-in today.
+    // TODO(stage-7): converge gateway to emit explicit slot per command so
+    //   multi-motor devices can be addressed without this heuristic.
+    const bool ok = motorRuntime_.gotoAngleFirstSlot(angle);
+    Serial.print("protocol command-in gotoangle=");
+    Serial.print(angle);
+    Serial.print(" ok=");
+    Serial.println(ok ? "1" : "0");
+    return ack("command-in", ok, ok ? "" : "no-slot");
+  }
+
+  Serial.print("protocol command-in unknown verb: ");
+  Serial.println(verb.c_str());
+  return ack("command-in", false, "unknown-verb");
 }
 
 String Protocol::ack(const char* type, bool ok, const String& data) {
