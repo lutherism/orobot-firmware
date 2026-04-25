@@ -5,20 +5,18 @@
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 
+#include "lib/url_transform.h"
+
 namespace orobot {
 
 namespace {
 
-// Convert the compile-time gateway WS URL to its HTTP twin:
-//   ws://host:port/device  →  http://host:port/api/device/claim-code/redeem
-//   wss://host:port/device → https://host:port/api/device/claim-code/redeem
+// Pure helper does the actual ws→http transform; we just adapt to Arduino's
+// String here. See src/lib/url_transform.h for the host-tested logic.
 String redeemUrl() {
-  String url(OROBOT_GATEWAY_URL);
-  if (url.startsWith("ws://"))  url = String("http://")  + url.substring(5);
-  else if (url.startsWith("wss://")) url = String("https://") + url.substring(6);
-  const int slash = url.indexOf('/', 8);  // skip past scheme://
-  const String base = (slash < 0) ? url : url.substring(0, slash);
-  return base + "/api/device/claim-code/redeem";
+  const std::string s = toHttpApiUrl(OROBOT_GATEWAY_URL,
+                                     "/api/device/claim-code/redeem");
+  return String(s.c_str());
 }
 
 }  // namespace

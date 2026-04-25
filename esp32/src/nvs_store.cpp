@@ -10,6 +10,8 @@
 #include <Preferences.h>
 #include <esp_system.h>
 
+#include "lib/identity_format.h"
+
 namespace orobot {
 
 namespace {
@@ -31,17 +33,6 @@ void fillRandom(uint8_t* buf, size_t n) {
       buf[i + j] = static_cast<uint8_t>((r >> (j * 8)) & 0xFF);
     }
   }
-}
-
-String hexEncode(const uint8_t* buf, size_t n) {
-  static const char kHex[] = "0123456789abcdef";
-  String out;
-  out.reserve(n * 2);
-  for (size_t i = 0; i < n; ++i) {
-    out += kHex[(buf[i] >> 4) & 0xF];
-    out += kHex[buf[i] & 0xF];
-  }
-  return out;
 }
 }  // namespace
 
@@ -140,23 +131,14 @@ bool NvsStore::clearPairCode() {
 
 DeviceIdentity generateIdentity() {
   DeviceIdentity id;
-
-  // RFC 4122 v4: 16 random bytes, then set version (0100xxxx in byte 6)
-  // and variant (10xxxxxx in byte 8).
   uint8_t b[16];
   fillRandom(b, sizeof(b));
-  b[6] = (b[6] & 0x0F) | 0x40;
-  b[8] = (b[8] & 0x3F) | 0x80;
-  char buf[37];
-  snprintf(buf, sizeof(buf),
-           "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-           b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
-           b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
-  id.uuid = String(buf);
+  applyUuidV4Bits(b);
+  id.uuid = String(formatUuid(b).c_str());
 
   uint8_t k[32];
   fillRandom(k, sizeof(k));
-  id.key = hexEncode(k, sizeof(k));
+  id.key = String(hexEncode(k, sizeof(k)).c_str());
   return id;
 }
 

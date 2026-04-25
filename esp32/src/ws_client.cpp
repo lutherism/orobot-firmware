@@ -4,50 +4,13 @@
 
 #include <ArduinoJson.h>
 
+#include "lib/url_transform.h"
+
 namespace orobot {
 
 namespace {
 
 WsClient* g_self = nullptr;
-
-// Parse `ws://host:port/path` or `wss://host:port/path` into the form the
-// library wants (host, port, path, ssl). Kept tiny — gateway URL is set at
-// compile time, no need for a general-purpose parser.
-struct ParsedUrl {
-  String host;
-  uint16_t port = 0;
-  String path;
-  bool ssl = false;
-  bool ok = false;
-};
-
-ParsedUrl parseUrl(const char* url) {
-  ParsedUrl p;
-  String s(url);
-  int i = 0;
-  if (s.startsWith("wss://")) {
-    p.ssl = true;
-    i = 6;
-  } else if (s.startsWith("ws://")) {
-    p.ssl = false;
-    i = 5;
-  } else {
-    return p;
-  }
-  const int slash = s.indexOf('/', i);
-  const String authority = (slash < 0) ? s.substring(i) : s.substring(i, slash);
-  p.path = (slash < 0) ? String("/") : s.substring(slash);
-  const int colon = authority.indexOf(':');
-  if (colon < 0) {
-    p.host = authority;
-    p.port = p.ssl ? 443 : 80;
-  } else {
-    p.host = authority.substring(0, colon);
-    p.port = static_cast<uint16_t>(authority.substring(colon + 1).toInt());
-  }
-  p.ok = p.host.length() > 0 && p.port > 0;
-  return p;
-}
 
 String typedFrame(const char* type, const String& deviceUuid) {
   // Connection-setup frame per device-protocol.md §3:
@@ -67,7 +30,7 @@ void WsClient::begin(const DeviceIdentity& id, Protocol* protocol) {
   protocol_ = protocol;
   g_self = this;
 
-  const ParsedUrl u = parseUrl(OROBOT_GATEWAY_URL);
+  const WsUrl u = parseWsUrl(OROBOT_GATEWAY_URL);
   if (!u.ok) {
     Serial.print("ws-bad-url ");
     Serial.println(OROBOT_GATEWAY_URL);
@@ -76,10 +39,10 @@ void WsClient::begin(const DeviceIdentity& id, Protocol* protocol) {
 
   Serial.print("ws-connecting ");
   Serial.print(u.ssl ? "wss://" : "ws://");
-  Serial.print(u.host);
+  Serial.print(u.host.c_str());
   Serial.print(':');
   Serial.print(u.port);
-  Serial.println(u.path);
+  Serial.println(u.path.c_str());
 
   if (u.ssl) {
     socket_.beginSSL(u.host.c_str(), u.port, u.path.c_str());

@@ -12,6 +12,8 @@
 #include <WebServer.h>
 #include <WiFi.h>
 
+#include "lib/ap_ssid.h"
+
 namespace orobot {
 
 namespace {
@@ -75,11 +77,7 @@ void handleSave() {
 }  // namespace
 
 String WifiPortal::apSsidFromMac(uint64_t mac) {
-  char buf[18];
-  snprintf(buf, sizeof(buf), "orobot-setup-%02X%02X",
-           static_cast<uint8_t>((mac >> 8) & 0xFF),
-           static_cast<uint8_t>(mac & 0xFF));
-  return String(buf);
+  return String(apSsidFromMacPure(mac).c_str());
 }
 
 bool WifiPortal::begin(NvsStore* store) {
