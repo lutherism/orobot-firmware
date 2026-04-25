@@ -40,6 +40,9 @@ constexpr const char* kPortalHtml =
     "<form method=POST action=/save>"
     "<label>Network name (SSID)<input name=ssid required maxlength=32></label>"
     "<label>Password<input name=pass type=password maxlength=63></label>"
+    "<label>Pair code (from orobot.io &rarr; Devices)"
+    "<input name=code inputmode=numeric pattern='[0-9]{6}' maxlength=6 "
+    "placeholder='123456' required></label>"
     "<button type=submit>Save &amp; reboot</button>"
     "</form>"
     "</main>";
@@ -58,7 +61,8 @@ void handleSave() {
   WifiCreds creds;
   creds.ssid = g_http.arg("ssid");
   creds.password = g_http.arg("pass");
-  if (!g_self->credsWrite(creds)) {
+  const String code = g_http.arg("code");
+  if (!g_self->credsWrite(creds, code)) {
     g_http.send(500, "text/plain", "nvs write failed");
     return;
   }
@@ -110,9 +114,10 @@ void WifiPortal::tick() {
 
 // Internal: called by handleSave to persist + flip the done flag. Not in the
 // public header so the test build doesn't need HTTP handlers.
-bool WifiPortal::credsWrite(const WifiCreds& creds) {
+bool WifiPortal::credsWrite(const WifiCreds& creds, const String& pairCode) {
   if (!store_) return false;
   if (!store_->writeWifi(creds)) return false;
+  if (pairCode.length() > 0 && !store_->writePairCode(pairCode)) return false;
   creds_received_ = true;
   return true;
 }
