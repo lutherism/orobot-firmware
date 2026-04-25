@@ -39,7 +39,7 @@ class WifiPortal {
   // Called by the portal's HTTP save handler; also callable from tests to
   // simulate a form submission without bringing up a real web server. Writes
   // to NVS via the store passed to `begin()` and flips `credsReceived()`.
-  bool credsWrite(const WifiCreds& creds);
+  bool credsWrite(const WifiCreds& creds, const String& pairCode = String());
 
  private:
   NvsStore* store_ = nullptr;

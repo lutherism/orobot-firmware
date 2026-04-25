@@ -14,9 +14,11 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
+#include "claim_redeem.h"
 #include "nvs_store.h"
 #include "protocol.h"
 #include "wifi_portal.h"
+#include "ws_client.h"
 
 namespace {
 
@@ -36,6 +38,9 @@ constexpr uint32_t kHeartbeatPeriodMs = 1000;
 orobot::NvsStore g_store;
 orobot::WifiPortal g_portal;
 orobot::Protocol g_protocol;
+orobot::WsClient g_ws;
+orobot::DeviceIdentity g_identity;
+bool g_ws_started = false;
 State g_state = State::kBoot;
 uint8_t g_sta_attempts = 0;
 uint32_t g_sta_started_ms = 0;
@@ -116,6 +121,20 @@ void setup() {
     return;
   }
 
+  g_identity = g_store.readIdentity();
+  if (g_identity.empty()) {
+    g_identity = orobot::generateIdentity();
+    if (!g_store.writeIdentity(g_identity)) {
+      Serial.println("identity-write-failed");
+    } else {
+      Serial.println("identity-generated");
+    }
+  }
+  Serial.print("device-uuid=");
+  Serial.println(g_identity.uuid);
+  Serial.print("device-key=");
+  Serial.println(g_identity.key);
+
   g_creds = g_store.readWifi();
   if (g_creds.empty()) {
     Serial.println("no-creds");
@@ -142,12 +161,32 @@ void loop() {
       break;
 
     case State::kStaConnected:
-      // Placeholder — #510 drives the WebSocket client from here.
-      // #511 owns the device-side command handlers once messages arrive.
       if (WiFi.status() != WL_CONNECTED) {
         Serial.println("sta-dropped");
+        g_ws_started = false;
         enterStaConnect(g_creds);
+        break;
       }
+      if (!g_ws_started) {
+        // Redeem any pending pair code before opening the WS. The gateway
+        // requires the device row + PubSub provisioning to exist before
+        // `connect-to-user` can subscribe — see
+        // robots-gateway/src/modules/devices/service.ts:redeemClaimCode.
+        const String pendingCode = g_store.readPairCode();
+        if (pendingCode.length() > 0) {
+          if (orobot::redeemPairCode(g_identity.uuid, pendingCode)) {
+            g_store.clearPairCode();
+            Serial.println("redeem-success");
+          } else {
+            // Keep the code in NVS so the next boot retries; surfacing the
+            // failure to serial is the only signal a non-OLED device has.
+            Serial.println("redeem-failed-keeping-code");
+          }
+        }
+        g_ws.begin(g_identity, &g_protocol);
+        g_ws_started = true;
+      }
+      g_ws.tick();
       break;
 
     case State::kAp:
