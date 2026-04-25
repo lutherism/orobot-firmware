@@ -24,6 +24,25 @@ void test_stepsForAngleDelta_zero(void) {
   TEST_ASSERT_EQUAL_INT(0, stepsForAngleDelta(45, 45, 200));
 }
 
+void test_motorState_initialIsHome(void) {
+  MotorState ms(/*homeAngle=*/45);
+  TEST_ASSERT_EQUAL_INT(45, ms.angle());
+}
+
+void test_motorState_applyDelta(void) {
+  MotorState ms(0);
+  ms.applyDelta(30);
+  TEST_ASSERT_EQUAL_INT(30, ms.angle());
+  ms.applyDelta(-10);
+  TEST_ASSERT_EQUAL_INT(20, ms.angle());
+}
+
+void test_motorState_setAngle(void) {
+  MotorState ms(0);
+  ms.setAngle(90);
+  TEST_ASSERT_EQUAL_INT(90, ms.angle());
+}
+
 void setUp(void) {}
 void tearDown(void) {}
 
@@ -35,5 +54,8 @@ int main(int, char**) {
   RUN_TEST(test_stepsForAngleDelta_positive);
   RUN_TEST(test_stepsForAngleDelta_negative);
   RUN_TEST(test_stepsForAngleDelta_zero);
+  RUN_TEST(test_motorState_initialIsHome);
+  RUN_TEST(test_motorState_applyDelta);
+  RUN_TEST(test_motorState_setAngle);
   return UNITY_END();
 }

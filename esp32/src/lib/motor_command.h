@@ -15,4 +15,14 @@ inline int stepsForAngleDelta(int currentAngle, int targetAngle, int stepsPerRev
   return (delta * stepsPerRev) / 360;
 }
 
+class MotorState {
+ public:
+  explicit MotorState(int homeAngle) : angle_(homeAngle) {}
+  int angle() const { return angle_; }
+  void applyDelta(int delta) { angle_ += delta; }
+  void setAngle(int a) { angle_ = a; }
+ private:
+  int angle_;
+};
+
 }  // namespace orobot
