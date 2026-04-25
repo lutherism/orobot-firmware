@@ -1,0 +1,9 @@
+{
+  "name": "@orobot/esp32-portal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "portal-dev": "node dev-server.mjs",
+    "portal-build": "node build.mjs"
+  }
+}

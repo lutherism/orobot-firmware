@@ -12,6 +12,8 @@
 #include <WebServer.h>
 #include <WiFi.h>
 
+#include "portal_html.h"  // generated from esp32/portal/index.html
+
 namespace orobot {
 
 namespace {
@@ -19,30 +21,6 @@ namespace {
 constexpr const char* kApPassword = nullptr;  // open network during provisioning
 constexpr byte kDnsPort = 53;
 constexpr uint16_t kHttpPort = 80;
-
-// Single-page provisioning form. Inlined rather than SPIFFS-backed so the
-// portal keeps working even on a fresh flash that hasn't partitioned SPIFFS.
-constexpr const char* kPortalHtml =
-    "<!doctype html><meta charset=utf-8>"
-    "<title>orobot setup</title>"
-    "<style>"
-    "body{font:16px system-ui;margin:0;padding:40px 20px;background:#0f172a;color:#f1f5f9}"
-    "main{max-width:360px;margin:0 auto}"
-    "h1{font-size:22px;margin:0 0 24px}"
-    "label{display:block;margin:16px 0 4px;font-size:13px;color:#94a3b8}"
-    "input{width:100%;box-sizing:border-box;padding:12px;font-size:16px;"
-    "border:1px solid #334155;border-radius:8px;background:#1e293b;color:#f1f5f9}"
-    "button{margin-top:24px;width:100%;padding:14px;font-size:16px;font-weight:600;"
-    "background:#22d3ee;color:#0f172a;border:0;border-radius:8px}"
-    "</style>"
-    "<main>"
-    "<h1>Connect your orobot</h1>"
-    "<form method=POST action=/save>"
-    "<label>Network name (SSID)<input name=ssid required maxlength=32></label>"
-    "<label>Password<input name=pass type=password maxlength=63></label>"
-    "<button type=submit>Save &amp; reboot</button>"
-    "</form>"
-    "</main>";
 
 DNSServer g_dns;
 WebServer g_http(kHttpPort);
