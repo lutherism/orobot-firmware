@@ -13,6 +13,7 @@
 #include <WiFi.h>
 
 #include "lib/ap_ssid.h"
+#include "portal_html.h"  // generated from esp32/portal/index.html
 
 namespace orobot {
 
