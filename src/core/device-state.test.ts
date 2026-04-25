@@ -76,4 +76,29 @@ describe('DeviceStateService', () => {
     fs.writeFileSync(filePath, '{ broken json');
     expect(() => new DeviceStateService(filePath)).toThrow(SyntaxError);
   });
+
+  it('recovers after a failed write — next patch() persists', async () => {
+    const svc = new DeviceStateService(filePath);
+
+    const original = fs.promises.writeFile;
+    let calls = 0;
+    const stub = ((...args: Parameters<typeof original>) => {
+      calls++;
+      if (calls === 1) return Promise.reject(new Error('disk full'));
+      return original(...args);
+    }) as typeof original;
+    (fs.promises as { writeFile: typeof original }).writeFile = stub;
+
+    try {
+      await expect(svc.patch({ deviceUuid: 'first' })).rejects.toThrow('disk full');
+      // The queue must not be poisoned — the second patch should persist.
+      await svc.patch({ deviceUuid: 'second' });
+    } finally {
+      (fs.promises as { writeFile: typeof original }).writeFile = original;
+    }
+
+    const onDisk = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    expect(onDisk.deviceUuid).toBe('second');
+    expect(svc.get().deviceUuid).toBe('second');
+  });
 });

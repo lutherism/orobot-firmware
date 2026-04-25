@@ -58,8 +58,11 @@ export class DeviceStateService {
 
   async patch(update: Partial<DeviceState>): Promise<void> {
     this.state = { ...this.state, ...update };
-    this.writeQueue = this.writeQueue.then(() => this.writeToDisk());
-    return this.writeQueue;
+    const next = this.writeQueue.then(() => this.writeToDisk());
+    // Surface the rejection to this caller, but unpoison the queue so a
+    // single transient disk failure doesn't reject every subsequent patch.
+    this.writeQueue = next.catch(() => {});
+    return next;
   }
 
   private async writeToDisk(): Promise<void> {
