@@ -29,6 +29,7 @@ constexpr const char* kPortalHtml = R"OROBOT_PORTAL(<!doctype html>
   <form method=POST action=/save>
     <label>Network name (SSID)<input name=ssid required maxlength=32></label>
     <label>Password<input name=pass type=password maxlength=63></label>
+    <label>Pair code (from orobot.io &rarr; Devices)<input name=code inputmode=numeric pattern='[0-9]{6}' maxlength=6 placeholder='123456' required></label>
     <button type=submit>Save &amp; reboot</button>
   </form>
 </main>
