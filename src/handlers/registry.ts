@@ -1,6 +1,7 @@
 import type { EventBus } from '../core/event-bus';
 import type { InboundMessage } from '../core/types';
 import { createLogger } from '../core/logger';
+import { makeEnvelope } from '../core/wire';
 
 export type MessageHandler = (msg: InboundMessage) => Promise<void>;
 
@@ -51,11 +52,10 @@ export class MessageHandlerRegistry {
       // Silently catch handler errors and continue to send ack
     } finally {
       this.bus.emit('network:send', {
-        payload: {
-          type: 'message-ack',
-          ackId: msg.ackId,
+        payload: makeEnvelope('message-ack', {
+          ackId:      msg.ackId,
           deviceUuid: this.getDeviceUuid(),
-        },
+        }),
       });
     }
   }

@@ -3,6 +3,7 @@ import { createLogger } from './logger';
 import type { StepperMotor } from '../hardware/stepper-motor';
 import type { DeviceStateService } from './device-state';
 import type { EventBus } from './event-bus';
+import { makeEnvelope } from './wire';
 
 const log = createLogger('device-sandbox');
 
@@ -31,12 +32,11 @@ export class DeviceSandboxService {
         console.log('[device-sandbox]', text);
         if (bus) {
           bus.emit('network:send', {
-            payload: {
-              type:       'device-log',
+            payload: makeEnvelope('device-log', {
               level:      'log',
               text,
               deviceUuid: state.get().deviceUuid,
-            },
+            }),
           });
         }
       },

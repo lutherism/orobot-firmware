@@ -151,11 +151,11 @@ describe('GatewayClient', () => {
       client.start();
       await connectedPromise;
 
-      bus.emit('network:send', { payload: { type: 'custom-event', value: 42 } });
+      bus.emit('network:send', { payload: { type: 'custom-event', data: '42' } });
       await new Promise((r) => setTimeout(r, 50));
 
       const custom = allMsgs.find((m) => (m as { type: string }).type === 'custom-event');
-      expect(custom).toMatchObject({ type: 'custom-event', value: 42 });
+      expect(custom).toMatchObject({ type: 'custom-event', data: '42' });
     } finally {
       client.stop();
       await closeServer(wss);

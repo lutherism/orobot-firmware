@@ -1,6 +1,7 @@
 import type { DeviceStateService } from '../core/device-state';
 import type { EventBus } from '../core/event-bus';
 import type { WifiManager } from '../wifi/wifi-manager';
+import { makeEnvelope } from '../core/wire';
 import type { MessageHandler } from './registry';
 
 export function createWifiListHandler(
@@ -12,15 +13,14 @@ export function createWifiListHandler(
     const networks = await wifiManager.scanNetworks();
     const { knownNetworks, deviceUuid } = state.get();
     bus.emit('network:send', {
-      payload: {
-        type:       'wifiList',
+      payload: makeEnvelope('wifiList', {
         deviceUuid,
-        data:       JSON.stringify({
+        data: {
           uniqueNetworks: networks,
           rawNetworks:    networks,
           knownNetworks:  knownNetworks.map((n) => ({ ssid: n.ssid, mac: n.mac })),
-        }),
-      },
+        },
+      }),
     });
   };
 }
