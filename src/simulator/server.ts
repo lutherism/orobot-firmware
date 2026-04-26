@@ -262,6 +262,47 @@ export function createServer(registry: DeviceRegistry) {
     _req.on('close', () => clearInterval(heartbeat));
   });
 
+  // ── Firmware binary serving ──────────────────────────────────────────────────
+  //
+  // Serves esptool-js–consumable artifacts for the Installer view. V1 reads
+  // them straight out of the local PlatformIO build directory; V1.1 will
+  // proxy GCS (the contract — `GET /api/firmware/:distId/:binKey` returning
+  // `application/octet-stream` — stays the same).
+  //
+  // The allow-list of binKeys is the path-traversal guard; we never join a
+  // user-supplied string into a filesystem path.
+
+  const FIRMWARE_BINARIES: Record<string, Record<string, string>> = {
+    esp32: {
+      bootloader:  'bootloader.bin',
+      partitions:  'partitions.bin',
+      application: 'firmware.bin',
+    },
+  };
+  const ESP32_BUILD_DIR = path.join(__dirname, '../../esp32/.pio/build/esp32dev');
+
+  app.get('/api/firmware/:distId/:binKey', (req, res) => {
+    const { distId, binKey } = req.params;
+    const distMap = FIRMWARE_BINARIES[distId];
+    if (!distMap || !distMap[binKey]) {
+      return res.status(404).json({
+        code: 'BINARY_NOT_BUILT',
+        message: `No firmware binary registered for ${distId}/${binKey}`,
+        guidance: 'Check the simulator FIRMWARE_BINARIES table or pick a different distribution.',
+      });
+    }
+    const filename = distMap[binKey];
+    const filePath = path.join(ESP32_BUILD_DIR, filename);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        code: 'BINARY_NOT_BUILT',
+        message: `Firmware binary ${filename} not built yet.`,
+        guidance: 'Build the firmware first: `cd orobot-firmware/esp32 && pio run -e esp32dev`. The simulator serves binaries from `.pio/build/esp32dev/`.',
+      });
+    }
+    res.type('application/octet-stream').sendFile(filePath);
+  });
+
   // ── Captive portal simulation ────────────────────────────────────────────────
 
   /** Serve the WiFi captive portal page for a device */
