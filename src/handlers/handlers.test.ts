@@ -194,7 +194,10 @@ describe('System handlers', () => {
     await handler(makeMsg({ type: 'getDeviceData', deviceUuid: 'dev-123' }));
     expect(sentPayloads).toHaveLength(1);
     expect((sentPayloads[0] as Record<string, unknown>).type).toBe('device-data-read');
-    expect((sentPayloads[0] as Record<string, unknown>).data).toEqual(deviceData);
+    // Wire contract: `data` is always a string. JSON.parse round-trips to the source object.
+    const data = (sentPayloads[0] as Record<string, unknown>).data;
+    expect(typeof data).toBe('string');
+    expect(JSON.parse(data as string)).toEqual(deviceData);
   });
 
   it('reboot handler emits system:reboot-requested', async () => {

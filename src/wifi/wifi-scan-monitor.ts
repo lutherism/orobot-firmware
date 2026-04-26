@@ -2,6 +2,7 @@ import type { DeviceStateService } from '../core/device-state';
 import type { EventBus } from '../core/event-bus';
 import type { WifiShellAdapter } from './types';
 import { createLogger } from '../core/logger';
+import { makeEnvelope } from '../core/wire';
 
 const PEER_PREFIX = 'OROBOT-Setup-';
 export class WifiScanMonitor {
@@ -40,11 +41,10 @@ export class WifiScanMonitor {
         await this.adapter.pushCredentials(network.ssid, wifiSettings);
         this.bus.emit('wifi:credentials-shared', { targetSsid: network.ssid });
         this.bus.emit('network:send', {
-          payload: {
-            type:       'wifi-setup-found',
-            data:       JSON.stringify({ uuidTag: network.ssid.slice(PEER_PREFIX.length) }),
+          payload: makeEnvelope('wifi-setup-found', {
             deviceUuid,
-          },
+            data: { uuidTag: network.ssid.slice(PEER_PREFIX.length) },
+          }),
         });
       }
     } catch (err) {

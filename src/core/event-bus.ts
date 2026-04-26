@@ -5,13 +5,14 @@ import type {
   ScanResult,
   ConnectionQuality,
 } from './types';
+import type { OutboundEnvelope } from './wire';
 
 export type EventMap = {
   'network:mode-changed':     { from: NetworkMode; to: NetworkMode };
   'network:connected':        { url: string };
   'network:disconnected':     { reason: string };
   'network:message':          { type: string; data: string; ackId: string };
-  'network:send':             { payload: Record<string, unknown> };
+  'network:send':             { payload: OutboundEnvelope };
   'hardware:motor-moved':     { angle: number };
   'hardware:motor-error':     { error: Error };
   'pty:output':               { data: string };

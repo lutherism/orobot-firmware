@@ -1,6 +1,7 @@
 import type { DeviceStateService } from '../core/device-state';
 import type { EventBus } from '../core/event-bus';
 import type { NetworkStateMachine } from '../network/state-machine';
+import { makeEnvelope } from '../core/wire';
 import type { MessageHandler } from './registry';
 
 export function createGetDeviceDataHandler(
@@ -10,12 +11,11 @@ export function createGetDeviceDataHandler(
   return async (msg) => {
     const data = state.get();
     bus.emit('network:send', {
-      payload: {
-        type: 'device-data-read',
+      payload: makeEnvelope('device-data-read', {
         deviceUuid: data.deviceUuid,
-        userUuid: data.ownerUuid,
+        userUuid:   data.ownerUuid ?? undefined,
         data,
-      },
+      }),
     });
   };
 }
