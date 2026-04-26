@@ -86,3 +86,30 @@ CI runs the same two commands on every PR (see
 The Pi/Jetson firmware (`../src/`) stays the reference implementation and
 canonical behavior. When protocol questions arise, the Pi firmware wins and
 the ESP32 port adapts.
+
+## Hardware bring-up procedure
+
+1. Erase + flash latest firmware: `pio run -e esp32dev -t erase && pio run -e esp32dev -t upload`
+2. Join `orobot-setup-XXXX` AP, submit SSID + pass + 6-digit pair code from `orobot.io → Devices → Add device`.
+3. Confirm device row appears in Devices page with non-null userUuid.
+4. Open or create a Robot. Attach the ESP32. Confirm persistence on reload.
+5. Wire bench motor — see "Bench rig" below.
+6. Open Program IDE, create program with `motor.gotoAngle(90)` in `onStart`.
+7. Test-on-Robot → assign slot → Deploy. Motor turns to 90°.
+
+If step 7 fails, switch firmware build to point at fake-gateway:
+`OROBOT_GATEWAY_URL='ws://<host-ip>:8093/device' pio run -e esp32dev -t upload`
+then `cd test-harness && npm run scenario:motor-gotoangle`. If scenario passes, the gap is gateway-side; if fails, firmware-side.
+
+### Bench rig (28BYJ-48 + ULN2003)
+
+| ULN2003 pin | ESP32 pin |
+|---|---|
+| IN1 | GPIO 14 |
+| IN2 | GPIO 27 |
+| IN3 | GPIO 26 |
+| IN4 | GPIO 25 |
+| V+ | external 5V |
+| GND | external GND + ESP32 GND |
+
+Common-ground the supplies. Do not power motor from USB rail.

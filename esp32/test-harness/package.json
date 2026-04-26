@@ -1,0 +1,16 @@
+{
+  "name": "orobot-esp32-test-harness",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Local fake gateway + scenario runner for ESP32 firmware integration testing.",
+  "scripts": {
+    "fake-gateway": "node fake-gateway.mjs",
+    "scenario:handshake": "node scenarios/handshake.mjs",
+    "scenario:ack-echo": "node scenarios/ack-echo.mjs",
+    "scenario:motor-gotoangle": "node scenarios/motor-gotoangle.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
