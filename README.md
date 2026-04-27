@@ -1,3 +1,5 @@
+![Logo](assets/repo-banner-1400w.jpeg)
+
 # orobot-firmware
 
 > **Note:** This document may lag behind the code. Always read the source before making changes.
