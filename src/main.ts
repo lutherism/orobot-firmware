@@ -30,6 +30,7 @@ import { WifiManager } from './wifi/wifi-manager';
 import { CaptivePortalServer } from './wifi/captive-portal';
 import { WifiScanMonitor } from './wifi/wifi-scan-monitor';
 import { RpiWifiShellAdapter } from './wifi/rpi-shell-adapter';
+import { MockWifiShellAdapter } from './wifi/mock-shell-adapter';
 import type { WifiShellAdapter } from './wifi/types';
 import { createLogger } from './core/logger';
 
@@ -121,7 +122,10 @@ export function createApp(options: AppOptions = {}): App {
   const networkSM = new NetworkStateMachine(state, bus, device);
   const wifiSM    = new WifiStateMachine(bus, device);
 
-  const wifiAdapter    = options.wifiShellAdapter ?? new RpiWifiShellAdapter();
+  // Jetson manages its own network via the host OS — the captive-portal/AP
+  // flow is Pi-only. Use the no-op adapter so iptables/hostapd are never invoked.
+  const wifiAdapter    = options.wifiShellAdapter
+                       ?? (platform === 'jetson' ? new MockWifiShellAdapter() : new RpiWifiShellAdapter());
   const wifiManager    = new WifiManager(
     wifiAdapter, state, bus, wifiSM,
     options.maxConnectFailures,
