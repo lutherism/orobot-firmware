@@ -7,8 +7,7 @@
  *
  * Pin numbers passed in are 40-pin header positions. JETSON_PIN_MAP translates
  * them to (chip, line) pairs. On Orin the primary GPIO bank is gpiochip0 and
- * line numbers are the Tegra SoC GPIO numbers — the same values the old sysfs
- * driver used, just accessed differently.
+ * line numbers are the Tegra SoC GPIO numbers.
  *
  * To verify pin assignments on a live board: `gpioinfo` (install via `apt install gpiod`).
  */
@@ -25,8 +24,8 @@ export const JETSON_PIN_MAP: Readonly<Record<number, { chip: number; line: numbe
   11: { chip: 0, line: 50  },
   12: { chip: 0, line: 79  },
   13: { chip: 0, line: 14  },
-  15: { chip: 0, line: 194 },
-  16: { chip: 0, line: 232 },
+  15: { chip: 0, line: 135 },  // PZ.05
+  16: { chip: 0, line: 137 },  // PZ.07
   18: { chip: 0, line: 15  },
   19: { chip: 0, line: 16  },
   21: { chip: 0, line: 17  },
@@ -35,8 +34,8 @@ export const JETSON_PIN_MAP: Readonly<Record<number, { chip: number; line: numbe
   24: { chip: 0, line: 19  },
   26: { chip: 0, line: 20  },
   29: { chip: 0, line: 149 },
-  31: { chip: 0, line: 200 },
-  32: { chip: 0, line: 168 },
+  31: { chip: 0, line: 101 },  // PQ.01
+  32: { chip: 0, line: 144 },  // PAC.06
   33: { chip: 0, line: 38  },
   35: { chip: 0, line: 76  },
   36: { chip: 0, line: 51  },
@@ -58,7 +57,7 @@ class JetsonPin implements Pin {
 }
 
 export class JetsonGPIODriver implements GPIODriver {
-  private readonly chips = new Map<number, { getLine(n: number): { requestOutputMode(c: string): void; setValue(v: 0|1): void; release(): void } }>();
+  private readonly chips = new Map<number, object>();
 
   async export(headerPin: number, _direction: 'in' | 'out'): Promise<Pin> {
     const mapping = JETSON_PIN_MAP[headerPin];
@@ -75,8 +74,8 @@ export class JetsonGPIODriver implements GPIODriver {
       this.chips.set(mapping.chip, chip!);
     }
 
-    const line = chip!.getLine(mapping.line);
-    line.requestOutputMode('orobot');
+    const line = new libgpiod.Line(chip, mapping.line);
+    line.requestOutputMode();
     return new JetsonPin(line);
   }
 }

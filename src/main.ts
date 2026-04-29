@@ -235,7 +235,12 @@ export function createApp(options: AppOptions = {}): App {
           }
         }),
       );
-      await motor.initialize();
+      // Motor init can fail on Jetson when no hardware is attached or pin map
+      // is wrong for this board. Degrade gracefully so the gateway connection
+      // and claim flow still work.
+      await motor.initialize().catch((err: unknown) => {
+        console.warn('Motor GPIO init failed (hardware may not be attached):', err instanceof Error ? err.message : String(err));
+      });
       await wifiManager.initialize();
       ptyManager.start();
     },
