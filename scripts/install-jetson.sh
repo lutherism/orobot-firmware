@@ -44,7 +44,7 @@ fi
 chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 
 echo "==> Installing dependencies and building"
-sudo -u "$SERVICE_USER" bash -lc "cd '$INSTALL_DIR' && npm ci && npm run build:firmware"
+sudo -u "$SERVICE_USER" bash -lc "cd '$INSTALL_DIR' && npm install --omit=dev && npm run build:firmware"
 
 echo "==> Creating persistent data directory $DATA_DIR"
 mkdir -p "$DATA_DIR"
