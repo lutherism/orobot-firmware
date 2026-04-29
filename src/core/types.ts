@@ -1,6 +1,6 @@
 export type NetworkMode = 'client' | 'ap' | 'dev' | 'sim';
 export type DeviceType  = 'wifi-motor' | 'wifi-camera' | (string & {});
-export type HardwareProfile = 'raspi' | 'banana' | (string & {});
+export type HardwareProfile = 'raspi' | 'jetson' | 'banana' | (string & {});
 
 export type WifiState =
   | 'UNCONFIGURED'

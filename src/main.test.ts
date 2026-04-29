@@ -133,7 +133,7 @@ describe('createApp()', () => {
     const app = createApp({ ...baseOptions(port), execCommand });
     await app.start();
     app.bus.emit('system:update-requested', {});
-    expect(execCommand).toHaveBeenCalledWith('/home/pi/orobot-firmware/update-reboot.sh', []);
+    expect(execCommand).toHaveBeenCalledWith(expect.stringContaining('update-reboot.sh'), []);
     await app.stop();
     await closeServer(wss);
   }, 5000);

@@ -33,8 +33,15 @@ import { RpiWifiShellAdapter } from './wifi/rpi-shell-adapter';
 import type { WifiShellAdapter } from './wifi/types';
 import { createLogger } from './core/logger';
 
-const DEFAULT_DATA_FILE       = path.join(__dirname, '../scripts/openroboticsdata/data.json');
-const RASPI_PINS              = [17, 18, 22, 27];
+const DEFAULT_DATA_FILE       = (() => {
+  const dir = process.env['OROBOT_DATA_DIR']
+    ?? path.join(__dirname, '../scripts/openroboticsdata');
+  return path.join(dir, 'data.json');
+})();
+// RPi uses BCM (Broadcom chip) GPIO numbers; Jetson driver expects physical
+// 40-pin header positions. These are the same physical connector positions.
+const RASPI_PINS              = [17, 18, 22, 27];  // BCM
+const JETSON_PINS             = [11, 12, 15, 13];  // header pins (≡ BCM 17,18,22,27)
 const BANANA_PINS             = [0, 1, 3, 2];
 const DEFAULT_SCAN_INTERVAL   = 10_000;
 const PROD_GATEWAY_HTTP_URL   = 'https://robots-gateway-v2.wl.r.appspot.com';
@@ -93,8 +100,11 @@ export function createApp(options: AppOptions = {}): App {
   const state  = new DeviceStateService(dataFilePath);
   const bus    = new EventBus();
 
-  const hw     = state.get().hardware;
-  const pins   = hw === 'banana' ? BANANA_PINS : RASPI_PINS;
+  const hw       = state.get().hardware;
+  const platform = (process.env['OROBOT_PLATFORM'] ?? 'pi').trim().toLowerCase();
+  const pins     = platform === 'jetson' ? JETSON_PINS
+                 : hw === 'banana'       ? BANANA_PINS
+                 : RASPI_PINS;
   const driver = options.driver ?? selectDriver();
   const motor  = new StepperMotor(driver, pins, bus);
 
@@ -192,7 +202,7 @@ export function createApp(options: AppOptions = {}): App {
     async start(): Promise<void> {
       unsubscribers.push(
         bus.on('system:reboot-requested',  () => exec('sudo', ['reboot'])),
-        bus.on('system:update-requested',  () => exec('/home/pi/orobot-firmware/update-reboot.sh', [])),
+        bus.on('system:update-requested',  () => exec(path.join(__dirname, '../update-reboot.sh'), [])),
         bus.on('network:connected',        () => heartbeat.start(hbIntervalMs)),
         // Attempt claim-code redeem on either event: when the network comes up
         // (pendingClaimCode was set earlier during AP provisioning) or when a
