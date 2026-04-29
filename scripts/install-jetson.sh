@@ -21,11 +21,12 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-echo "==> Installing Node.js 20"
+echo "==> Installing Node.js 20 and libgpiod"
 if ! command -v node >/dev/null 2>&1 || [[ "$(node -v)" != v20* ]]; then
   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
   apt-get install -y nodejs
 fi
+apt-get install -y libgpiod2 libgpiod-dev gpiod
 
 # JetPack ships a 'gpio' group; add the service user so it can write /sys/class/gpio.
 if getent group gpio >/dev/null 2>&1; then
