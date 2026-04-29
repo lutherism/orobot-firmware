@@ -1,4 +1,4 @@
-![Logo](assets/repo-banner-1400w.jpeg)
+![Logo](assets/repo-banner-1400w.png)
 
 # orobot-firmware
 
