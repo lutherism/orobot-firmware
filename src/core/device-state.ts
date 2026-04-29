@@ -17,9 +17,8 @@ export interface DeviceState {
   hardware:         HardwareProfile;
   pingTime:         number;
   devIP:            string | null;
-  pendingClaimCode:       string | null;
-  deviceGeneratedCode:    string | null; // headless pairing (Jetson); device generates, user redeems via CLI
-  lastSetupError:         string | null;
+  pendingClaimCode: string | null;
+  lastSetupError:   string | null;
 }
 
 const DEFAULT_STATE: Readonly<DeviceState> = Object.freeze({
@@ -32,9 +31,8 @@ const DEFAULT_STATE: Readonly<DeviceState> = Object.freeze({
   hardware:         'raspi',
   pingTime:         0,
   devIP:            null,
-  pendingClaimCode:    null,
-  deviceGeneratedCode: null,
-  lastSetupError:      null,
+  pendingClaimCode: null,
+  lastSetupError:   null,
 });
 
 export class DeviceStateService {

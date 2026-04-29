@@ -174,31 +174,6 @@ export function createApp(options: AppOptions = {}): App {
 
   const unsubscribers: Array<() => void> = [];
 
-  async function tryRegisterDeviceCode(): Promise<void> {
-    const { ownerUuid, deviceGeneratedCode, deviceUuid, hardware } = state.get();
-    if (ownerUuid || hardware !== 'jetson') return;
-
-    let code = deviceGeneratedCode;
-    if (!code) {
-      code = String(Math.floor(100_000 + Math.random() * 900_000));
-      await state.patch({ deviceGeneratedCode: code });
-    }
-    process.stdout.write(`orobot device code: ${code}\n`);
-
-    const gatewayHttpBase = options.gatewayUrl
-      ? wsUrlToHttpBase(options.gatewayUrl)
-      : PROD_GATEWAY_HTTP_URL;
-    try {
-      await fetch(`${gatewayHttpBase}/api/device/claim-code/device-register`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ code, deviceUuid }),
-      });
-    } catch {
-      /* will retry on next network:connected */
-    }
-  }
-
   async function tryRedeemClaimCode(): Promise<void> {
     const { pendingClaimCode, deviceUuid } = state.get();
     if (!pendingClaimCode) return;
@@ -233,7 +208,6 @@ export function createApp(options: AppOptions = {}): App {
         // (pendingClaimCode was set earlier during AP provisioning) or when a
         // code is submitted after we're already connected (simulator / reclaim).
         bus.on('network:connected',        () => { void tryRedeemClaimCode(); }),
-        bus.on('network:connected',        () => { void tryRegisterDeviceCode(); }),
         bus.on('portal:claim-code-stored', () => { void tryRedeemClaimCode(); }),
         bus.on('network:disconnected',     () => heartbeat.stop()),
         bus.on('wifi:goto-client-requested', () => void wifiManager.gotoClient()),
