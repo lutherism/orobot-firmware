@@ -19,6 +19,11 @@ if [[ -z "$CODE" ]]; then
   exit 1
 fi
 
+if [[ ! "$CODE" =~ ^[0-9]{6}$ ]]; then
+  echo "Error: code must be 6 digits (e.g. 386146 or '386 146')" >&2
+  exit 1
+fi
+
 DATA_FILE="${OROBOT_DATA_DIR:-/var/lib/orobot}/data.json"
 if [[ ! -f "$DATA_FILE" ]]; then
   echo "Device not initialized — is orobot.service running?" >&2
