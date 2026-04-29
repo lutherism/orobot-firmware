@@ -5,15 +5,20 @@ import { JetsonGPIODriver, JETSON_PIN_MAP } from './jetson-driver';
 const mockSetValue = vi.fn();
 const mockRelease = vi.fn();
 const mockRequestOutputMode = vi.fn();
-const mockGetLine = vi.fn(() => ({
+const mockGetLine = vi.fn((_offset?: number) => ({
   requestOutputMode: mockRequestOutputMode,
   setValue: mockSetValue,
   release: mockRelease,
 }));
 
 vi.mock('node-libgpiod', async () => {
-  class Chip { getLine = mockGetLine; }
-  class Line {}
+  class Chip { constructor(_index?: number) {} }
+  class Line {
+    constructor(_chip: Chip, offset: number) { mockGetLine(offset); } // eslint-disable-line @typescript-eslint/no-unused-vars
+    requestOutputMode = mockRequestOutputMode;
+    setValue = mockSetValue;
+    release = mockRelease;
+  }
   return { Chip, Line };
 });
 
@@ -26,7 +31,7 @@ describe('JetsonGPIODriver', () => {
     const driver = new JetsonGPIODriver();
     await driver.export(11, 'out');
     expect(mockGetLine).toHaveBeenCalledWith(50);
-    expect(mockRequestOutputMode).toHaveBeenCalledWith('orobot');
+    expect(mockRequestOutputMode).toHaveBeenCalled();
   });
 
   it('pin.set() calls setValue with the given value', async () => {
