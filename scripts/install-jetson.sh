@@ -43,6 +43,7 @@ if getent group gpio >/dev/null 2>&1; then
 fi
 
 echo "==> Cloning/updating $REPO_URL into $INSTALL_DIR"
+git config --global --add safe.directory "$INSTALL_DIR"
 if [[ -d "$INSTALL_DIR/.git" ]]; then
   git -C "$INSTALL_DIR" fetch --depth=1 origin master
   git -C "$INSTALL_DIR" reset --hard origin/master
