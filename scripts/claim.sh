@@ -8,7 +8,10 @@
 set -euo pipefail
 
 GATEWAY="${OROBOT_API:-https://orobot.io}"
-CODE="${1:-}"
+# Join all args and strip spaces/dashes so "386 146" and "386146" both work.
+CODE="${*:-}"
+CODE="${CODE// /}"
+CODE="${CODE//-/}"
 
 if [[ -z "$CODE" ]]; then
   echo "Usage: $0 <claim-code>" >&2
