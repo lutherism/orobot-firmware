@@ -66,6 +66,10 @@ if [[ ! -f "$DATA_FILE" ]]; then
   chown "$SERVICE_USER:$SERVICE_USER" "$DATA_FILE"
 fi
 
+echo "==> Installing orobot-claim helper"
+cp "$INSTALL_DIR/scripts/claim.sh" /usr/local/bin/orobot-claim
+chmod +x /usr/local/bin/orobot-claim
+
 echo "==> Writing systemd unit"
 cat >/etc/systemd/system/orobot.service <<EOF
 [Unit]
@@ -110,6 +114,10 @@ echo "    2. Your browser should open the setup portal automatically."
 echo "       If not, navigate to http://192.168.4.1"
 echo "    3. Enter your WiFi credentials and the claim code shown on screen"
 echo "       at orobot.io/claim"
+echo
+echo "  Claim this device to your account:"
+echo "    orobot-claim <code>"
+echo "    (find the code with: journalctl -u orobot.service -n 20)"
 echo
 echo "  Useful commands:"
 echo "    systemctl status orobot.service"
