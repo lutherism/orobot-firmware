@@ -1,10 +1,24 @@
 {
   "distributions": [
     {
+      "id": "esp32",
+      "type": "esp32",
+      "label": "ESP32",
+      "description": "ESP32, ESP32-S2, ESP32-S3, and ESP32-C3 boards",
+      "targetKind": "serial-port",
+      "binaries": {
+        "bootloader":  { "url": "/api/firmware/esp32/bootloader",  "flashAddress": 4096 },
+        "partitions":  { "url": "/api/firmware/esp32/partitions",  "flashAddress": 32768 },
+        "application": { "url": "/api/firmware/esp32/application", "flashAddress": 65536 }
+      },
+      "boardIds": ["esp32", "esp32-s2", "esp32-s3", "esp32-c3"]
+    },
+    {
       "id": "rpi",
       "type": "raspberry-pi",
       "label": "Raspberry Pi",
       "description": "All Pi models (5, 4, 400, Zero, Compute Module)",
+      "targetKind": "block-device",
       "imageUrl": "",
       "imageSize": 0,
       "boardIds": ["rpi5", "rpi4", "rpi400", "rpi-zero", "rpi-cm"]

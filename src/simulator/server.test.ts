@@ -251,6 +251,40 @@ describe('GET /api/devices/:id/wifi', () => {
 
 // ── POST /api/devices/:id/wifi ────────────────────────────────────────────────
 
+// ── Firmware binary serving ───────────────────────────────────────────────────
+
+describe('GET /api/firmware/:distId/:binKey', () => {
+  it('returns 404 BINARY_NOT_BUILT for unknown distId', async () => {
+    const app = createServer(makeRegistry());
+    const res = await supertest(app).get('/api/firmware/nope/bootloader');
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('BINARY_NOT_BUILT');
+    expect(res.body.guidance).toBeTruthy();
+  });
+
+  it('returns 404 BINARY_NOT_BUILT for unknown binKey (path-traversal guard)', async () => {
+    const app = createServer(makeRegistry());
+    const res = await supertest(app).get('/api/firmware/esp32/..%2F..%2Fetc%2Fpasswd');
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('BINARY_NOT_BUILT');
+  });
+
+  it('returns 404 BINARY_NOT_BUILT when build artifact is missing', async () => {
+    // The esp32 build dir likely does not exist in CI/dev — the route should
+    // surface a guidance-rich 404 rather than crashing.
+    const app = createServer(makeRegistry());
+    const res = await supertest(app).get('/api/firmware/esp32/bootloader');
+    if (res.status === 404) {
+      expect(res.body.code).toBe('BINARY_NOT_BUILT');
+      expect(res.body.guidance).toMatch(/pio run/);
+    } else {
+      // If the build happens to exist locally, just confirm the content type.
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toMatch(/octet-stream/);
+    }
+  });
+});
+
 describe('POST /api/devices/:id/wifi', () => {
   let app: ReturnType<typeof createServer>;
 
