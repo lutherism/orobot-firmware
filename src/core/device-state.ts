@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { randomUUID } from 'crypto';
 import type {
   NetworkMode,
   DeviceType,
@@ -48,6 +49,9 @@ export class DeviceStateService {
         throw err;
       }
       this.state = { ...DEFAULT_STATE };
+    }
+    if (!this.state.deviceUuid) {
+      this.state = { ...this.state, deviceUuid: randomUUID() };
       this.writeSync();
     }
   }

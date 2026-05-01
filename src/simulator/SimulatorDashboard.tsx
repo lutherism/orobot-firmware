@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { DeviceCard } from './DeviceCard';
-import { FlashManager, detectDrives } from './FlashManager';
-import { type Drive, type Distribution, type FlashState } from './flashUtils';
+import { Installer } from './Installer';
+import { WebSerialTransport } from './transports/WebSerialTransport';
+import type { Distribution, Transport, TransportKind } from './transports/types';
 import type { Device, DeviceStatus } from './types';
 
-type View = 'devices' | 'flash';
+type View = 'devices' | 'installer';
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -331,29 +332,17 @@ export function SimulatorDashboard({
   const [spawnMenuOpen, setSpawnMenuOpen] = useState(false);
   const spawnMenuRef = useRef<HTMLDivElement>(null);
   
-  // Flash manager state
-  const [drives, setDrives] = useState<Drive[]>([
-    { letter: 'E:', name: 'SD_CARD', size: 32 * 1024 * 1024 * 1024, free: 0, condition: 'ready' },
-    { letter: 'F:', name: 'USB_DRIVE', size: 64 * 1024 * 1024 * 1024, free: 32 * 1024 * 1024 * 1024, condition: 'ready' },
-  ]);
+  // Installer state
   const [distributions, setDistributions] = useState<Distribution[]>([]);
-  const [flashState, setFlashState] = useState<FlashState>({ 
-    status: 'flashing', 
-    progress: 0, 
-    log: [],
-    driveStates: {
-      'E:': { status: 'preparing', progress: 0 },
-      'F:': { status: 'flashing', progress: 30 },
-    },
-    driveLogs: {
-      'E:': 'writing bits...hello?',
-      'F:': 'writing bits...hello?',
-    },
-  });
-  
-  // Load drives and distributions on mount
+  const transports = useRef<Map<TransportKind, Transport>>(
+    new Map<TransportKind, Transport>([
+      ['serial-port', new WebSerialTransport()],
+      // 'block-device' transport is intentionally unregistered until the SD-card
+      // path lands. The Installer view shows a "not wired up" panel for it.
+    ]),
+  );
+
   useEffect(() => {
-    // detectDrives().then(setDrives);
     fetch('/distribution-config.json')
       .then(r => r.json())
       .then(cfg => setDistributions(cfg.distributions || []))
@@ -418,7 +407,7 @@ export function SimulatorDashboard({
         <Badge>{devices.length} total</Badge>
         <ViewTabs>
           <ViewTab $active={view === 'devices'} onClick={() => setView('devices')}>Devices</ViewTab>
-          <ViewTab $active={view === 'flash'} onClick={() => setView('flash')}>Flash Manager</ViewTab>
+          <ViewTab $active={view === 'installer'} onClick={() => setView('installer')}>Installer</ViewTab>
         </ViewTabs>
         <Spacer />
         {userLabel && <Badge>{userLabel}</Badge>}
@@ -518,19 +507,8 @@ export function SimulatorDashboard({
         </DeviceGrid>
       )}
 
-      {view === 'flash' && (
-        <FlashManager
-          drives={drives}
-          distributions={distributions}
-          flashState={flashState}
-          onFlash={(drive, distro) => {
-            console.log('Flash', drive, distro);
-          }}
-          onCancel={() => setFlashState({ status: 'idle', progress: 0, log: [] })}
-          onAddDrive={(drive) => {
-            setDrives(prev => [...prev, drive]);
-          }}
-        />
+      {view === 'installer' && (
+        <Installer distributions={distributions} transports={transports.current} />
       )}
 
       {/* Stats bar - only show for devices view */}

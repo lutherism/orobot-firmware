@@ -30,6 +30,7 @@ import { WifiManager } from './wifi/wifi-manager';
 import { CaptivePortalServer } from './wifi/captive-portal';
 import { WifiScanMonitor } from './wifi/wifi-scan-monitor';
 import { RpiWifiShellAdapter } from './wifi/rpi-shell-adapter';
+import { MockWifiShellAdapter } from './wifi/mock-shell-adapter';
 import type { WifiShellAdapter } from './wifi/types';
 import { createLogger } from './core/logger';
 
@@ -121,7 +122,10 @@ export function createApp(options: AppOptions = {}): App {
   const networkSM = new NetworkStateMachine(state, bus, device);
   const wifiSM    = new WifiStateMachine(bus, device);
 
-  const wifiAdapter    = options.wifiShellAdapter ?? new RpiWifiShellAdapter();
+  // Jetson manages its own network via the host OS — the captive-portal/AP
+  // flow is Pi-only. Use the no-op adapter so iptables/hostapd are never invoked.
+  const wifiAdapter    = options.wifiShellAdapter
+                       ?? (platform === 'jetson' ? new MockWifiShellAdapter() : new RpiWifiShellAdapter());
   const wifiManager    = new WifiManager(
     wifiAdapter, state, bus, wifiSM,
     options.maxConnectFailures,
@@ -235,7 +239,12 @@ export function createApp(options: AppOptions = {}): App {
           }
         }),
       );
-      await motor.initialize();
+      // Motor init can fail on Jetson when no hardware is attached or pin map
+      // is wrong for this board. Degrade gracefully so the gateway connection
+      // and claim flow still work.
+      await motor.initialize().catch((err: unknown) => {
+        console.warn('Motor GPIO init failed (hardware may not be attached):', err instanceof Error ? err.message : String(err));
+      });
       await wifiManager.initialize();
       ptyManager.start();
     },

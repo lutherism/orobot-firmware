@@ -1,82 +1,81 @@
 /**
- * GPIO driver for NVIDIA Jetson boards (Nano, Xavier NX, Orin Nano).
+ * GPIO driver for NVIDIA Jetson Orin Nano / Orin NX (JetPack 6+).
  *
- * Talks to the Linux sysfs GPIO interface at /sys/class/gpio. The `gpio` npm
- * package used by RPiGPIODriver assumes Pi-style BCM numbering and ships with
- * Pi-specific timing — neither holds on Jetson — so we write to sysfs directly.
+ * JetPack 6 removed the legacy sysfs GPIO interface (/sys/class/gpio) in favour
+ * of the Linux character device API (/dev/gpiochip*). This driver uses the
+ * `node-libgpiod` native bindings to talk to that interface.
  *
- * The 40-pin Jetson header uses the same physical layout as a Raspberry Pi but
- * each header pin maps to a different SoC GPIO number. JETSON_PIN_MAP below
- * translates the logical (header) pin a caller passes in to the SoC GPIO that
- * sysfs expects. The map covers Jetson Nano / Orin Nano; other Jetson variants
- * have a near-identical layout but should be verified against the L4T
- * pinmux spreadsheet before using.
+ * Pin numbers passed in are 40-pin header positions. JETSON_PIN_MAP translates
+ * them to (chip, line) pairs. On Orin the primary GPIO bank is gpiochip0 and
+ * line numbers are the Tegra SoC GPIO numbers.
+ *
+ * To verify pin assignments on a live board: `gpioinfo` (install via `apt install gpiod`).
  */
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
 import type { GPIODriver, Pin } from './types';
 
-/**
- * Logical 40-pin header pin → Jetson SoC GPIO number.
- * Source: NVIDIA Jetson Nano J41 header pinout (matches Orin Nano / Xavier NX
- * for the GPIO-capable pins listed). Power, ground, and I²C pins are omitted.
- */
-export const JETSON_PIN_MAP: Readonly<Record<number, number>> = Object.freeze({
-  7:  216,
-  11: 50,
-  12: 79,
-  13: 14,
-  15: 194,
-  16: 232,
-  18: 15,
-  19: 16,
-  21: 17,
-  22: 13,
-  23: 18,
-  24: 19,
-  26: 20,
-  29: 149,
-  31: 200,
-  32: 168,
-  33: 38,
-  35: 76,
-  36: 51,
-  37: 12,
-  38: 77,
-  40: 78,
+// Loaded lazily so tests and non-Jetson builds can import this file without
+// the native module installed. The real load happens in JetsonGPIODriver.export().
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let libgpiod: any;
+
+/** 40-pin header position → { chip index, line number } */
+export const JETSON_PIN_MAP: Readonly<Record<number, { chip: number; line: number }>> = Object.freeze({
+  7:  { chip: 0, line: 106 },
+  11: { chip: 0, line: 50  },
+  12: { chip: 0, line: 79  },
+  13: { chip: 0, line: 14  },
+  15: { chip: 0, line: 135 },  // PZ.05
+  16: { chip: 0, line: 137 },  // PZ.07
+  18: { chip: 0, line: 15  },
+  19: { chip: 0, line: 16  },
+  21: { chip: 0, line: 17  },
+  22: { chip: 0, line: 13  },
+  23: { chip: 0, line: 18  },
+  24: { chip: 0, line: 19  },
+  26: { chip: 0, line: 20  },
+  29: { chip: 0, line: 149 },
+  31: { chip: 0, line: 101 },  // PQ.01
+  32: { chip: 0, line: 144 },  // PAC.06
+  33: { chip: 0, line: 38  },
+  35: { chip: 0, line: 76  },
+  36: { chip: 0, line: 51  },
+  37: { chip: 0, line: 12  },
+  38: { chip: 0, line: 77  },
+  40: { chip: 0, line: 78  },
 });
 
-const SYSFS_ROOT = '/sys/class/gpio';
-
 class JetsonPin implements Pin {
-  constructor(private readonly socGpio: number, private readonly root: string) {}
+  constructor(private readonly line: { setValue(v: 0|1): void; release(): void }) {}
 
   async set(value: 0 | 1): Promise<void> {
-    await fs.writeFile(path.join(this.root, `gpio${this.socGpio}`, 'value'), String(value));
+    this.line.setValue(value);
   }
 
   async unexport(): Promise<void> {
-    await fs.writeFile(path.join(this.root, 'unexport'), String(this.socGpio));
+    this.line.release();
   }
 }
 
 export class JetsonGPIODriver implements GPIODriver {
-  /** Override the sysfs root — useful for tests that mock the filesystem. */
-  constructor(private readonly root: string = SYSFS_ROOT) {}
+  private readonly chips = new Map<number, object>();
 
-  async export(pin: number, direction: 'in' | 'out'): Promise<Pin> {
-    const socGpio = JETSON_PIN_MAP[pin];
-    if (socGpio === undefined) {
+  async export(headerPin: number, _direction: 'in' | 'out'): Promise<Pin> {
+    const mapping = JETSON_PIN_MAP[headerPin];
+    if (!mapping) {
       const known = Object.keys(JETSON_PIN_MAP).join(', ');
-      throw new Error(`Pin ${pin} is not a GPIO-capable header pin on Jetson. Known pins: ${known}`);
+      throw new Error(`Pin ${headerPin} is not a GPIO-capable header pin on Jetson. Known pins: ${known}`);
     }
-    const pinDir = path.join(this.root, `gpio${socGpio}`);
-    try {
-      await fs.access(pinDir);
-    } catch {
-      await fs.writeFile(path.join(this.root, 'export'), String(socGpio));
+
+    if (!libgpiod) libgpiod = await import('node-libgpiod');
+
+    let chip = this.chips.get(mapping.chip);
+    if (!chip) {
+      chip = new libgpiod.Chip(mapping.chip);
+      this.chips.set(mapping.chip, chip!);
     }
-    await fs.writeFile(path.join(pinDir, 'direction'), direction);
-    return new JetsonPin(socGpio, this.root);
+
+    const line = new libgpiod.Line(chip, mapping.line);
+    line.requestOutputMode();
+    return new JetsonPin(line);
   }
 }

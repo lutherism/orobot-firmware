@@ -176,7 +176,7 @@ describe('PTY handler', () => {
   });
 
   it('PTYManager.write() throws when called before start()', () => {
-    const mgr = new PTYManagerClass();
+    const mgr = new PTYManagerClass({ spawn: () => { throw new Error('no pty'); } } as any, new EventBus());
     expect(() => mgr.write('hello')).toThrow('PTYManager not started');
   });
 });
@@ -256,7 +256,7 @@ describe('WiFi handlers', () => {
 
   it('wifiList handler emits network:send with correct payload structure', async () => {
     const { wifiManager, state, bus, adapter } = makeWifiManager();
-    adapter.setScanResults([{ ssid: 'HomeWifi', mac: 'aa:bb:cc', signal: -50 }]);
+    adapter.setScanResults([{ ssid: 'HomeWifi', mac: 'aa:bb:cc', security: 'WPA2' }]);
     const sent: unknown[] = [];
     bus.on('network:send', (p) => sent.push(p));
     const handler = createWifiListHandler(wifiManager, state, bus);
