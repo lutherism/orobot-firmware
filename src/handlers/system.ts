@@ -32,14 +32,23 @@ export function createUpdateHandler(bus: EventBus): MessageHandler {
   };
 }
 
+const VALID_SIMPLE_MODES = new Set(['client', 'ap']);
+const DEV_IP_RE = /^\d{1,3}(?:\.\d{1,3}){3}$/;
+
 export function createNetworkModeHandler(sm: NetworkStateMachine): MessageHandler {
   return async (msg) => {
     const raw = msg.data; // e.g. 'client', 'ap', 'dev:192.168.1.1'
     if (raw.startsWith('dev:')) {
       const devIP = raw.slice(4);
+      if (!DEV_IP_RE.test(devIP)) {
+        console.warn(`[networkmode] invalid dev IP rejected: ${JSON.stringify(devIP)}`);
+        return;
+      }
       await sm.transition('dev', { devIP });
-    } else {
+    } else if (VALID_SIMPLE_MODES.has(raw)) {
       await sm.transition(raw as import('../core/types').NetworkMode);
+    } else {
+      console.warn(`[networkmode] unknown mode rejected: ${JSON.stringify(raw)}`);
     }
   };
 }
