@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Claim this Jetson device to your orobot.io account.
-#
-# Usage:
 #   orobot-claim <code>
 #
 # Generate the claim code at orobot.io/o/robots, then run this command.

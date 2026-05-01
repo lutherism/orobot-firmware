@@ -93,6 +93,10 @@ echo "  Claim this device to your account:"
 echo "    1. Go to orobot.io/o/robots and generate a claim code."
 echo "    2. Run: orobot-claim <code>"
 echo
+echo "  Claim this device to your account:"
+echo "    orobot-claim <code>"
+echo "    (find the code with: journalctl -u orobot.service -n 20)"
+echo
 echo "  Useful commands:"
 echo "    systemctl status orobot.service"
 echo "    journalctl -u orobot.service -f"
