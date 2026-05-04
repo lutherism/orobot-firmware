@@ -311,7 +311,6 @@ export class DeviceRegistry extends EventEmitter {
     }
   }
 
-
   async networkConnected(id: string): Promise<void> {
     const inst = this.instances.get(id);
     inst?.app.bus.emit('network:connected', {url: GATEWAY_WS});
