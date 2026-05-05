@@ -234,6 +234,24 @@ describe('System handlers', () => {
     expect(state.get().networkMode).toBe('dev');
     expect(state.get().devIP).toBe('192.168.1.1');
   });
+
+  it('networkmode handler rejects unknown mode without throwing', async () => {
+    const bus   = new EventBus();
+    const state = makeTmpState({ deviceUuid: 'dev-123', networkMode: 'client' });
+    const sm    = new NetworkStateMachine(state, bus);
+    const handler = createNetworkModeHandler(sm);
+    await expect(handler(makeMsg({ type: 'networkmode', data: 'evil-mode' }))).resolves.toBeUndefined();
+    expect(state.get().networkMode).toBe('client');
+  });
+
+  it('networkmode handler rejects dev: with non-IP suffix without throwing', async () => {
+    const bus   = new EventBus();
+    const state = makeTmpState({ deviceUuid: 'dev-123', networkMode: 'client' });
+    const sm    = new NetworkStateMachine(state, bus);
+    const handler = createNetworkModeHandler(sm);
+    await expect(handler(makeMsg({ type: 'networkmode', data: 'dev:not-an-ip' }))).resolves.toBeUndefined();
+    expect(state.get().networkMode).toBe('client');
+  });
 });
 
 // ── WiFi + Camera stubs ──────────────────────────────────────────
