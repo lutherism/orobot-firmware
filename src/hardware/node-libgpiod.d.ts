@@ -1,10 +1,11 @@
 declare module 'node-libgpiod' {
+  export function version(): string;
   export class Chip {
     constructor(index: number);
-    getLine(offset: number): Line;
   }
   export class Line {
-    requestOutputMode(consumer: string): void;
+    constructor(chip: Chip, offset: number);
+    requestOutputMode(): void;
     setValue(value: 0 | 1): void;
     release(): void;
   }
