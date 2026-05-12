@@ -24,7 +24,7 @@ export class GatewayClient {
   private readonly unsubscribers: Array<() => void> = [];
   private readonly log: ReturnType<typeof createLogger>;
 
-  constructor(
+constructor(
     private readonly bus:         EventBus,
     private readonly state:       DeviceStateService,
     private readonly registry:    MessageHandlerRegistry,
@@ -34,6 +34,8 @@ export class GatewayClient {
     private readonly pingIntervalMs = DEFAULT_PING_MS,
     private readonly pongTimeoutMs  = DEFAULT_PONG_TIMEOUT,
     private readonly sleepFn: SleepFn = defaultSleep,
+    /** Platform identifier sent in the handshake (pi, jetson, simulator). */
+    public readonly platform: string = 'pi',
   ) {
     this.log = createLogger('gateway-client', device);
   }
@@ -119,7 +121,7 @@ export class GatewayClient {
       ws.on('open', () => {
         this.log.info({ event: 'ws:connected', url }, 'Gateway connection established');
         const { deviceUuid } = this.state.get();
-        ws.send(JSON.stringify({ type: 'identify-connection', deviceUuid }));
+        ws.send(JSON.stringify({ type: 'identify-connection', deviceUuid, platform: this.platform }));
         ws.send(JSON.stringify({ type: 'connect-to-user',     deviceUuid }));
         this.bus.emit('network:connected', { url });
 

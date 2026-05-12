@@ -53,7 +53,7 @@ describe('GatewayClient', () => {
       client.start();
       const msgs = await handshakePromise;
 
-      expect(msgs).toContainEqual({ type: 'identify-connection', deviceUuid: 'test-device-uuid' });
+      expect(msgs).toContainEqual({ type: 'identify-connection', deviceUuid: 'test-device-uuid', platform: 'pi' });
       expect(msgs).toContainEqual({ type: 'connect-to-user',     deviceUuid: 'test-device-uuid' });
     } finally {
       client.stop();

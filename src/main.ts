@@ -167,7 +167,7 @@ export function createApp(options: AppOptions = {}): App {
   });
 
   const wsFactory: WsFactory = (url, proto) => new WebSocket(url, proto);
-  const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device, options.pingIntervalMs);
+  const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device, options.pingIntervalMs, undefined, undefined, platform);
   const heartbeat     = new HeartbeatService(state, bus, fetch, device);
   const hbIntervalMs  = options.heartbeatIntervalMs ?? 8_000;
 
