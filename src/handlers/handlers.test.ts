@@ -303,6 +303,35 @@ describe('Camera handler', () => {
     const handler = createCameraHandler(bus);
     await expect(handler(makeMsg({ type: 'getframe' }))).resolves.toBeUndefined();
   });
+
+  it('camera handler emits a camera-frame network message', async () => {
+    const bus = new EventBus();
+    const sent: unknown[] = [];
+    bus.on('network:send', (p) => sent.push(p.payload));
+    const handler = createCameraHandler(bus, async () => ({
+      mimeType: 'image/jpeg',
+      encoding: 'base64',
+      frame: 'abc123',
+      capturedAt: '2026-05-13T00:00:00.000Z',
+      width: 320,
+      height: 240,
+    }));
+
+    await handler(makeMsg({ type: 'getframe', deviceUuid: 'dev-123' }));
+
+    expect(sent).toHaveLength(1);
+    const payload = sent[0] as Record<string, string>;
+    expect(payload.type).toBe('camera-frame');
+    expect(payload.deviceUuid).toBe('dev-123');
+    expect(JSON.parse(payload.data)).toEqual({
+      mimeType: 'image/jpeg',
+      encoding: 'base64',
+      frame: 'abc123',
+      capturedAt: '2026-05-13T00:00:00.000Z',
+      width: 320,
+      height: 240,
+    });
+  });
 });
 
 // ── load-config handler ──────────────────────────────────────────
