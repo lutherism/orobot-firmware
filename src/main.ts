@@ -8,6 +8,7 @@ import { createMotorHandler, createGotoRelativeHandler, createStopAllHandler } f
 import { createPtyHandler } from './handlers/pty';
 import { createCameraHandler, captureCameraFrame } from './handlers/camera';
 import { createVisionInferenceHandler } from './handlers/vision-inference';
+import { createAgentInferenceHandler } from './handlers/agent-inference';
 import {
   createGetDeviceDataHandler,
   createRebootHandler,
@@ -145,9 +146,10 @@ export function createApp(options: AppOptions = {}): App {
   const scanIntervalMs  = options.scanIntervalMs ?? DEFAULT_SCAN_INTERVAL;
 
   const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid, device);
-  registry.register('pty-in',        createPtyHandler(ptyManager));
-  registry.register('getframe',      createCameraHandler(bus));
-  registry.register('infer-frame',   createVisionInferenceHandler(bus, programConfig, captureCameraFrame));
+  registry.register('pty-in',                  createPtyHandler(ptyManager));
+  registry.register('getframe',               createCameraHandler(bus));
+  registry.register('infer-frame',            createVisionInferenceHandler(bus, programConfig, captureCameraFrame));
+  registry.register('agent-inference-request', createAgentInferenceHandler(bus, null));
   registry.register('getDeviceData', createGetDeviceDataHandler(state, bus));
   registry.register('networkmode',   createNetworkModeHandler(networkSM));
   registry.register('share-wifi',    createShareWifiHandler(wifiManager));
@@ -177,7 +179,7 @@ export function createApp(options: AppOptions = {}): App {
   const SYSTEM_MSG_TYPES = new Set([
     'load-config', 'load-code', 'pty-in', 'getframe', 'infer-frame', 'getDeviceData',
     'networkmode', 'share-wifi', 'wifiList', 'reboot', 'update', 'command-in', 'stop',
-    'servo-command',
+    'servo-command', 'agent-inference-request',
   ]);
 
   registry.setPriorityDispatcher((msg) => {
