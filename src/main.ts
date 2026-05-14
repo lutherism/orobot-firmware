@@ -19,6 +19,8 @@ import { ProgramConfigService } from './core/program-config';
 import { createLoadConfigHandler } from './handlers/program-config';
 import { DeviceSandboxService } from './core/device-sandbox';
 import { createLoadCodeHandler } from './handlers/load-code';
+import { createServoCommandHandler } from './handlers/servo-command';
+import { PCA9685Driver } from './drivers/pca9685';
 import { StepperMotor } from './hardware/stepper-motor';
 import { selectDriver } from './hardware/driver-registry';
 import { PTYManager, type PtySpawner } from './pty/pty-manager';
@@ -102,6 +104,8 @@ export function createApp(options: AppOptions = {}): App {
   const state  = new DeviceStateService(dataFilePath);
   const bus    = new EventBus();
 
+  const pca9685  = new PCA9685Driver();
+
   const hw       = state.get().hardware;
   const platform = (process.env['OROBOT_PLATFORM'] ?? 'pi').trim().toLowerCase();
   const pins     = platform === 'jetson' ? JETSON_PINS
@@ -150,8 +154,9 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('gotoangle',     true, createMotorHandler(motor));
   registry.register('gotorelative',  true, createGotoRelativeHandler(motor));
   registry.register('load-config', createLoadConfigHandler(programConfig, motor));
-  registry.register('load-code', createLoadCodeHandler(deviceSandbox, motor, state, bus));
-  registry.register('stop',      createStopAllHandler(motor));
+  registry.register('load-code',      createLoadCodeHandler(deviceSandbox, motor, state, bus));
+  registry.register('stop',           createStopAllHandler(motor));
+  registry.register('servo-command',  createServoCommandHandler(pca9685));
 
   // System message types must always reach the registry.
   // User action types (e.g. 'go', 'home') are not in this set and can be
@@ -159,6 +164,7 @@ export function createApp(options: AppOptions = {}): App {
   const SYSTEM_MSG_TYPES = new Set([
     'load-config', 'load-code', 'pty-in', 'getframe', 'infer-frame', 'getDeviceData',
     'networkmode', 'share-wifi', 'wifiList', 'reboot', 'update', 'command-in', 'stop',
+    'servo-command',
   ]);
 
   registry.setPriorityDispatcher((msg) => {
@@ -247,6 +253,11 @@ export function createApp(options: AppOptions = {}): App {
       await motor.initialize().catch((err: unknown) => {
         console.warn('Motor GPIO init failed (hardware may not be attached):', err instanceof Error ? err.message : String(err));
       });
+      // PCA9685 init is best-effort — degrades gracefully on devices without
+      // the board wired up (common for non-quadruped robots).
+      await pca9685.init().catch((err: unknown) => {
+        console.warn('PCA9685 I²C init failed (board may not be connected):', err instanceof Error ? err.message : String(err));
+      });
       await wifiManager.initialize();
       ptyManager.start();
     },
@@ -261,6 +272,7 @@ export function createApp(options: AppOptions = {}): App {
       wifiScanMonitor.stop();
       wifiSM.reset(); // reset state machine so start() can run the full init sequence again
       await motor.stop(); // de-energize coils before process exits
+      pca9685.close();
     },
     get bus() { return bus; },
     get state() { return state; },
