@@ -20,6 +20,8 @@ import { createLoadConfigHandler } from './handlers/program-config';
 import { DeviceSandboxService } from './core/device-sandbox';
 import { createLoadCodeHandler } from './handlers/load-code';
 import { createServoCommandHandler } from './handlers/servo-command';
+import { createGaitCommandHandler } from './handlers/gait-command';
+import { GaitStateMachine } from './gait/quadruped';
 import { PCA9685Driver } from './drivers/pca9685';
 import { StepperMotor } from './hardware/stepper-motor';
 import { selectDriver } from './hardware/driver-registry';
@@ -105,6 +107,7 @@ export function createApp(options: AppOptions = {}): App {
   const bus    = new EventBus();
 
   const pca9685  = new PCA9685Driver();
+  const gait     = new GaitStateMachine(pca9685);
 
   const hw       = state.get().hardware;
   const platform = (process.env['OROBOT_PLATFORM'] ?? 'pi').trim().toLowerCase();
@@ -157,6 +160,16 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('load-code',      createLoadCodeHandler(deviceSandbox, motor, state, bus));
   registry.register('stop',           createStopAllHandler(motor));
   registry.register('servo-command',  createServoCommandHandler(pca9685));
+
+  // Gait commands — registered by their data string so the registry routes them
+  // from `command-in` messages via the exact data-match path in findHandler().
+  const gaitHandler = createGaitCommandHandler(gait);
+  registry.register('stand',          gaitHandler);
+  registry.register('sit',            gaitHandler);
+  registry.register('walk:forward',   gaitHandler);
+  registry.register('walk:backward',  gaitHandler);
+  registry.register('turn:left',      gaitHandler);
+  registry.register('turn:right',     gaitHandler);
 
   // System message types must always reach the registry.
   // User action types (e.g. 'go', 'home') are not in this set and can be
