@@ -6,7 +6,8 @@ import { EventBus } from './core/event-bus';
 import { MessageHandlerRegistry } from './handlers/registry';
 import { createMotorHandler, createGotoRelativeHandler, createStopAllHandler } from './handlers/motor';
 import { createPtyHandler } from './handlers/pty';
-import { createCameraHandler } from './handlers/camera';
+import { createCameraHandler, captureCameraFrame } from './handlers/camera';
+import { createVisionInferenceHandler } from './handlers/vision-inference';
 import {
   createGetDeviceDataHandler,
   createRebootHandler,
@@ -139,6 +140,7 @@ export function createApp(options: AppOptions = {}): App {
   const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid, device);
   registry.register('pty-in',        createPtyHandler(ptyManager));
   registry.register('getframe',      createCameraHandler(bus));
+  registry.register('infer-frame',   createVisionInferenceHandler(bus, programConfig, captureCameraFrame));
   registry.register('getDeviceData', createGetDeviceDataHandler(state, bus));
   registry.register('networkmode',   createNetworkModeHandler(networkSM));
   registry.register('share-wifi',    createShareWifiHandler(wifiManager));
@@ -155,7 +157,7 @@ export function createApp(options: AppOptions = {}): App {
   // User action types (e.g. 'go', 'home') are not in this set and can be
   // intercepted by device code before the registry sees them.
   const SYSTEM_MSG_TYPES = new Set([
-    'load-config', 'load-code', 'pty-in', 'getframe', 'getDeviceData',
+    'load-config', 'load-code', 'pty-in', 'getframe', 'infer-frame', 'getDeviceData',
     'networkmode', 'share-wifi', 'wifiList', 'reboot', 'update', 'command-in', 'stop',
   ]);
 
