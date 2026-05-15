@@ -3,11 +3,12 @@ import { execFile } from 'child_process';
 import { WebSocket } from 'ws';
 import { DeviceStateService } from './core/device-state';
 import { EventBus } from './core/event-bus';
-import { CameraStreamService } from './camera/stream-service';
+import { CameraStreamService as CameraPushService } from './camera/stream-service';
 import { MessageHandlerRegistry } from './handlers/registry';
 import { createMotorHandler, createGotoRelativeHandler, createStopAllHandler } from './handlers/motor';
 import { createPtyHandler } from './handlers/pty';
 import { createCameraHandler, captureCameraFrame } from './handlers/camera';
+import { CameraStreamService } from './handlers/camera-stream';
 import { createVisionInferenceHandler } from './handlers/vision-inference';
 import { createAgentInferenceHandler } from './handlers/agent-inference';
 import {
@@ -88,6 +89,8 @@ export interface AppOptions {
   maxReconnectRetries?: number;
   /** First N chars of device UUID to include in log output — used by the simulator. */
   devicePrefix?: string;
+  /** Override ffmpeg spawner for camera streaming — used in tests to avoid hardware. */
+  ffmpegSpawner?: import('./handlers/camera-stream').FfmpegSpawner;
 }
 
 export interface App {
@@ -146,6 +149,8 @@ export function createApp(options: AppOptions = {}): App {
   const wifiScanMonitor = new WifiScanMonitor(wifiAdapter, state, bus, device);
   const scanIntervalMs  = options.scanIntervalMs ?? DEFAULT_SCAN_INTERVAL;
 
+  const cameraStream = new CameraStreamService(bus, options.ffmpegSpawner);
+
   const registry = new MessageHandlerRegistry(bus, () => state.get().deviceUuid, device);
   registry.register('pty-in',                  createPtyHandler(ptyManager));
   registry.register('getframe',               createCameraHandler(bus));
@@ -159,7 +164,7 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('update',        createUpdateHandler(bus));
   registry.register('gotoangle',     true, createMotorHandler(motor));
   registry.register('gotorelative',  true, createGotoRelativeHandler(motor));
-  registry.register('load-config', createLoadConfigHandler(programConfig, motor));
+  registry.register('load-config', createLoadConfigHandler(programConfig, motor, cameraStream));
   registry.register('load-code',      createLoadCodeHandler(deviceSandbox, motor, state, bus));
   registry.register('stop',           createStopAllHandler(motor));
   registry.register('servo-command',  createServoCommandHandler(pca9685));
@@ -195,8 +200,8 @@ export function createApp(options: AppOptions = {}): App {
   const heartbeat     = new HeartbeatService(state, bus, fetch, device);
   const hbIntervalMs  = options.heartbeatIntervalMs ?? 8_000;
 
-  // Camera stream service — created lazily when network connects and config.camera is set.
-  let cameraStream: CameraStreamService | null = null;
+  // HTTP push camera stream service — created lazily when network connects and config.camera is set.
+  let cameraPushStream: CameraPushService | null = null;
 
   const exec = options.execCommand ?? ((cmd: string, args: string[]) => {
     // fire-and-forget; errors are silently ignored (reboot/update kills the process anyway)
@@ -241,22 +246,22 @@ export function createApp(options: AppOptions = {}): App {
         bus.on('network:connected',        () => { void tryRedeemClaimCode(); }),
         bus.on('portal:claim-code-stored', () => { void tryRedeemClaimCode(); }),
         bus.on('network:disconnected',     () => heartbeat.stop()),
-        // Camera stream — start when network comes up if config.camera is enabled
+        // HTTP push camera stream — start when network comes up if config.camera is enabled
         // and the device has a registered secret for REST auth.
         bus.on('network:connected', () => {
           const { deviceUuid, deviceSecret } = state.get();
           if (!programConfig.get().camera || !deviceSecret) return;
-          if (cameraStream) return; // already running
+          if (cameraPushStream) return; // already running
           const gatewayHttpBase = options.gatewayUrl
             ? wsUrlToHttpBase(options.gatewayUrl)
             : PROD_GATEWAY_HTTP_URL;
-          cameraStream = new CameraStreamService({ deviceUuid, deviceSecret, gatewayHttpBase });
-          void cameraStream.start();
+          cameraPushStream = new CameraPushService({ deviceUuid, deviceSecret, gatewayHttpBase });
+          void cameraPushStream.start();
         }),
         bus.on('network:disconnected', () => {
-          if (cameraStream) {
-            cameraStream.stop();
-            cameraStream = null;
+          if (cameraPushStream) {
+            cameraPushStream.stop();
+            cameraPushStream = null;
           }
         }),
         bus.on('wifi:goto-client-requested', () => void wifiManager.gotoClient()),
@@ -301,8 +306,9 @@ export function createApp(options: AppOptions = {}): App {
     async stop(): Promise<void> {
       unsubscribers.forEach((fn) => fn());
       unsubscribers.length = 0;
-      cameraStream?.stop();
-      cameraStream = null;
+      cameraStream.stop();
+      cameraPushStream?.stop();
+      cameraPushStream = null;
       wifiManager.stop();
       ptyManager.stop();
       gatewayClient.stop();
