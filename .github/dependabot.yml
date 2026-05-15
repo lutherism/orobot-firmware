@@ -1,0 +1,14 @@
+# Dependabot config for orobot-firmware.
+# Mirrors robots-gateway/.github/dependabot.yml.
+# Closes lutherism/orobotio#1420.
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
