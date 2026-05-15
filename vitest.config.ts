@@ -15,6 +15,12 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: 'v8',
+      thresholds: {
+        'src/core/**/*.ts':    { functions: 96 },
+        'src/network/**/*.ts': { functions: 95 },
+        'src/gait/**/*.ts':    { functions: 100 },
+        'src/drivers/**/*.ts': { functions: 100 },
+      },
     }
   },
 });
