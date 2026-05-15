@@ -23,6 +23,24 @@ export interface VisionConfig {
   sampleFps?: number;
 }
 
+export interface CameraConfig {
+  /**
+   * Whether continuous camera streaming is enabled. When true, the firmware
+   * starts an ffmpeg capture loop and emits `camera-frame` WS messages at
+   * `fps` frames per second. Defaults to false.
+   */
+  enabled?: boolean;
+  /**
+   * V4L2 device path on Linux (e.g. `/dev/video0`). Ignored in sim mode.
+   * Defaults to `/dev/video0`.
+   */
+  device?: string;
+  /**
+   * Target frames per second. Clamped to 1–30. Defaults to 10.
+   */
+  fps?: number;
+}
+
 export interface ProgramConfig {
   motors?:    MotorConfig[];
   poses?:     Record<string, Record<string, number>>;
@@ -31,12 +49,13 @@ export interface ProgramConfig {
   unitId?:    string;
   vision?:    VisionConfig;
   /**
-   * Enable continuous MJPEG camera streaming to the gateway.
-   * When `true`, the firmware pushes frames to POST /api/device/:uuid/stream/push
-   * using device-secret auth (requires `deviceSecret` in device state).
-   * Defaults to `false` — no camera process is started unless explicitly enabled.
+   * Camera configuration for continuous MJPEG streaming.
+   * When `enabled` is true (or the field is truthy for legacy boolean compat),
+   * the push-relay service (src/camera/stream-service.ts) activates on network
+   * connect, and the WS-based CameraStreamService emits camera-frame messages.
+   * Defaults to undefined (no camera process started).
    */
-  camera?:    boolean;
+  camera?:    CameraConfig;
 }
 
 export class ProgramConfigService {
