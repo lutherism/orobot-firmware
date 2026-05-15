@@ -3,6 +3,7 @@ import { execFile } from 'child_process';
 import { WebSocket } from 'ws';
 import { DeviceStateService } from './core/device-state';
 import { EventBus } from './core/event-bus';
+import { CameraStreamService } from './camera/stream-service';
 import { MessageHandlerRegistry } from './handlers/registry';
 import { createMotorHandler, createGotoRelativeHandler, createStopAllHandler } from './handlers/motor';
 import { createPtyHandler } from './handlers/pty';
@@ -194,6 +195,9 @@ export function createApp(options: AppOptions = {}): App {
   const heartbeat     = new HeartbeatService(state, bus, fetch, device);
   const hbIntervalMs  = options.heartbeatIntervalMs ?? 8_000;
 
+  // Camera stream service — created lazily when network connects and config.camera is set.
+  let cameraStream: CameraStreamService | null = null;
+
   const exec = options.execCommand ?? ((cmd: string, args: string[]) => {
     // fire-and-forget; errors are silently ignored (reboot/update kills the process anyway)
     execFile(cmd, args, () => {});
@@ -237,6 +241,24 @@ export function createApp(options: AppOptions = {}): App {
         bus.on('network:connected',        () => { void tryRedeemClaimCode(); }),
         bus.on('portal:claim-code-stored', () => { void tryRedeemClaimCode(); }),
         bus.on('network:disconnected',     () => heartbeat.stop()),
+        // Camera stream — start when network comes up if config.camera is enabled
+        // and the device has a registered secret for REST auth.
+        bus.on('network:connected', () => {
+          const { deviceUuid, deviceSecret } = state.get();
+          if (!programConfig.get().camera || !deviceSecret) return;
+          if (cameraStream) return; // already running
+          const gatewayHttpBase = options.gatewayUrl
+            ? wsUrlToHttpBase(options.gatewayUrl)
+            : PROD_GATEWAY_HTTP_URL;
+          cameraStream = new CameraStreamService({ deviceUuid, deviceSecret, gatewayHttpBase });
+          void cameraStream.start();
+        }),
+        bus.on('network:disconnected', () => {
+          if (cameraStream) {
+            cameraStream.stop();
+            cameraStream = null;
+          }
+        }),
         bus.on('wifi:goto-client-requested', () => void wifiManager.gotoClient()),
         bus.on('wifi:state-changed', ({ from, to }) => {
           if (to === 'CONNECTING') {
@@ -279,6 +301,8 @@ export function createApp(options: AppOptions = {}): App {
     async stop(): Promise<void> {
       unsubscribers.forEach((fn) => fn());
       unsubscribers.length = 0;
+      cameraStream?.stop();
+      cameraStream = null;
       wifiManager.stop();
       ptyManager.stop();
       gatewayClient.stop();

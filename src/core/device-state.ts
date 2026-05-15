@@ -20,6 +20,12 @@ export interface DeviceState {
   devIP:            string | null;
   pendingClaimCode: string | null;
   lastSetupError:   string | null;
+  /**
+   * Device secret for REST-API authentication (camera stream push, etc.).
+   * Provisioned at device setup time and stored persistently.
+   * Used to obtain short-lived session tokens via POST /api/device/:uuid/session.
+   */
+  deviceSecret?:    string;
 }
 
 const DEFAULT_STATE: Readonly<DeviceState> = Object.freeze({
