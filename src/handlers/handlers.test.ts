@@ -388,6 +388,79 @@ describe('load-config handler', () => {
       handler(makeMsg({ type: 'load-config', data: 'not json' }))
     ).resolves.toBeUndefined();
   });
+
+  it('starts the camera stream when config.camera.enabled is true and stream is not running', async () => {
+    const configSvc = makeTmpProgramConfig();
+    const motor = { setConstraints: vi.fn() } as unknown as StepperMotor;
+    const cameraStream = {
+      isRunning: false,
+      start: vi.fn(),
+      stop: vi.fn(),
+    };
+    const handler = createLoadConfigHandler(configSvc, motor, cameraStream as any);
+    const payload = { config: { camera: { enabled: true } }, unitId: 'u1' };
+    await handler(makeMsg({ type: 'load-config', data: JSON.stringify(payload), deviceUuid: 'dev-123' }));
+
+    expect(cameraStream.start).toHaveBeenCalledWith('dev-123', { enabled: true });
+    expect(cameraStream.stop).not.toHaveBeenCalled();
+  });
+
+  it('does not start the camera stream when already running', async () => {
+    const configSvc = makeTmpProgramConfig();
+    const motor = { setConstraints: vi.fn() } as unknown as StepperMotor;
+    const cameraStream = {
+      isRunning: true,
+      start: vi.fn(),
+      stop: vi.fn(),
+    };
+    const handler = createLoadConfigHandler(configSvc, motor, cameraStream as any);
+    const payload = { config: { camera: { enabled: true } }, unitId: 'u1' };
+    await handler(makeMsg({ type: 'load-config', data: JSON.stringify(payload), deviceUuid: 'dev-123' }));
+
+    expect(cameraStream.start).not.toHaveBeenCalled();
+  });
+
+  it('stops the camera stream when config.camera.enabled is false and stream is running', async () => {
+    const configSvc = makeTmpProgramConfig();
+    const motor = { setConstraints: vi.fn() } as unknown as StepperMotor;
+    const cameraStream = {
+      isRunning: true,
+      start: vi.fn(),
+      stop: vi.fn(),
+    };
+    const handler = createLoadConfigHandler(configSvc, motor, cameraStream as any);
+    const payload = { config: { camera: { enabled: false } }, unitId: 'u1' };
+    await handler(makeMsg({ type: 'load-config', data: JSON.stringify(payload) }));
+
+    expect(cameraStream.stop).toHaveBeenCalled();
+    expect(cameraStream.start).not.toHaveBeenCalled();
+  });
+
+  it('does not stop the camera stream when already idle and camera disabled', async () => {
+    const configSvc = makeTmpProgramConfig();
+    const motor = { setConstraints: vi.fn() } as unknown as StepperMotor;
+    const cameraStream = {
+      isRunning: false,
+      start: vi.fn(),
+      stop: vi.fn(),
+    };
+    const handler = createLoadConfigHandler(configSvc, motor, cameraStream as any);
+    const payload = { config: {}, unitId: 'u1' };
+    await handler(makeMsg({ type: 'load-config', data: JSON.stringify(payload) }));
+
+    expect(cameraStream.start).not.toHaveBeenCalled();
+    expect(cameraStream.stop).not.toHaveBeenCalled();
+  });
+
+  it('ignores camera stream when no cameraStream service is provided', async () => {
+    const configSvc = makeTmpProgramConfig();
+    const motor = { setConstraints: vi.fn() } as unknown as StepperMotor;
+    const handler = createLoadConfigHandler(configSvc, motor); // no cameraStream
+    const payload = { config: { camera: { enabled: true } }, unitId: 'u1' };
+    await expect(
+      handler(makeMsg({ type: 'load-config', data: JSON.stringify(payload) }))
+    ).resolves.toBeUndefined();
+  });
 });
 
 // ── load-code handler ────────────────────────────────────────────
