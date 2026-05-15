@@ -30,6 +30,13 @@ export interface ProgramConfig {
   actions?:   Array<{ name: string; message: string }>;
   unitId?:    string;
   vision?:    VisionConfig;
+  /**
+   * Enable continuous MJPEG camera streaming to the gateway.
+   * When `true`, the firmware pushes frames to POST /api/device/:uuid/stream/push
+   * using device-secret auth (requires `deviceSecret` in device state).
+   * Defaults to `false` — no camera process is started unless explicitly enabled.
+   */
+  camera?:    boolean;
 }
 
 export class ProgramConfigService {
