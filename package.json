@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^20.0.0",
+    "@types/node": "^25.8.0",
     "@types/react": "^17.0.91",
     "@types/react-dom": "^17.0.26",
     "@types/supertest": "^7.2.0",
