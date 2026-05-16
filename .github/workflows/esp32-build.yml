@@ -31,7 +31,7 @@ jobs:
       # PlatformIO's own cache covers ~/.platformio (toolchains + libraries).
       # A cold first run downloads ~300 MB; subsequent runs are ~30 s.
       - name: Cache PlatformIO
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.platformio/.cache
