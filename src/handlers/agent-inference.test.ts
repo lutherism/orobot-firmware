@@ -127,6 +127,24 @@ describe('createAgentInferenceHandler', () => {
     await flush();
   });
 
+  it('passes garbage Buffer to agent.analyze() when data is not valid base64 (Buffer.from never throws)', async () => {
+    // Pin the Node.js silent-garbage behavior: Buffer.from('!!!not-base64!!!', 'base64')
+    // does NOT throw — it returns a (possibly empty) Buffer with invalid chars silently dropped.
+    // The try/catch in agent-inference.ts is unreachable by the current runtime.
+    const handler = createAgentInferenceHandler(bus, mockAgent);
+    await handler(makeMsg({ data: '!!!not-base64!!!' }));
+    await flush();
+
+    // analyze() is called — no error envelope, because the catch block is unreachable
+    expect(mockAgent.analyze).toHaveBeenCalledOnce();
+    const envelope = sent[0] as Record<string, unknown>;
+    expect(envelope['type']).toBe('agent-inference-result');
+    const data = JSON.parse(envelope['data'] as string) as Record<string, unknown>;
+    // No error field — bad base64 goes through as a garbage buffer, not an error response
+    expect(data['error']).toBeUndefined();
+    expect(data['labels']).toEqual(MOCK_RESULT.labels);
+  });
+
   it('handler resolves before inference completes (truly non-blocking)', async () => {
     // Use a local bus so deferred work from prior tests cannot pollute sent
     const localBus  = new EventBus();

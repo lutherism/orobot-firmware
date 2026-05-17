@@ -53,6 +53,11 @@ export function createAgentInferenceHandler(
           return;
         }
 
+        // Note: Buffer.from(str, 'base64') never throws in Node.js — it silently
+        // ignores invalid or non-base64 characters and returns a truncated/garbage
+        // Buffer. This try/catch is defensive for future compatibility (e.g. a
+        // strict atob shim or WASM decoder) but cannot be triggered by the current
+        // Node.js runtime. See agent-inference.test.ts for the pinned behavior.
         let imageBuffer: Buffer;
         try {
           imageBuffer = Buffer.from(base64Image, 'base64');
