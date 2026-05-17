@@ -11,6 +11,8 @@ import { createCameraHandler, captureCameraFrame } from './handlers/camera';
 import { CameraStreamService } from './handlers/camera-stream';
 import { createVisionInferenceHandler } from './handlers/vision-inference';
 import { createAgentInferenceHandler } from './handlers/agent-inference';
+import { createAgentModelHandlers } from './handlers/agent-model';
+import { ModelManager } from './agent/model-manager';
 import {
   createGetDeviceDataHandler,
   createRebootHandler,
@@ -156,6 +158,14 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('getframe',               createCameraHandler(bus));
   registry.register('infer-frame',            createVisionInferenceHandler(bus, programConfig, captureCameraFrame));
   registry.register('agent-inference-request', createAgentInferenceHandler(bus, null));
+
+  // Agent model management — list, download, delete local ONNX models.
+  const modelManager = new ModelManager();
+  const agentModelHandlers = createAgentModelHandlers(bus, modelManager);
+  registry.register('agent-list-models-request',     agentModelHandlers.listModels);
+  registry.register('agent-download-model-request',  agentModelHandlers.downloadModel);
+  registry.register('agent-delete-model-request',    agentModelHandlers.deleteModel);
+
   registry.register('getDeviceData', createGetDeviceDataHandler(state, bus));
   registry.register('networkmode',   createNetworkModeHandler(networkSM));
   registry.register('share-wifi',    createShareWifiHandler(wifiManager));
@@ -186,6 +196,7 @@ export function createApp(options: AppOptions = {}): App {
     'load-config', 'load-code', 'pty-in', 'getframe', 'infer-frame', 'getDeviceData',
     'networkmode', 'share-wifi', 'wifiList', 'reboot', 'update', 'command-in', 'stop',
     'servo-command', 'agent-inference-request',
+    'agent-list-models-request', 'agent-download-model-request', 'agent-delete-model-request',
   ]);
 
   registry.setPriorityDispatcher((msg) => {
