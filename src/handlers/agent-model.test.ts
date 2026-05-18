@@ -1,16 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { EventEmitter } from 'events';
-import type { EventBus } from '../core/event-bus';
+import { EventBus } from '../core/event-bus';
 import { createAgentModelHandlers } from './agent-model';
 import type { ModelManager } from '../agent/model-manager';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeBus(): { bus: EventBus; sent: unknown[] } {
-  const emitter = new EventEmitter() as EventBus;
+  const bus = new EventBus();
   const sent: unknown[] = [];
-  emitter.on('network:send', (payload) => sent.push(payload));
-  return { bus: emitter, sent };
+  bus.on('network:send', (payload) => sent.push(payload));
+  return { bus, sent };
 }
 
 function makeMsg(type: string, data: string, deviceUuid = 'test-device') {
