@@ -290,9 +290,18 @@ describe('GatewayClient', () => {
   it('doubles backoffMs on each failed connection attempt', async () => {
     const { EventEmitter } = await import('node:events');
     const sleepCalls: number[] = [];
-    const fakeSleep: SleepFn = (ms) => { sleepCalls.push(ms); return Promise.resolve(); };
+    // Signal each backoff cycle so the test can wait deterministically
+    // rather than racing wall-clock timers (which is flaky under slow CI).
+    let onSleepCalled: (() => void) | null = null;
+    const fakeSleep: SleepFn = (ms) => {
+      sleepCalls.push(ms);
+      onSleepCalled?.();
+      return Promise.resolve();
+    };
 
-    // wsFactory that always emits an error — simulates unreachable server
+    // wsFactory that always emits an error — simulates unreachable server.
+    // Emit on a microtask (queueMicrotask) so the failure cycle advances
+    // without depending on macrotask scheduling under load.
     const makeFailingWs = () => {
       const ws = Object.assign(new EventEmitter(), {
         readyState: 3, // CLOSED
@@ -301,7 +310,7 @@ describe('GatewayClient', () => {
         close: () => {},
         terminate: () => {},
       });
-      setTimeout(() => ws.emit('error', new Error('ECONNREFUSED')), 0);
+      queueMicrotask(() => ws.emit('error', new Error('ECONNREFUSED')));
       return ws;
     };
 
@@ -318,10 +327,26 @@ describe('GatewayClient', () => {
       fakeSleep,
     );
 
+    // Wait until at least 3 sleep cycles have happened, with a generous cap.
+    const waitForCycles = (n: number) => new Promise<void>((resolve, reject) => {
+      const deadline = setTimeout(() => reject(new Error(
+        `timeout waiting for ${n} sleep cycles (got ${sleepCalls.length})`,
+      )), 2_000);
+      onSleepCalled = () => {
+        if (sleepCalls.length >= n) {
+          clearTimeout(deadline);
+          onSleepCalled = null;
+          resolve();
+        }
+      };
+    });
+
     client.start();
-    // Allow 3 failure cycles to complete: each is one Promise.resolve() tick
-    await new Promise((r) => setTimeout(r, 100));
-    client.stop();
+    try {
+      await waitForCycles(3);
+    } finally {
+      client.stop();
+    }
 
     // backoffMs starts at 2000, doubles: 2000 → 4000 → 8000 → ...
     expect(sleepCalls.length).toBeGreaterThanOrEqual(3);
