@@ -16,6 +16,10 @@
 export type { InferenceResult, BoundingBox, AgentConfig } from './types';
 export { ModelLoader } from './model-loader';
 export type { Backend, ModelLoaderOptions } from './model-loader';
+export { ModelManager } from './model-manager';
+export type { ModelMeta, DownloadProgressCallback, ModelManagerOptions } from './model-manager';
+export { STARTER_MODELS, findInCatalog } from './model-catalog';
+export type { CatalogEntry } from './model-catalog';
 
 import type { InferenceResult, AgentConfig } from './types';
 import { ModelLoader, type ModelLoaderOptions } from './model-loader';
