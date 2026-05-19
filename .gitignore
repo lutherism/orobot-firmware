@@ -38,6 +38,7 @@ scripts/openroboticsdata/data.json
 
 /dist
 /.superpowers
+/.claude
 
 # simulator persistence (local device state, not committed)
 .simulator/
