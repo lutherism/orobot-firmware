@@ -130,7 +130,7 @@ describe('createCameraHandler', () => {
     });
 
     const handler = createCameraHandler(bus, fakeCapture);
-    await handler({ type: 'camera', deviceUuid: 'd1', userUuid: 'u1', data: '' });
+    await handler({ type: 'camera', deviceUuid: 'd1', ackId: 'ack-1', data: '' });
 
     expect(emitted).toHaveLength(1);
     const payload = emitted[0].payload;
