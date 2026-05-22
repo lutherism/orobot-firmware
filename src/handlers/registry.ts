@@ -49,7 +49,7 @@ export class MessageHandlerRegistry {
         }
       }
     } catch (error) {
-      // Silently catch handler errors and continue to send ack
+      this.log.warn({ event: 'handler:error', type: msg.type, err: error }, 'Message handler threw — ack still sent');
     } finally {
       this.bus.emit('network:send', {
         payload: makeEnvelope('message-ack', {

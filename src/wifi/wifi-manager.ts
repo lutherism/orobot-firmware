@@ -83,7 +83,18 @@ export class WifiManager {
   }
 
   async shareCredentials(data: string): Promise<void> {
-    const { tagUuid } = JSON.parse(data) as { tagUuid: string };
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(data);
+    } catch {
+      this.log.warn({ event: 'wifi:share-parse-error' }, 'share-wifi: invalid JSON payload, ignoring');
+      return;
+    }
+    const tagUuid = (parsed as Record<string, unknown>)?.tagUuid;
+    if (typeof tagUuid !== 'string' || tagUuid.length === 0) {
+      this.log.warn({ event: 'wifi:share-missing-uuid' }, 'share-wifi: missing or invalid tagUuid, ignoring');
+      return;
+    }
     const { wifiSettings } = this.state.get();
     if (!wifiSettings) return;
     const targetSsid = `OROBOT-Setup-${tagUuid}`;
