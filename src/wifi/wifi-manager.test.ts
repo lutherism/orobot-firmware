@@ -108,4 +108,25 @@ describe('WifiManager', () => {
       creds,
     }]);
   });
+
+  it('shareCredentials() ignores malformed JSON without throwing', async () => {
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: { ssid: 'Home', password: 'pass' } }), bus, wifiSM);
+    await manager.initialize();
+    await expect(manager.shareCredentials('not-valid-json')).resolves.toBeUndefined();
+    expect(adapter.pushCalls).toHaveLength(0);
+  });
+
+  it('shareCredentials() ignores payload missing tagUuid without throwing', async () => {
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: { ssid: 'Home', password: 'pass' } }), bus, wifiSM);
+    await manager.initialize();
+    await expect(manager.shareCredentials(JSON.stringify({ ssid: 'no-uuid-here' }))).resolves.toBeUndefined();
+    expect(adapter.pushCalls).toHaveLength(0);
+  });
+
+  it('shareCredentials() ignores payload with empty-string tagUuid', async () => {
+    const manager = new WifiManager(adapter, makeTmpState({ wifiSettings: { ssid: 'Home', password: 'pass' } }), bus, wifiSM);
+    await manager.initialize();
+    await expect(manager.shareCredentials(JSON.stringify({ tagUuid: '' }))).resolves.toBeUndefined();
+    expect(adapter.pushCalls).toHaveLength(0);
+  });
 });
