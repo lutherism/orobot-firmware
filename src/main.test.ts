@@ -138,6 +138,119 @@ describe('createApp()', () => {
     await closeServer(wss);
   }, 5000);
 
+  // ── Integration: client → AP fallback ─────────────────────────────────────
+  //
+  // These tests cover the seam that NODE_ENV=sim leaves unexercised: the full
+  // chain from GatewayClient WS error → WifiManager failure counter →
+  // WifiStateMachine SETUP_MODE → main.ts handler → adapter.startAP().
+  //
+  // Under NODE_ENV=sim the RpiWifiShellAdapter is never instantiated, so a
+  // regression anywhere in this chain can pass tests but fail on a real Pi.
+  // By injecting MockWifiShellAdapter + an unreachable gatewayUrl we exercise
+  // every link of the chain in CI regardless of platform.
+
+  it('client→ap fallback: real WS ECONNREFUSED triggers SETUP_MODE and startAP()', async () => {
+    // Inject a mock adapter so we can assert startAP() was called without
+    // running hostapd / iptables.
+    const wifiAdapter = new MockWifiShellAdapter();
+
+    const app = createApp({
+      driver:              new MockGPIODriver(),
+      ptySpawner:          makeNullPtySpawner(),
+      dataFilePath:        makeTmpStateFile({
+        deviceUuid:   'fallback-test-uuid',
+        wifiSettings: { ssid: 'TestNet', password: 'testpass' },
+      }),
+      wifiShellAdapter:    wifiAdapter,
+      // One failure is enough to trigger the fallback — keeps the test fast.
+      maxConnectFailures:  1,
+      heartbeatIntervalMs: 60_000,
+      scanIntervalMs:      60_000,
+      // Port 1 is privileged and always ECONNREFUSED — the real GatewayClient
+      // will emit network:disconnected which WifiManager counts as a failure.
+      gatewayUrl:          'ws://127.0.0.1:1',
+    });
+
+    // Subscribe to wifi:state-changed BEFORE start() so we don't miss the event.
+    const fallbackEvent = new Promise<{ from: string; to: string }>((resolve) => {
+      app.bus.on('wifi:state-changed', (e: { from: string; to: string }) => {
+        if (e.to === 'SETUP_MODE') resolve(e);
+      });
+    });
+
+    await app.start();
+    const event = await fallbackEvent;
+
+    // WifiStateMachine transitioned from CONNECTING → SETUP_MODE
+    expect(event.from).toBe('CONNECTING');
+    expect(event.to).toBe('SETUP_MODE');
+    // WifiManager called adapter.startAP() — on a real Pi this starts hostapd
+    expect(wifiAdapter.startAPCalls).toBe(1);
+
+    await app.stop();
+  }, 8000);
+
+  it('client→ap fallback: share-wifi AP SSID is OROBOT-Setup-<tagUuid>', async () => {
+    // Verifies the AP SSID format (issue #113 hardening) is preserved through
+    // the full integration path: inbound share-wifi message → WifiManager →
+    // adapter.pushCredentials with the correct SSID.
+    const { wss, port } = await startServer();
+    const wifiAdapter = new MockWifiShellAdapter();
+
+    // Use a real server so the gateway client connects — this gives us a
+    // connected state where the share-wifi handler can fire.
+    const app = createApp({
+      ...baseOptions(port),
+      wifiShellAdapter: wifiAdapter,
+      dataFilePath: makeTmpStateFile({
+        deviceUuid:   'ssid-test-uuid',
+        wifiSettings: { ssid: 'HomeNet', password: 'secret' },
+      }),
+    });
+
+    const handshakeDone = new Promise<void>((resolve) => {
+      wss.once('connection', (ws) => {
+        ws.once('message', () => resolve());
+      });
+    });
+
+    try {
+      await app.start();
+      await handshakeDone;
+
+      // Send a share-wifi message through the real WS path — the handler
+      // routes it to WifiManager.shareCredentials().
+      const sharePayload = JSON.stringify({
+        type:       'share-wifi',
+        data:       JSON.stringify({ tagUuid: 'tag-abc-123' }),
+        deviceUuid: 'ssid-test-uuid',
+        ackId:      'ack-share',
+      });
+
+      // Wait for the handler to execute: the message crosses a WS boundary so
+      // we wait for the pushCalls array to be populated rather than using a
+      // fixed timeout.
+      await new Promise<void>((resolve, reject) => {
+        const deadline = setTimeout(() => reject(new Error('pushCredentials not called within timeout')), 2000);
+        const poll = setInterval(() => {
+          if (wifiAdapter.pushCalls.length > 0) {
+            clearInterval(poll);
+            clearTimeout(deadline);
+            resolve();
+          }
+        }, 10);
+        wss.clients.forEach((client) => client.send(sharePayload));
+      });
+
+      expect(wifiAdapter.pushCalls).toContainEqual(
+        expect.objectContaining({ targetSsid: 'OROBOT-Setup-tag-abc-123' }),
+      );
+    } finally {
+      await app.stop();
+      await closeServer(wss);
+    }
+  }, 5000);
+
   it('inbound gotoangle:90 message causes hardware:motor-moved with angle 90', async () => {
     const { wss, port } = await startServer();
 
