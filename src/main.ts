@@ -19,7 +19,7 @@ import {
   createUpdateHandler,
   createNetworkModeHandler,
 } from './handlers/system';
-import { createWifiListHandler, createShareWifiHandler } from './handlers/wifi';
+import { createWifiListHandler, createShareWifiHandler, createWifiProvisionHandler } from './handlers/wifi';
 import { ProgramConfigService } from './core/program-config';
 import { createLoadConfigHandler } from './handlers/program-config';
 import { DeviceSandboxService } from './core/device-sandbox';
@@ -169,6 +169,7 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('getDeviceData', createGetDeviceDataHandler(state, bus));
   registry.register('networkmode',   createNetworkModeHandler(networkSM));
   registry.register('share-wifi',    createShareWifiHandler(wifiManager));
+  registry.register('wifi-provision', createWifiProvisionHandler(wifiManager));
   registry.register('wifiList',      createWifiListHandler(wifiManager, state, bus));
   registry.register('reboot',        createRebootHandler(bus));
   registry.register('update',        createUpdateHandler(bus));
@@ -194,7 +195,7 @@ export function createApp(options: AppOptions = {}): App {
   // intercepted by device code before the registry sees them.
   const SYSTEM_MSG_TYPES = new Set([
     'load-config', 'load-code', 'pty-in', 'getframe', 'infer-frame', 'getDeviceData',
-    'networkmode', 'share-wifi', 'wifiList', 'reboot', 'update', 'command-in', 'stop',
+    'networkmode', 'share-wifi', 'wifi-provision', 'wifiList', 'reboot', 'update', 'command-in', 'stop',
     'servo-command', 'agent-inference-request',
     'agent-list-models-request', 'agent-download-model-request', 'agent-delete-model-request',
   ]);

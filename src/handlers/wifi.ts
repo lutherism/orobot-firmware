@@ -30,3 +30,19 @@ export function createShareWifiHandler(wifiManager: WifiManager): MessageHandler
     await wifiManager.shareCredentials(msg.data);
   };
 }
+
+export function createWifiProvisionHandler(wifiManager: WifiManager): MessageHandler {
+  return async (msg) => {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(msg.data);
+    } catch {
+      return;
+    }
+    const creds = parsed as Record<string, unknown>;
+    const ssid = creds?.ssid;
+    const password = creds?.password;
+    if (typeof ssid !== 'string' || ssid.length === 0) return;
+    await wifiManager.provisionNetwork({ ssid, password: typeof password === 'string' ? password : '' });
+  };
+}
