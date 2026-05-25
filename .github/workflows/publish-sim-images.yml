@@ -1,0 +1,81 @@
+name: publish-sim-images
+
+# Publishes orobot-firmware simulator images to Google Artifact Registry so
+# the gateway's CloudSimDriver can reference them from Cloud Run.
+#
+# Two images are built from a single matrix job:
+#   sim-host  — multi-tenant HTTP service (Dockerfile.simhost, firmware#122)
+#   sim       — single headless device simulator (Dockerfile.sim, firmware#121)
+#
+# Image paths (both tags pushed on every run):
+#   us-central1-docker.pkg.dev/$FIRMWARE_GCP_PROJECT_ID/orobot-firmware/sim-host:$SHA
+#   us-central1-docker.pkg.dev/$FIRMWARE_GCP_PROJECT_ID/orobot-firmware/sim-host:latest
+#   us-central1-docker.pkg.dev/$FIRMWARE_GCP_PROJECT_ID/orobot-firmware/sim:$SHA
+#   us-central1-docker.pkg.dev/$FIRMWARE_GCP_PROJECT_ID/orobot-firmware/sim:latest
+#
+# Auth: Workload Identity Federation via FIRMWARE_GCP_WIF_PROVIDER /
+#       FIRMWARE_GCP_PUBLISH_SA secrets. These must be created in the repo
+#       before this workflow can succeed — see Post-merge ops in the PR.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'Dockerfile.simhost'
+      - 'Dockerfile.sim'
+      - 'src/sim-host/**'
+      - 'src/simulator/**'
+      - 'src/main.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/publish-sim-images.yml'
+  workflow_dispatch:
+
+# Never run two publishes for the same image family in parallel — the :latest
+# tag would race. cancel-in-progress: false ensures an in-flight publish
+# completes before the next one starts (rather than leaving :latest mid-push).
+concurrency:
+  group: publish-sim-images
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      id-token: write   # required for WIF token exchange
+
+    strategy:
+      matrix:
+        include:
+          - image: sim-host
+            dockerfile: Dockerfile.simhost
+          - image: sim
+            dockerfile: Dockerfile.sim
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.FIRMWARE_GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.FIRMWARE_GCP_PUBLISH_SA }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build image
+        run: |
+          docker build \
+            -f ${{ matrix.dockerfile }} \
+            -t us-central1-docker.pkg.dev/${{ vars.FIRMWARE_GCP_PROJECT_ID }}/orobot-firmware/${{ matrix.image }}:${{ github.sha }} \
+            -t us-central1-docker.pkg.dev/${{ vars.FIRMWARE_GCP_PROJECT_ID }}/orobot-firmware/${{ matrix.image }}:latest \
+            .
+
+      - name: Push image
+        run: |
+          docker push us-central1-docker.pkg.dev/${{ vars.FIRMWARE_GCP_PROJECT_ID }}/orobot-firmware/${{ matrix.image }}:${{ github.sha }}
+          docker push us-central1-docker.pkg.dev/${{ vars.FIRMWARE_GCP_PROJECT_ID }}/orobot-firmware/${{ matrix.image }}:latest
