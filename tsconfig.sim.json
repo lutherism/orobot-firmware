@@ -23,6 +23,7 @@
     "src/simulator/DeviceRegistry.test.ts",
     "src/simulator/server.ts",
     "src/simulator/server.test.ts",
-    "src/simulator/transports"
+    "src/simulator/transports",
+    "src/sim-host/server.test.ts"
   ]
 }

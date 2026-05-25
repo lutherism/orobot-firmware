@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "bin": {
-    "orobot-firmware-sim": "dist/simulator/headless.js"
+    "orobot-firmware-sim": "dist/simulator/headless.js",
+    "orobot-sim-host": "dist/sim-host/server.js"
   },
   "scripts": {
     "simulator": "tsx src/simulator/server.ts",
     "sim:headless": "tsx src/simulator/headless.ts",
+    "sim-host": "tsx src/sim-host/server.ts",
     "dev": "cross-env LOG_LEVEL=info tsx src/dev.ts",
     "dev:local": "cross-env LOG_LEVEL=info tsx src/dev.ts --local",
     "test": "vitest run",
