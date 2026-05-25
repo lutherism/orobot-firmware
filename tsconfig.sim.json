@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react"
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "scripts",
+    "portal",
+    "src/portal",
+    "src/simulator/client.tsx",
+    "src/simulator/AuthScreen.tsx",
+    "src/simulator/DeviceCard.tsx",
+    "src/simulator/Installer.tsx",
+    "src/simulator/SimulatorDashboard.tsx",
+    "src/simulator/authService.ts",
+    "src/simulator/DeviceRegistry.ts",
+    "src/simulator/DeviceRegistry.test.ts",
+    "src/simulator/server.ts",
+    "src/simulator/server.test.ts",
+    "src/simulator/transports"
+  ]
+}

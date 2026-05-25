@@ -2,14 +2,18 @@
   "name": "orobot-firmware",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "orobot-firmware-sim": "dist/simulator/headless.js"
+  },
   "scripts": {
     "simulator": "tsx src/simulator/server.ts",
+    "sim:headless": "tsx src/simulator/headless.ts",
     "dev": "cross-env LOG_LEVEL=info tsx src/dev.ts",
     "dev:local": "cross-env LOG_LEVEL=info tsx src/dev.ts --local",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "build:firmware": "tsc",
+    "build:firmware": "tsc && tsc -p tsconfig.sim.json",
     "build:portal": "node scripts/build-portal.mjs",
     "build": "npm run build:firmware && npm run build:portal"
   },
