@@ -98,6 +98,24 @@ describe('PTYManager', () => {
     expect(spawner.processes[0].killed).toBe(true);
   });
 
+  it('watchdog: spawn() arms the watchdog for init writes (slow-boot guard)', async () => {
+    // After start(), the init writes (su - pi, echo ...) should have armed the
+    // watchdog. If the shell produces no output within 5s (PAM slow on cold boot),
+    // the process must be killed — not left alive waiting indefinitely.
+    // We do NOT call write() here — the watchdog must be set by spawn() itself.
+    await vi.advanceTimersByTimeAsync(5100);
+    expect(spawner.processes[0].killed).toBe(true);
+  });
+
+  it('watchdog: spawn() watchdog clears when shell emits its first prompt', async () => {
+    // Simulate the shell responding within the 5-second window (normal fast boot).
+    // The process should NOT be killed.
+    await vi.advanceTimersByTimeAsync(2000);
+    spawner.processes[0].simulateData('pi@orobot:~$ ');
+    await vi.advanceTimersByTimeAsync(3500); // past the original 5s deadline
+    expect(spawner.processes[0].killed).toBe(false);
+  });
+
   it('stop() prevents restart when the process exits', async () => {
     manager.stop();
     // Simulate the process exiting after stop() was called
