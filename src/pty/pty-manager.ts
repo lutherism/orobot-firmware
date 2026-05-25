@@ -85,6 +85,19 @@ export class PTYManager {
     proc.write('su - pi\r');
     proc.write('echo Welcome to ORobot SSH\r');
 
+    // Arm the watchdog for init writes. On a loaded Pi, PAM auth for `su - pi`
+    // can take 3–8 seconds. Without arming here the watchdog only starts on the
+    // first user write(), which means a command sent before the shell has emitted
+    // its prompt will race against a shell that is already mid-init. Arming now
+    // ensures any shell output (including the login prompt) resets the flag and
+    // clears the timer — identical to the normal write() flow.
+    this.waitingForResponse = true;
+    this.watchdogTimer = setTimeout(() => {
+      if (this.waitingForResponse) {
+        this.process?.kill(9);
+      }
+    }, WATCHDOG_MS);
+
     proc.on('data', (data) => {
       this.waitingForResponse = false;
       if (this.watchdogTimer) {
