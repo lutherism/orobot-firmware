@@ -36,7 +36,7 @@
     "styletron-engine-monolithic": "^1.0.0",
     "styletron-react": "^6.1.0",
     "uuid": "^14.0.0",
-    "ws": "^8.8.0"
+    "ws": "^8.21.0"
   },
   "optionalDependencies": {
     "node-libgpiod": "^0.6.0"
