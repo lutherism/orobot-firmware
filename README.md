@@ -66,7 +66,9 @@ After repeated connection failures in `client` mode, the device automatically fa
 ```bash
 npm run dev           # Run against production gateway (mock GPIO/WiFi)
 npm run dev:local     # Run against local gateway (localhost:8080)
-npm run simulator     # Run the browser-accessible simulator UI
+npm run simulator     # Run the browser-accessible simulator UI (port 3001)
+npm run sim:headless  # Run the headless simulator (Cloud Run / CI target)
+npm run sim-host      # Run the multi-tenant simulator host service
 npm run test          # Run all tests once
 ```
 
@@ -78,10 +80,12 @@ No hardware required — `dev` mode uses `MockGPIODriver` and `MockWifiShellAdap
 |---------|-------------|
 | `npm run dev` | Run firmware locally against production gateway |
 | `npm run dev:local` | Run firmware locally against `localhost:8080` |
-| `npm run simulator` | Start the simulator server (`src/simulator/`) |
+| `npm run simulator` | Start the browser simulator UI (`src/simulator/server.ts`) |
+| `npm run sim:headless` | Start headless simulator entry point (`src/simulator/headless.ts`) |
+| `npm run sim-host` | Start multi-tenant simulator host service (`src/sim-host/server.ts`) |
 | `npm run test` | Run Vitest once |
-| `npm run build` | Compile TypeScript to `dist/` via `tsc` |
-| `npm run build:firmware` | Alias for `build` |
+| `npm run build` | Compile firmware TypeScript + build captive portal bundle |
+| `npm run build:firmware` | Compile firmware TypeScript to `dist/` via `tsc` only |
 
 ## Testing
 
