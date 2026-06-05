@@ -1,0 +1,158 @@
+#cloud-config
+# orobot.io Raspberry Pi OS — cloud-init user-data template
+#
+# Used with Raspberry Pi OS Trixie (≥ Nov 2025) which uses cloud-init by default
+# (init_format: "cloudinit-rpi" in the rpi-imager .json definition).
+#
+# The Pi Imager writes this template to the FAT partition as /boot/user-data,
+# replacing {{SSID}}, {{WIFI_PASSWORD}}, {{COUNTRY}}, {{HOSTNAME}} with the
+# values the user entered in the Imager Advanced Options dialog.
+#
+# Template variable placeholders (substituted by orobot image build tooling):
+#   {{SSID}}          — WiFi network name (may be empty)
+#   {{WIFI_PASSWORD}} — WiFi password (may be empty)
+#   {{COUNTRY}}       — 2-letter WiFi country code (e.g. US, GB)
+#   {{HOSTNAME}}      — desired hostname (defaults to orobot)
+#
+# References:
+#   https://www.raspberrypi.com/news/cloud-init-on-raspberry-pi-os/
+#   https://github.com/raspberrypi/rpi-imager/blob/main/doc/schema-notes.md
+
+hostname: "{{HOSTNAME}}"
+manage_etc_hosts: true
+
+# ---- users ------------------------------------------------------------------
+users:
+  - name: orobot
+    gecos: "orobot service user"
+    groups: [netdev, gpio, i2c, spi, video]
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    shell: /bin/bash
+    lock_passwd: true
+
+# ---- WiFi (wpa_supplicant) --------------------------------------------------
+# cloud-init on RPi OS writes /etc/wpa_supplicant/wpa_supplicant.conf directly.
+# If SSID is empty the Pi will start in AP mode (handled by orobot firmware).
+write_files:
+  - path: /etc/wpa_supplicant/wpa_supplicant.conf
+    permissions: "0600"
+    owner: root:root
+    content: |
+      ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+      update_config=1
+      country={{COUNTRY}}
+
+      network={
+        ssid="{{SSID}}"
+        psk="{{WIFI_PASSWORD}}"
+        key_mgmt=WPA-PSK
+        priority=1
+      }
+
+  # Seed orobot data.json so WifiManager boots directly into client mode
+  # when WiFi credentials are present.  The firmware auto-generates a device
+  # UUID on first run and persists the full state on top of this seed.
+  - path: /var/lib/orobot/data.json
+    permissions: "0640"
+    owner: root:root
+    defer: true       # write after packages installed, so dir exists
+    content: |
+      {
+        "deviceUuid": "",
+        "networkMode": "client",
+        "wifiSettings": { "ssid": "{{SSID}}", "password": "{{WIFI_PASSWORD}}" },
+        "knownNetworks": [{ "ssid": "{{SSID}}", "mac": "", "password": "{{WIFI_PASSWORD}}" }],
+        "ownerUuid": null,
+        "type": "wifi-motor",
+        "hardware": "raspi",
+        "pingTime": 0,
+        "devIP": null,
+        "pendingClaimCode": null,
+        "lastSetupError": null
+      }
+
+  # Systemd drop-in: display claim info on tty1 after orobot.service starts.
+  - path: /etc/systemd/system/orobot-firstrun-display.service
+    permissions: "0644"
+    owner: root:root
+    content: |
+      [Unit]
+      Description=orobot first-boot HDMI claim-code display
+      After=orobot.service
+      ConditionPathExists=!/var/lib/orobot/.firstrun-display-done
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/usr/local/bin/orobot-firstrun-display.sh
+      ExecStartPost=/usr/bin/touch /var/lib/orobot/.firstrun-display-done
+
+      [Install]
+      WantedBy=multi-user.target
+
+  # Companion script that actually writes to tty1.
+  - path: /usr/local/bin/orobot-firstrun-display.sh
+    permissions: "0755"
+    owner: root:root
+    content: |
+      #!/usr/bin/env bash
+      # Wait up to 90s for the device UUID to be provisioned.
+      DEADLINE=$(( $(date +%s) + 90 ))
+      DATA_FILE="/var/lib/orobot/data.json"
+      DEVICE_UUID=""
+      while [[ -z "$DEVICE_UUID" && $(date +%s) -lt $DEADLINE ]]; do
+        if [[ -f "$DATA_FILE" ]]; then
+          DEVICE_UUID=$(python3 -c "import json; d=json.load(open('$DATA_FILE')); print(d.get('deviceUuid',''))" 2>/dev/null || true)
+        fi
+        [[ -z "$DEVICE_UUID" ]] && sleep 3
+      done
+      {
+        echo ""
+        echo "=========================================="
+        echo "  Welcome to orobot.io!"
+        echo "=========================================="
+        echo ""
+        echo "  Device ID: ${DEVICE_UUID:-<not yet provisioned>}"
+        echo ""
+        echo "  To add this device to your account:"
+        echo "    1. Visit https://orobot.io/o/robots"
+        echo "    2. Click 'Add Device' and enter a claim code, or run:"
+        echo "         orobot-claim <6-digit-code>"
+        echo ""
+        echo "  Alternatively connect to the orobot.io web app and"
+        echo "  the device will appear when it contacts the gateway."
+        echo "=========================================="
+        echo ""
+      } > /dev/tty1 2>/dev/null || true
+      # Publish mDNS TXT record if avahi is available.
+      if command -v avahi-publish &>/dev/null && [[ -n "$DEVICE_UUID" ]]; then
+        avahi-publish -s "orobot-${DEVICE_UUID:0:8}" _orobot._tcp 3006 \
+          "uuid=$DEVICE_UUID" "setup=1" &
+      fi
+      sleep 300
+      printf '\033[2J\033[H' > /dev/tty1 2>/dev/null || true
+
+# ---- packages ---------------------------------------------------------------
+packages:
+  - avahi-daemon
+  - avahi-utils
+  - nodejs
+  - npm
+
+# ---- runcmd -----------------------------------------------------------------
+runcmd:
+  # Enable and start the firstrun display service
+  - [systemctl, daemon-reload]
+  - [systemctl, enable, orobot-firstrun-display.service]
+  # Start avahi so mDNS is available immediately
+  - [systemctl, enable, avahi-daemon]
+  - [systemctl, start, avahi-daemon]
+  # Log that cloud-init provisioning completed
+  - [sh, -c, "echo '[orobot cloud-init] Provisioning complete — $(date -Iseconds)' >> /var/log/orobot-firstrun.log"]
+
+# ---- power state after first-boot cloud-init run ----------------------------
+power_state:
+  mode: reboot
+  message: "orobot cloud-init provisioning complete — rebooting into normal operation"
+  timeout: 30
+  condition: True
