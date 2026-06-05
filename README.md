@@ -99,6 +99,31 @@ Tests live alongside source files (`*.test.ts`). Hardware dependencies (`gpio`, 
 
 ## Deployment
 
+### Quick Start (Recommended) — Raspberry Pi Imager
+
+The easiest way to run orobot firmware on a Raspberry Pi is to flash the **orobot.io OS image** using [Raspberry Pi Imager](https://www.raspberrypi.com/software/). The image ships with the firmware pre-installed and a first-boot provisioning script (`image/firstrun.sh`) that handles everything automatically:
+
+1. Download [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
+2. Click **Choose OS** → **Use custom** and select the orobot.io image (available at `https://orobot.io/os` — a native Imager catalog entry is coming soon).
+3. Open **Advanced Options** (⚙) and enter your WiFi SSID and password.
+4. Flash the card, insert it into your Pi, and power on.
+
+**What happens on first boot (`image/firstrun.sh`):**
+- Writes your WiFi credentials into `wpa_supplicant.conf` and seeds `data.json` so the firmware boots directly into `client` mode.
+- If no WiFi credentials were provided, the firmware falls back to AP (hotspot) mode automatically — connect to `OROBOT-Setup-*` and open `http://192.168.4.1:3006` to enter credentials.
+- Waits up to 90 seconds for `orobot.service` to provision a device UUID, then prints a claim code and the device ID on the HDMI console (no SSH required).
+- Publishes an `_orobot._tcp` mDNS service so the web UI can discover the device on your local network.
+
+After boot, open [orobot.io/o/devices](https://orobot.io/o/devices), click **Add Device**, and follow the wizard — the claim code from the HDMI console (or mDNS auto-discovery) completes pairing in seconds.
+
+**For a Raspberry Pi OS Trixie image**, the `image/cloud-init/user-data.template` file provides equivalent provisioning via `cloud-init` (`cloudinit-rpi` format). Behavior is identical to `firstrun.sh`.
+
+See [apps/web/public/docs/Firmware_Install_Guide.md](https://orobot.io/docs/#/Firmware_Install_Guide) for the end-to-end user-facing walkthrough.
+
+---
+
+### Manual Deployment (Advanced)
+
 Build locally, copy to the Pi, run with PM2:
 
 ```bash
