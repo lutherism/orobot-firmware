@@ -3,6 +3,13 @@ FROM node:22-slim AS builder
 
 WORKDIR /build
 
+# node-pty requires node-gyp native compilation: python3, make, and g++.
+# node:22-slim omits these; install them before npm ci so the gyp rebuild
+# succeeds.  They stay in the builder stage only — the runtime stage stays slim.
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+      python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy manifests first for layer-cache efficiency
 COPY package.json package-lock.json ./
 
@@ -26,11 +33,13 @@ RUN addgroup --system orobot && adduser --system --ingroup orobot orobot
 
 WORKDIR /app
 
-# Copy manifests for prod install
+# Copy manifests (needed by Node module resolution)
 COPY package.json package-lock.json ./
 
-# Production deps only; skip optional hardware libs
-RUN npm ci --omit=dev --omit=optional && npm cache clean --force
+# Reuse node_modules from builder — they already include the compiled node-pty
+# native binary.  This avoids re-running node-gyp in the runtime stage (which
+# would require build tools that bloat the image).
+COPY --from=builder /build/node_modules ./node_modules
 
 # Copy compiled output from builder
 COPY --from=builder /build/dist ./dist
