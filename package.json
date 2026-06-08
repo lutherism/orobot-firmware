@@ -12,6 +12,7 @@
     "sim-host": "tsx src/sim-host/server.ts",
     "dev": "cross-env LOG_LEVEL=info tsx src/dev.ts",
     "dev:local": "cross-env LOG_LEVEL=info tsx src/dev.ts --local",
+    "so101": "tsx src/bridges/so101/run.ts",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
