@@ -78,4 +78,17 @@ export class JetsonGPIODriver implements GPIODriver {
     line.requestOutputMode();
     return new JetsonPin(line);
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async pwmWrite(_pin: number, _value: number): Promise<void> {
+    // Jetson Orin uses the gpiod character-device interface which does not
+    // expose hardware PWM through the same channel. Use a PWM-capable
+    // expansion board (e.g. PCA9685) or the Jetson hardware PWM sysfs path
+    // via a dedicated driver. This satisfies the GPIODriver interface contract
+    // but throws at runtime so callers surface the gap explicitly.
+    throw new Error(
+      'JetsonGPIODriver.pwmWrite() is not implemented. ' +
+      'Use a PCA9685 driver for PWM on Jetson hardware.',
+    );
+  }
 }
