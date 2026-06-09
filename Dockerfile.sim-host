@@ -1,0 +1,54 @@
+# Multi-tenant sim-host HTTP service (firmware#122).
+#
+# Serves /spawn, /list, /teardown, /healthz and starts one firmware simulator
+# instance per spawned session. Mirrors Dockerfile.sim's two-stage build (the
+# sim-host spawns the same firmware app, so it needs the full compiled build +
+# node-pty native binary) but boots dist/sim-host/server.js instead of the
+# single-tenant headless simulator.
+
+# ── Stage 1: build ────────────────────────────────────────────────────────────
+FROM node:22-slim AS builder
+
+WORKDIR /build
+
+# node-pty requires node-gyp native compilation: python3, make, and g++.
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+      python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json ./
+
+# --omit=optional skips node-libgpiod and other Pi-only hardware libs.
+RUN npm ci --omit=optional
+
+COPY tsconfig.json tsconfig.sim.json ./
+COPY src/ ./src/
+
+# Compiles src/** (incl. src/sim-host) to dist/ — see tsconfig.json.
+RUN npm run build:firmware
+
+# ── Stage 2: runtime ──────────────────────────────────────────────────────────
+FROM node:22-slim AS runtime
+
+RUN addgroup --system orobot && adduser --system --ingroup orobot orobot
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY --from=builder /build/node_modules ./node_modules
+COPY --from=builder /build/dist ./dist
+
+USER orobot
+
+# Required env at runtime:
+#   SIM_HOST_SECRET   shared secret the gateway presents on /spawn etc.
+# Optional:
+#   PORT              HTTP listen port (default: 8080, Cloud Run convention)
+#   SIM_HOST_MAX      max concurrent sims (default: 32)
+ENV NODE_ENV=production \
+    LOG_LEVEL=info \
+    PORT=8080
+
+EXPOSE 8080
+
+ENTRYPOINT ["node", "dist/sim-host/server.js"]
