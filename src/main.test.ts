@@ -1,9 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { WebSocketServer } from 'ws';
+import type { WebSocket as WsWebSocket } from 'ws';
 import { createApp } from './main';
 import { MockGPIODriver } from './hardware/mock-driver';
 import { MockWifiShellAdapter } from './wifi/mock-shell-adapter';
 import type { PtySpawner } from './pty/pty-manager';
+import type { WsFactory } from './network/gateway-client';
 import { makeTmpStateFile } from './test-utils/make-state';
 
 /** PtySpawner that does nothing — lets PTYManager start without spawning a real shell. */
@@ -28,6 +30,37 @@ async function startServer(): Promise<{ wss: WebSocketServer; port: number }> {
 
 function closeServer(wss: WebSocketServer): Promise<void> {
   return new Promise((resolve) => wss.close(() => resolve()));
+}
+
+/**
+ * Returns a WsFactory whose every socket immediately emits 'error' on the next
+ * event-loop tick.  Used to exercise the client→AP fallback path without a real
+ * network connection or relying on OS-level ECONNREFUSED timing (the previous
+ * approach using port 1 was a recurring source of flakiness).
+ */
+function makeErrorWsFactory(errorMessage = 'connect ECONNREFUSED 127.0.0.1:1'): WsFactory {
+  return (_url: string, _proto: string): WsWebSocket => {
+    const handlers: Record<string, Array<(...args: unknown[]) => void>> = {};
+    const ws = {
+      readyState: 3, // CLOSED — never writable
+      send:       () => {},
+      close:      () => {},
+      ping:       () => {},
+      terminate:  () => {},
+      on(event: string, handler: (...args: unknown[]) => void) {
+        handlers[event] ??= [];
+        handlers[event].push(handler);
+        if (event === 'error') {
+          // Fire synchronously on next tick so all handlers are registered first.
+          setImmediate(() => {
+            const err = Object.assign(new Error(errorMessage), { code: 'ECONNREFUSED' });
+            handlers['error']?.forEach((h) => h(err));
+          });
+        }
+      },
+    };
+    return ws as unknown as WsWebSocket;
+  };
 }
 
 /** Options shared by all createApp() calls in these tests. */
@@ -149,9 +182,18 @@ describe('createApp()', () => {
   // By injecting MockWifiShellAdapter + an unreachable gatewayUrl we exercise
   // every link of the chain in CI regardless of platform.
 
-  it('client→ap fallback: real WS ECONNREFUSED triggers SETUP_MODE and startAP()', async () => {
-    // Inject a mock adapter so we can assert startAP() was called without
-    // running hostapd / iptables.
+  it('client→ap fallback: WS ECONNREFUSED triggers SETUP_MODE and startAP()', async () => {
+    // Previous implementation pointed at ws://127.0.0.1:1 (privileged port) and
+    // waited for a real ECONNREFUSED.  That introduced a timing race: the OS may
+    // take variable time to refuse the connection, and the backoff sleep in
+    // GatewayClient added further jitter that caused intermittent timeouts in CI.
+    //
+    // Fix: inject a WsFactory whose sockets immediately emit 'error' — no real
+    // network I/O, no OS timer races.  The full chain under test is unchanged:
+    //   wsFactory error → GatewayClient emits network:disconnected
+    //   → WifiManager increments connectFailures → reaches maxConnectFailures=1
+    //   → WifiStateMachine transitions CONNECTING→SETUP_MODE
+    //   → adapter.startAP() called
     const wifiAdapter = new MockWifiShellAdapter();
 
     const app = createApp({
@@ -166,9 +208,12 @@ describe('createApp()', () => {
       maxConnectFailures:  1,
       heartbeatIntervalMs: 60_000,
       scanIntervalMs:      60_000,
-      // Port 1 is privileged and always ECONNREFUSED — the real GatewayClient
-      // will emit network:disconnected which WifiManager counts as a failure.
+      // No real URL needed — the mock factory ignores it.
       gatewayUrl:          'ws://127.0.0.1:1',
+      // Inject deterministic error-emitting WS — avoids real network timing.
+      wsFactory:           makeErrorWsFactory(),
+      // Skip reconnect backoff delay so the test completes immediately.
+      sleepFn:             () => Promise.resolve(),
     });
 
     // Subscribe to wifi:state-changed BEFORE start() so we don't miss the event.
@@ -188,7 +233,7 @@ describe('createApp()', () => {
     expect(wifiAdapter.startAPCalls).toBe(1);
 
     await app.stop();
-  }, 8000);
+  }, 5000);
 
   it('client→ap fallback: share-wifi AP SSID is OROBOT-Setup-<tagUuid>', async () => {
     // Verifies the AP SSID format (issue #113 hardening) is preserved through
