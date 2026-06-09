@@ -74,6 +74,19 @@ npm run test          # Run all tests once
 
 No hardware required — `dev` mode uses `MockGPIODriver` and `MockWifiShellAdapter` in place of real GPIO and `wpa_cli`.
 
+## Python SDK (`python/`)
+
+[`python/`](python/) holds the `orobot` Python SDK + Jupyter/Colab notebooks for
+researchers: connect to a robot from a notebook, read its state over the REST gateway,
+and record teleoperation sessions for imitation learning (LeRobot / Hugging Face). The
+recording core is dependency-free; the `LeRobotDataset` export step is gated on
+[orobotio#3252](https://github.com/lutherism/orobotio/issues/3252). See
+[`python/README.md`](python/README.md).
+
+```bash
+cd python && python -m pytest -q     # SDK tests (no network, no hardware)
+```
+
 ## Scripts
 
 | Command | Description |
