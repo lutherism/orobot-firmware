@@ -32,7 +32,7 @@ import { StepperMotor } from './hardware/stepper-motor';
 import { selectDriver } from './hardware/driver-registry';
 import { PTYManager, type PtySpawner } from './pty/pty-manager';
 import { NetworkStateMachine } from './network/state-machine';
-import { GatewayClient, type WsFactory } from './network/gateway-client';
+import { GatewayClient, type WsFactory, type SleepFn } from './network/gateway-client';
 import { HeartbeatService } from './network/heartbeat';
 import { MdnsClaimService } from './network/mdns-claim';
 import type { GPIODriver } from './hardware/types';
@@ -94,6 +94,10 @@ export interface AppOptions {
   devicePrefix?: string;
   /** Override ffmpeg spawner for camera streaming — used in tests to avoid hardware. */
   ffmpegSpawner?: import('./handlers/camera-stream').FfmpegSpawner;
+  /** Override WebSocket factory — used in tests to inject a mock WS without real network I/O. */
+  wsFactory?: WsFactory;
+  /** Override sleep function in GatewayClient reconnect loop — used in tests to avoid real delays. */
+  sleepFn?: SleepFn;
 }
 
 export interface App {
@@ -208,8 +212,8 @@ export function createApp(options: AppOptions = {}): App {
     return deviceSandbox.dispatch(msg.type, data);
   });
 
-  const wsFactory: WsFactory = (url, proto) => new WebSocket(url, proto);
-  const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device, options.pingIntervalMs, undefined, undefined, platform);
+  const wsFactory: WsFactory = options.wsFactory ?? ((url, proto) => new WebSocket(url, proto));
+  const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device, options.pingIntervalMs, undefined, options.sleepFn, platform);
   const heartbeat     = new HeartbeatService(state, bus, fetch, device);
   const mdnsClaim     = new MdnsClaimService(state, bus, device);
   const hbIntervalMs  = options.heartbeatIntervalMs ?? 8_000;
