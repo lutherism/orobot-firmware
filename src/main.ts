@@ -34,6 +34,7 @@ import { PTYManager, type PtySpawner } from './pty/pty-manager';
 import { NetworkStateMachine } from './network/state-machine';
 import { GatewayClient, type WsFactory } from './network/gateway-client';
 import { HeartbeatService } from './network/heartbeat';
+import { MdnsClaimService } from './network/mdns-claim';
 import type { GPIODriver } from './hardware/types';
 import { WifiStateMachine } from './wifi/wifi-state-machine';
 import { WifiManager } from './wifi/wifi-manager';
@@ -210,6 +211,7 @@ export function createApp(options: AppOptions = {}): App {
   const wsFactory: WsFactory = (url, proto) => new WebSocket(url, proto);
   const gatewayClient = new GatewayClient(bus, state, registry, wsFactory, options.gatewayUrl, device, options.pingIntervalMs, undefined, undefined, platform);
   const heartbeat     = new HeartbeatService(state, bus, fetch, device);
+  const mdnsClaim     = new MdnsClaimService(state, bus, device);
   const hbIntervalMs  = options.heartbeatIntervalMs ?? 8_000;
 
   // HTTP push camera stream service — created lazily when network connects and config.camera is set.
@@ -236,6 +238,7 @@ export function createApp(options: AppOptions = {}): App {
       });
       if (res.ok) {
         await state.patch({ pendingClaimCode: null, lastSetupError: null });
+        bus.emit('portal:claim-code-cleared', {});
       } else {
         await state.patch({
           lastSetupError: `Registration failed (${res.status}). Please double-check the claim code.`,
@@ -314,10 +317,12 @@ export function createApp(options: AppOptions = {}): App {
       });
       await wifiManager.initialize();
       ptyManager.start();
+      mdnsClaim.start();
     },
     async stop(): Promise<void> {
       unsubscribers.forEach((fn) => fn());
       unsubscribers.length = 0;
+      mdnsClaim.stop();
       cameraStream.stop();
       cameraPushStream?.stop();
       cameraPushStream = null;

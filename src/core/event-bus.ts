@@ -23,7 +23,8 @@ export type EventMap = {
   'wifi:disconnected':         { reason: string };
   'wifi:credentials-shared':   { targetSsid: string };
   'wifi:goto-client-requested': Record<string, never>;
-  'portal:claim-code-stored': { code: string };
+  'portal:claim-code-stored':  { code: string };
+  'portal:claim-code-cleared': Record<string, never>;
   'system:heartbeat-sent':    { pingTime: number };
   'system:reboot-requested':  Record<string, never>;
   'system:update-requested':  Record<string, never>;
