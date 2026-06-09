@@ -37,6 +37,7 @@ import { HeartbeatService } from '../../network/heartbeat';
 import { NetworkStateMachine } from '../../network/state-machine';
 import { FeetechProductionBus, type FeetechBus } from './feetech-bus';
 import { createMotorCommandHandler } from './motor-command-handler';
+import { createReadAnglesHandler } from './readangles-handler';
 import path from 'path';
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -215,6 +216,10 @@ export function createSO101Bridge(options: SO101BridgeOptions = {}): SO101Bridge
   registry.register(
     'motor-command',
     createMotorCommandHandler(feetechBus, { defaultSpeed: options.servoSpeed }),
+  );
+  registry.register(
+    'readangles',
+    createReadAnglesHandler(feetechBus, eventBus),
   );
 
   const wsFactory: WsFactory = options.wsFactory ?? ((url, proto) => new WebSocket(url, proto));
