@@ -12,6 +12,7 @@ import { CameraStreamService } from './handlers/camera-stream';
 import { createVisionInferenceHandler } from './handlers/vision-inference';
 import { createAgentInferenceHandler } from './handlers/agent-inference';
 import { createAgentModelHandlers } from './handlers/agent-model';
+import { createRunPolicyHandlers } from './handlers/run-policy';
 import { ModelManager } from './agent/model-manager';
 import {
   createGetDeviceDataHandler,
@@ -170,6 +171,13 @@ export function createApp(options: AppOptions = {}): App {
   registry.register('agent-list-models-request',     agentModelHandlers.listModels);
   registry.register('agent-download-model-request',  agentModelHandlers.downloadModel);
   registry.register('agent-delete-model-request',    agentModelHandlers.deleteModel);
+
+  // LeRobot policy-inference launcher (gateway PR #3363, issue #3260).
+  // Routed from `command-in` messages whose data is `run-policy:<json>` /
+  // `stop-policy:<jobId>` via the prefix-match path in findHandler().
+  const policyHandlers = createRunPolicyHandlers(bus, () => state.get().deviceUuid);
+  registry.register('run-policy:',  true, policyHandlers.run);
+  registry.register('stop-policy:', true, policyHandlers.stop);
 
   registry.register('getDeviceData', createGetDeviceDataHandler(state, bus));
   registry.register('networkmode',   createNetworkModeHandler(networkSM));
