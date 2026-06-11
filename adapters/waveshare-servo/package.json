@@ -1,0 +1,12 @@
+{
+  "name": "@orobot/adapter-waveshare-servo",
+  "version": "0.1.0",
+  "description": "Reference stub adapter for WaveShare bus-servo controllers over UART/serial. Template for community hardware adapter authors.",
+  "main": "index.js",
+  "license": "MIT",
+  "keywords": ["orobot", "adapter", "servo", "waveshare", "uart"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lutherism/orobot-firmware.git"
+  }
+}
