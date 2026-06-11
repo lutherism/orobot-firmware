@@ -56,6 +56,14 @@ export interface ProgramConfig {
    * Defaults to undefined (no camera process started).
    */
   camera?:    CameraConfig;
+  /**
+   * Hardware adapter package IDs to auto-install on program deploy.
+   * Each ID must match `@orobot/adapter-<slug>` — other values are rejected
+   * silently (see AdapterInstaller trust model in src/handlers/adapter-installer.ts).
+   * Corresponds to the `hardwareAdapters` field in orobotio PR #3608.
+   * Example: `['@orobot/adapter-waveshare-servo']`
+   */
+  hardwareAdapters?: string[];
 }
 
 export class ProgramConfigService {
